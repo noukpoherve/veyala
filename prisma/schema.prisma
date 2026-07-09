@@ -184,7 +184,12 @@ model GeneratedCV {
   tailoredData Json
   docxUrl      String?
   pdfUrl       String?
-  createdAt    DateTime @default(now())
+
+  coverLetter        String  @default("") @db.Text
+  coverLetterDocxUrl String?
+  coverLetterPdfUrl  String?
+
+  createdAt DateTime @default(now())
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   template Template @relation(fields: [templateId], references: [id])

@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Download, FileText, RefreshCw } from "lucide-react";
+import { ArrowLeft, Download, FileText, Mail, PenLine, RefreshCw } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
 import { parseTemplateDefinition } from "@/lib/templates/definition";
 import { renderCVHtml } from "@/lib/pdf/render-html";
+import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { generateCV, GenerationError } from "@/lib/generate-cv";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Aperçu du CV" };
 
@@ -30,6 +32,9 @@ export default async function CvDetailPage({
   const data = cvSchema.parse(cv.tailoredData);
   const definition = parseTemplateDefinition(cv.template.definition);
   const previewHtml = renderCVHtml(data, definition);
+  const letterHtml = cv.coverLetter
+    ? renderCoverLetterHtml(data, { body: cv.coverLetter, jobTitle: cv.jobTitle }, definition)
+    : null;
 
   async function regenerate() {
     "use server";
@@ -85,22 +90,12 @@ export default async function CvDetailPage({
           </Badge>
         </div>
         <div className="flex flex-wrap gap-2">
-          {cv.docxUrl ? (
-            <Button asChild variant="gradient">
-              <a href={cv.docxUrl} download>
-                <Download />
-                Télécharger Word
-              </a>
-            </Button>
-          ) : null}
-          {cv.pdfUrl ? (
-            <Button asChild>
-              <a href={cv.pdfUrl} download>
-                <FileText />
-                Télécharger PDF
-              </a>
-            </Button>
-          ) : null}
+          <Button asChild variant="gradient">
+            <Link href={`/cv/${cv.id}/edit`}>
+              <PenLine />
+              Modifier dans l&apos;éditeur
+            </Link>
+          </Button>
           <form action={regenerate}>
             <Button type="submit" variant="outline">
               <RefreshCw />
@@ -110,14 +105,89 @@ export default async function CvDetailPage({
         </div>
       </header>
 
-      <section aria-label="Aperçu du CV" className="overflow-hidden rounded-xl border shadow-sm">
-        <iframe
-          srcDoc={previewHtml}
-          title={`Aperçu du CV — ${cv.jobTitle}`}
-          className="h-[1188px] w-full bg-white"
-          sandbox=""
-        />
+      <section aria-labelledby="cv-title" className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="cv-title" className="flex items-center gap-2 font-display text-lg font-semibold">
+            <FileText className="size-5 text-primary" aria-hidden />
+            CV optimisé
+          </h2>
+          <div className="flex gap-2">
+            {cv.docxUrl ? (
+              <Button asChild size="sm">
+                <a href={cv.docxUrl} download>
+                  <Download />
+                  Word (.docx)
+                </a>
+              </Button>
+            ) : null}
+            {cv.pdfUrl ? (
+              <Button asChild size="sm" variant="outline">
+                <a href={cv.pdfUrl} download>
+                  <Download />
+                  PDF
+                </a>
+              </Button>
+            ) : null}
+          </div>
+        </div>
+        <div className="overflow-hidden rounded-xl border shadow-sm">
+          <iframe
+            srcDoc={previewHtml}
+            title={`Aperçu du CV — ${cv.jobTitle}`}
+            className="h-[1188px] w-full bg-white"
+            sandbox=""
+          />
+        </div>
       </section>
+
+      {letterHtml ? (
+        <section aria-labelledby="letter-title" className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="letter-title" className="flex items-center gap-2 font-display text-lg font-semibold">
+              <Mail className="size-5 text-primary" aria-hidden />
+              Lettre de motivation
+            </h2>
+            <div className="flex gap-2">
+              {cv.coverLetterDocxUrl ? (
+                <Button asChild size="sm">
+                  <a href={cv.coverLetterDocxUrl} download>
+                    <Download />
+                    Word (.docx)
+                  </a>
+                </Button>
+              ) : null}
+              {cv.coverLetterPdfUrl ? (
+                <Button asChild size="sm" variant="outline">
+                  <a href={cv.coverLetterPdfUrl} download>
+                    <Download />
+                    PDF
+                  </a>
+                </Button>
+              ) : null}
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-xl border shadow-sm">
+            <iframe
+              srcDoc={letterHtml}
+              title={`Lettre de motivation — ${cv.jobTitle}`}
+              className="h-[1188px] w-full bg-white"
+              sandbox=""
+            />
+          </div>
+        </section>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Lettre de motivation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Ce CV a été généré avant l&apos;ajout des lettres de motivation. Régénérez-le
+              pour en obtenir une, ou rédigez-la dans l&apos;éditeur.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </article>
   );
 }
