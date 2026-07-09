@@ -10,8 +10,11 @@ export async function POST(req) {
   try {
     const { jobUrl, jobText, variant, targetTitle, criteria } = await req.json();
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json({ error: "ANTHROPIC_API_KEY manquante. Ajoutez-la dans .env.local." }, { status: 500 });
+    if (!process.env.LLM_API_KEY) {
+      return NextResponse.json(
+        { error: "LLM_API_KEY manquante. Renseignez votre fournisseur dans .env.local (voir README)." },
+        { status: 500 }
+      );
     }
 
     // 1. Texte de l'offre : soit collé, soit récupéré depuis l'URL.
@@ -23,7 +26,7 @@ export async function POST(req) {
       offer = await fetchJobText(jobUrl);
     }
 
-    // 2. Adaptation par Claude.
+    // 2. Adaptation par le LLM configuré.
     const cv = await tailorCv({ jobText: offer, variant, targetTitle, criteria });
 
     // 3. Génération du .docx.
