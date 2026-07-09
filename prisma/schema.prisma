@@ -179,6 +179,7 @@ model GeneratedCV {
   templateId   String
   jobTitle     String
   jobSource    String
+  jobText      String   @db.Text
   jobTextHash  String
   tailoredData Json
   docxUrl      String?
