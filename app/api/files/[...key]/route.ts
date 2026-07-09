@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { readLocalFile } from "@/lib/storage";
+import { readStoredFile } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
@@ -12,7 +12,7 @@ const CONTENT_TYPES: Record<string, string> = {
   ".jpeg": "image/jpeg",
 };
 
-/** Serves files from local storage (dev). Requires an authenticated session. */
+/** Serves stored files (local, S3/R2 or Supabase). Requires an authenticated session. */
 export async function GET(_req: Request, { params }: { params: { key: string[] } }) {
   const session = await auth();
   if (!session?.user) {
@@ -27,7 +27,7 @@ export async function GET(_req: Request, { params }: { params: { key: string[] }
   }
 
   try {
-    const buffer = await readLocalFile(key);
+    const buffer = await readStoredFile(key);
     const ext = key.slice(key.lastIndexOf("."));
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
