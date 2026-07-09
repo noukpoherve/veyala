@@ -9,7 +9,7 @@ const bodySchema = z.object({
   prompt: z.string().min(1).max(500).default("Réponds uniquement : OK"),
 });
 
-/** Endpoint de test de la couche LLM — réservé aux admins. */
+/** LLM layer test endpoint — admin only. */
 export async function POST(req: Request) {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {

@@ -42,7 +42,7 @@ if (process.env.EMAIL_SERVER && process.env.EMAIL_FROM) {
   );
 }
 
-// Connexion locale sans SMTP ni OAuth, uniquement hors production.
+// Local sign-in without SMTP or OAuth, enabled outside production only.
 if (process.env.NODE_ENV !== "production") {
   providers.push(
     Credentials({

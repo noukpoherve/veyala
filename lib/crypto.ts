@@ -11,7 +11,7 @@ function getKey(): Buffer {
   return key;
 }
 
-/** Chiffre un secret (clé API LLM) pour stockage en base. Format : iv.tag.data en base64. */
+/** Encrypts a secret (LLM API key) for DB storage. Format: iv.tag.data, base64-encoded. */
 export function encryptSecret(plain: string): string {
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(ALGO, getKey(), iv);

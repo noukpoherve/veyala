@@ -36,8 +36,8 @@ async function applyDelta(
 }
 
 /**
- * Débite `amount` crédits de façon atomique (Serializable).
- * Lève InsufficientCreditsError si le solde est insuffisant — jamais de solde négatif.
+ * Atomically debits `amount` credits (Serializable isolation).
+ * Throws InsufficientCreditsError when the balance is too low — never negative.
  */
 export async function debitCredits(
   userId: string,
@@ -50,7 +50,7 @@ export async function debitCredits(
   });
 }
 
-/** Crédite `amount` crédits de façon atomique. */
+/** Atomically credits `amount` credits. */
 export async function creditCredits(
   userId: string,
   amount: number,

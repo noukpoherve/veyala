@@ -1,8 +1,8 @@
 import type { NextAuthConfig } from "next-auth";
 
 /**
- * Config Auth.js sans adaptateur ni provider Node : importable depuis le
- * middleware (edge). La config complète (Prisma, nodemailer) est dans lib/auth.ts.
+ * Auth.js config without adapter or Node-only providers: safe to import from
+ * the (edge) middleware. The full config (Prisma, nodemailer) lives in lib/auth.ts.
  */
 export const authConfig = {
   providers: [],

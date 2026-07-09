@@ -10,14 +10,14 @@
     --card-foreground: 213 44% 22%;
     --popover: 0 0% 100%;
     --popover-foreground: 213 44% 22%;
-    /* Indigo de la marque (rail dégradé du CV signature) */
+    /* Brand indigo (from the signature CV gradient rail) */
     --primary: 231 32% 42%;
     --primary-foreground: 0 0% 100%;
     --secondary: 226 28% 94%;
     --secondary-foreground: 213 44% 24%;
     --muted: 226 28% 94%;
     --muted-foreground: 215 12% 42%;
-    /* Violet du dégradé */
+    /* Gradient purple accent */
     --accent: 270 34% 94%;
     --accent-foreground: 270 34% 34%;
     --destructive: 351 44% 44%;
@@ -61,7 +61,7 @@
 }
 
 @layer utilities {
-  /* Dégradé signature bleu → indigo → violet → bordeaux → rouge, repris du CV. */
+  /* Signature gradient blue → indigo → purple → burgundy → red, from the CV. */
   .bg-signature {
     background: linear-gradient(
       180deg,

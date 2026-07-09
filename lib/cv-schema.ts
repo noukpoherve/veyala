@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 /**
- * Schéma du CV structuré — la « source de vérité » stockée dans BaseProfile.data
- * et le format échangé avec le LLM (import comme adaptation).
+ * Structured CV schema — the "source of truth" stored in BaseProfile.data
+ * and the format exchanged with the LLM (both import and tailoring).
  */
 
 export const linkSchema = z.object({
@@ -62,12 +62,12 @@ export type CVExperience = z.infer<typeof experienceSchema>;
 export type CVEducation = z.infer<typeof educationSchema>;
 export type CVSkillGroup = z.infer<typeof skillGroupSchema>;
 
-/** Valide des données LLM/formulaire ; lève une ZodError descriptive sinon. */
+/** Validates LLM/form data; throws a descriptive ZodError otherwise. */
 export function parseCV(data: unknown): CVData {
   return cvSchema.parse(data);
 }
 
-/** Version texte du schéma, injectée dans les prompts pour cadrer la sortie JSON. */
+/** Text version of the schema, injected into prompts to constrain JSON output. */
 export const CV_JSON_SHAPE = `{
   "identity": { "fullName": string, "headline": string, "photoUrl": string },
   "contact": {

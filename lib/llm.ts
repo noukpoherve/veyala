@@ -3,10 +3,10 @@ import { db } from "@/lib/db";
 import { decryptSecret } from "@/lib/crypto";
 
 /**
- * Couche LLM agnostique : n'importe quel fournisseur OpenAI-compatible
+ * Provider-agnostic LLM layer: any OpenAI-compatible provider
  * (Groq, Gemini, Mistral, Cerebras, OpenRouter, DeepSeek, OpenAI, xAI…)
- * ou protocole Anthropic. La config vient des variables d'env, surchargée
- * par le fournisseur par défaut défini en base par l'admin (LLMProvider).
+ * or the Anthropic protocol. Config comes from env vars, overridden by
+ * the default provider the admin configures in DB (LLMProvider).
  */
 
 export type LLMProtocolName = "openai" | "anthropic";
@@ -49,7 +49,7 @@ function envConfig(): LLMConfig | null {
   };
 }
 
-/** Fournisseur effectif : défaut admin en base, sinon variables d'env. */
+/** Effective provider: admin-defined DB default first, env vars otherwise. */
 export async function resolveLLMConfig(): Promise<LLMConfig> {
   const provider = await db.lLMProvider
     .findFirst({
@@ -68,7 +68,7 @@ export async function resolveLLMConfig(): Promise<LLMConfig> {
         providerName: provider.name,
       };
     } catch {
-      // Clé indéchiffrable (ENCRYPTION_KEY changée ?) : on retombe sur l'env.
+      // Undecryptable key (ENCRYPTION_KEY rotated?): fall back to env config.
     }
   }
 
@@ -83,7 +83,7 @@ export async function resolveLLMConfig(): Promise<LLMConfig> {
 
 const MAX_RETRIES = 3;
 
-/** Envoie system + user au fournisseur configuré et renvoie le texte brut. */
+/** Sends system + user prompts to the configured provider, returns raw text. */
 export async function chat(params: ChatParams, config?: LLMConfig): Promise<string> {
   const cfg = config ?? (await resolveLLMConfig());
 
@@ -175,8 +175,8 @@ async function chatAnthropic(
 }
 
 /**
- * Extraction JSON tolérante : retire les fences markdown et, à défaut d'un
- * parse direct, récupère le premier objet {…} de la réponse.
+ * Lenient JSON extraction: strips markdown fences and, when direct parsing
+ * fails, recovers the first {…} object found in the response.
  */
 export function parseJSONLoose<T = unknown>(raw: string): T {
   const clean = raw.replace(/```(?:json)?/g, "").trim();
@@ -191,7 +191,7 @@ export function parseJSONLoose<T = unknown>(raw: string): T {
   }
 }
 
-/** chat() + parsing JSON tolérant en un appel. */
+/** chat() + lenient JSON parsing in one call. */
 export async function chatJSON<T = unknown>(params: ChatParams, config?: LLMConfig): Promise<T> {
   return parseJSONLoose<T>(await chat(params, config));
 }
