@@ -31,5 +31,7 @@ function normalize(text: string): string {
       "Impossible d'extraire assez de texte de ce fichier (scan ou document vide ?)."
     );
   }
-  return clean.slice(0, 20000);
+  // Enough for a dense multi-page resume while staying within free-tier
+  // token-per-minute quotas at structuring time.
+  return clean.slice(0, 14000);
 }

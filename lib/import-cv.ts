@@ -17,10 +17,12 @@ ${CV_JSON_SHAPE}`;
 
 /** Structures raw resume text into schema-compliant JSON. Zero invention. */
 export async function structureCV(rawText: string): Promise<CVData> {
+  // The JSON output is roughly the size of the source text (~3 chars/token).
+  const maxTokens = Math.min(Math.max(Math.ceil(rawText.length / 3) + 800, 2000), 5000);
   const raw = await chatJSON({
     system: SYSTEM_PROMPT,
     user: `TEXTE DU CV :\n${rawText}`,
-    maxTokens: 6000,
+    maxTokens,
     temperature: 0.1,
   });
 
@@ -31,7 +33,7 @@ export async function structureCV(rawText: string): Promise<CVData> {
   const fixed = await chatJSON({
     system: SYSTEM_PROMPT,
     user: `TEXTE DU CV :\n${rawText}\n\nTa précédente réponse était invalide : ${parsed.error.message.slice(0, 800)}\nCorrige et renvoie uniquement le JSON.`,
-    maxTokens: 6000,
+    maxTokens,
     temperature: 0.1,
   });
   return cvSchema.parse(fixed);

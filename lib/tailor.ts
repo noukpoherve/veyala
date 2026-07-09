@@ -1,7 +1,10 @@
 import "server-only";
 import * as cheerio from "cheerio";
 import { chatJSON } from "@/lib/llm";
-import { cvSchema, CV_JSON_SHAPE, type CVData } from "@/lib/cv-schema";
+import { cvSchema, cvForLLM, CV_JSON_SHAPE, type CVData } from "@/lib/cv-schema";
+
+/** Keeps prompts within free-tier TPM budgets (Groq: 12k tokens/min). */
+const MAX_JOB_TEXT_PROMPT_CHARS = 8000;
 
 /** Fetches and cleans a job posting's text from its URL. */
 export async function fetchJobText(url: string): Promise<string> {
@@ -58,9 +61,12 @@ ${CV_JSON_SHAPE}`;
 export async function tailorCV(params: TailorParams): Promise<TailorResult> {
   const { baseCV, jobText, targetTitle, instructions, language } = params;
 
+  // Compact JSON without the photo: the payload counts against the provider's
+  // token-per-minute quota, and Groq also counts max_tokens as "requested".
+  const cvJson = JSON.stringify(cvForLLM(baseCV));
   const user = [
-    `CV DE BASE (JSON) :\n${JSON.stringify(baseCV, null, 1)}`,
-    `OFFRE D'EMPLOI :\n${jobText}`,
+    `CV DE BASE (JSON) :\n${cvJson}`,
+    `OFFRE D'EMPLOI :\n${jobText.slice(0, MAX_JOB_TEXT_PROMPT_CHARS)}`,
     targetTitle && `POSTE VISÉ (indiqué par le candidat) : ${targetTitle}`,
     instructions && `CONSIGNES SUPPLÉMENTAIRES DU CANDIDAT : ${instructions}`,
     language && `LANGUE DU CV GÉNÉRÉ : ${language}`,
@@ -68,10 +74,13 @@ export async function tailorCV(params: TailorParams): Promise<TailorResult> {
     .filter(Boolean)
     .join("\n\n");
 
+  // The reply mirrors the input CV: size the output budget on it (~3 chars/token).
+  const maxTokens = Math.min(Math.max(Math.ceil(cvJson.length / 3) + 800, 2000), 6000);
+
   const raw = await chatJSON<Record<string, unknown>>({
     system: SYSTEM_PROMPT,
     user,
-    maxTokens: 6000,
+    maxTokens,
     temperature: 0.4,
   });
 

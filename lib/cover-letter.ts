@@ -1,6 +1,8 @@
 import "server-only";
 import { chat } from "@/lib/llm";
-import type { CVData } from "@/lib/cv-schema";
+import { cvForLLM, type CVData } from "@/lib/cv-schema";
+
+const MAX_JOB_TEXT_PROMPT_CHARS = 6000;
 
 const SYSTEM_PROMPT = `Tu es un expert en candidatures et en recrutement.
 On te donne le CV d'un candidat (JSON) et le texte d'une offre d'emploi.
@@ -24,8 +26,8 @@ export interface CoverLetterParams {
 /** Writes the cover letter body from the tailored CV and the job posting. */
 export async function writeCoverLetter(params: CoverLetterParams): Promise<string> {
   const user = [
-    `CV DU CANDIDAT (JSON) :\n${JSON.stringify(params.cv, null, 1)}`,
-    `OFFRE D'EMPLOI :\n${params.jobText}`,
+    `CV DU CANDIDAT (JSON) :\n${JSON.stringify(cvForLLM(params.cv))}`,
+    `OFFRE D'EMPLOI :\n${params.jobText.slice(0, MAX_JOB_TEXT_PROMPT_CHARS)}`,
     `INTITULÉ DU POSTE : ${params.jobTitle}`,
     params.instructions && `CONSIGNES DU CANDIDAT : ${params.instructions}`,
     params.language && `LANGUE DE LA LETTRE : ${params.language}`,
@@ -33,7 +35,7 @@ export async function writeCoverLetter(params: CoverLetterParams): Promise<strin
     .filter(Boolean)
     .join("\n\n");
 
-  const raw = await chat({ system: SYSTEM_PROMPT, user, maxTokens: 1500, temperature: 0.5 });
+  const raw = await chat({ system: SYSTEM_PROMPT, user, maxTokens: 1200, temperature: 0.5 });
   const body = raw.replace(/```/g, "").trim();
   if (body.length < 200) {
     throw new Error("La lettre générée est trop courte. Réessayez.");

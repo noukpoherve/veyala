@@ -67,6 +67,14 @@ export function parseCV(data: unknown): CVData {
   return cvSchema.parse(data);
 }
 
+/**
+ * Copy of the CV safe to embed in LLM prompts: the photo (base64 data URL,
+ * enormous in tokens) is stripped — it is re-attached after tailoring.
+ */
+export function cvForLLM(cv: CVData): CVData {
+  return { ...cv, identity: { ...cv.identity, photoUrl: "" } };
+}
+
 /** Text version of the schema, injected into prompts to constrain JSON output. */
 export const CV_JSON_SHAPE = `{
   "identity": { "fullName": string, "headline": string, "photoUrl": string },

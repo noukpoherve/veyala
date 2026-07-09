@@ -37,7 +37,9 @@ export class LLMError extends Error {
   constructor(
     message: string,
     public readonly status?: number,
-    public readonly retryable = false
+    public readonly retryable = false,
+    /** Server-suggested wait before retrying (rate limits). */
+    public readonly retryAfterMs?: number
   ) {
     super(message);
     this.name = "LLMError";
@@ -103,18 +105,32 @@ export async function chat(params: ChatParams, config?: LLMConfig): Promise<stri
     } catch (e) {
       lastError = e instanceof LLMError ? e : new LLMError(String(e), undefined, true);
       if (!lastError.retryable || attempt === MAX_RETRIES - 1) throw lastError;
-      await new Promise((r) => setTimeout(r, 800 * 2 ** attempt));
+      // Honor the provider's suggested wait (TPM windows), capped at 30 s.
+      const delay = Math.min(lastError.retryAfterMs ?? 800 * 2 ** attempt, 30000);
+      await new Promise((r) => setTimeout(r, delay));
     }
   }
   throw lastError ?? new LLMError("Erreur LLM inconnue.");
 }
 
-function errorFromStatus(status: number, body: string, provider: string): LLMError {
+function errorFromStatus(status: number, body: string, provider: string, headers?: Headers): LLMError {
   if (status === 429) {
+    // Groq/OpenAI put the suggested wait in Retry-After or in the message
+    // ("Please try again in 7.66s").
+    const headerSeconds = Number(headers?.get("retry-after"));
+    const messageSeconds = Number(/try again in ([\d.]+)s/i.exec(body)?.[1]);
+    const seconds = headerSeconds || messageSeconds || 0;
     return new LLMError(
       `Quota atteint chez ${provider}. Patientez ou changez de fournisseur dans l'admin.`,
       status,
-      true
+      true,
+      seconds ? Math.ceil(seconds * 1000) + 500 : undefined
+    );
+  }
+  if (status === 413) {
+    return new LLMError(
+      `Requête trop volumineuse pour le modèle chez ${provider} : raccourcissez le texte de l'offre ou allégez le CV de base.`,
+      status
     );
   }
   if (status === 401 || status === 403) {
@@ -157,7 +173,7 @@ async function chatOpenAI(
       ],
     }),
   });
-  if (!res.ok) throw errorFromStatus(res.status, await res.text(), cfg.providerName);
+  if (!res.ok) throw errorFromStatus(res.status, await res.text(), cfg.providerName, res.headers);
   const data = (await res.json()) as {
     choices?: { message?: { content?: string } }[];
   };
@@ -193,7 +209,7 @@ async function chatAnthropic(
       messages: [{ role: "user", content: userContent }],
     }),
   });
-  if (!res.ok) throw errorFromStatus(res.status, await res.text(), cfg.providerName);
+  if (!res.ok) throw errorFromStatus(res.status, await res.text(), cfg.providerName, res.headers);
   const data = (await res.json()) as { content?: { type: string; text?: string }[] };
   return (data.content ?? [])
     .filter((b) => b.type === "text")
