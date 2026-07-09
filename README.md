@@ -1,82 +1,143 @@
-# Générateur de CV adapté à une offre
+# CVGen — CV optimisés par IA, adaptés à chaque offre
 
-Application Next.js : collez l'URL d'une offre d'emploi (ou son texte), choisissez vos
-critères, et téléchargez un CV Word (.docx) **adapté automatiquement à l'offre** — avec
-exactement le design de votre CV (dégradé, logo IMIE, briques de compétences, liens
-cliquables, une seule page).
+Plateforme SaaS de génération de CV sur mesure : l'utilisateur importe son CV (source de
+vérité), colle une offre d'emploi, choisit un template et télécharge un CV **Word (.docx) +
+PDF** optimisé ATS, tenant sur une page, avec liens cliquables.
 
-Le code est **agnostique** : il fonctionne avec n'importe quel fournisseur d'IA
-(Groq, Google Gemini, Mistral, Cerebras, OpenRouter, DeepSeek, OpenAI, Claude…),
-sans rien changer au code — uniquement 3 variables dans `.env.local`.
+**Règle fondamentale : l'IA n'invente jamais rien.** Elle reformule, réordonne et met en
+avant ce qui existe déjà dans le CV importé.
 
-## Installation
+## Stack
+
+- **Next.js 14** (App Router, Server Components) · **TypeScript strict** · **React 18**
+- **Tailwind CSS** + **shadcn/ui** + **lucide-react**
+- **PostgreSQL** via **Prisma** (transactions pour tous les mouvements de crédits)
+- **Auth.js v5** : magic link (email) + Google OAuth (+ connexion dev sans SMTP hors production)
+- **Stripe** : Checkout + webhook signé et idempotent
+- **docx** pour le Word, **Playwright (Chromium headless)** pour le PDF pixel-perfect
+- **Couche LLM agnostique** : tout fournisseur OpenAI-compatible ou Anthropic, configurable
+  par variables d'env et surchargeable par l'admin (clés chiffrées AES-GCM en base)
+- **zod** (validation), **react-hook-form** (formulaires)
+
+## Démarrage rapide
 
 ```bash
+# 1. Dépendances + navigateur PDF
 npm install
-cp .env.local.example .env.local   # puis choisir/dé-commenter un fournisseur
-npm run dev                         # http://localhost:3000
+npx playwright install chromium
+
+# 2. Configuration
+cp .env.local.example .env.local     # remplir au minimum DATABASE_URL, NEXTAUTH_SECRET,
+                                     # ADMIN_EMAILS, ENCRYPTION_KEY, LLM_*
+# Prisma lit .env : y mettre DATABASE_URL également.
+
+# 3. Base de données + données de démo (packs, 3 templates officiels, admins)
+npx prisma migrate dev
+npx prisma db seed
+
+# 4. Lancer
+npm run dev                          # http://localhost:3000
 ```
 
-## Choisir son fournisseur d'IA
+Secrets à générer : `openssl rand -base64 32` pour `NEXTAUTH_SECRET` et `ENCRYPTION_KEY`.
 
-Tout se règle dans `.env.local` avec 3 variables :
+En développement sans SMTP ni Google OAuth, un formulaire **« Connexion dev »** sur `/login`
+permet de se connecter avec un simple email (désactivé en production).
 
-| Variable | Rôle |
+## Fournisseurs LLM gratuits / peu chers
+
+Le fournisseur se change **sans toucher au code** : variables d'env ou Admin → Réglages.
+
+| Fournisseur | `LLM_BASE_URL` | Modèle conseillé (`LLM_MODEL`) | Notes |
+|---|---|---|---|
+| **Groq** | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` | Gratuit, très rapide |
+| **Google Gemini** | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-2.0-flash` | Tier gratuit généreux, vision |
+| **Mistral** | `https://api.mistral.ai/v1` | `mistral-small-latest` | Tier gratuit, vision (pixtral) |
+| **Cerebras** | `https://api.cerebras.ai/v1` | `llama-3.3-70b` | Gratuit, ultra rapide |
+| **OpenRouter** | `https://openrouter.ai/api/v1` | `meta-llama/llama-3.3-70b-instruct:free` | Agrégateur, modèles :free |
+| **DeepSeek** | `https://api.deepseek.com/v1` | `deepseek-chat` | Très peu cher |
+| **OpenAI** | `https://api.openai.com/v1` | `gpt-4o-mini` | Peu cher, vision |
+| **Anthropic** | `https://api.anthropic.com` (+ `LLM_PROTOCOL=anthropic`) | `claude-haiku-4-5` | Protocole dédié, vision |
+
+> L'import de template par image nécessite un modèle **vision** (Gemini, GPT-4o, Claude,
+> Pixtral…). Les générations de CV fonctionnent avec n'importe quel modèle texte.
+
+## Stripe (mode test)
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+# copier le whsec_... affiché dans STRIPE_WEBHOOK_SECRET
+```
+
+Achat test avec la carte `4242 4242 4242 4242`. Le webhook `checkout.session.completed`
+crédite le compte de façon **idempotente** (les retries Stripe ne créditent jamais deux fois).
+
+## Architecture
+
+```
+app/
+  (marketing)/        Landing, pricing, FAQ, pages légales (SSR public)
+  (auth)/login        Connexion (magic link, Google, dev)
+  (app)/              Espace connecté : dashboard, generate, cv/[id], profile,
+                      templates, billing
+  (admin)/admin/      Back-office : stats, users, validation templates, paiements, réglages
+  api/                generate, import-cv, templates, stripe/{checkout,webhook},
+                      files (stockage local), llm/test, auth
+lib/
+  llm.ts              Couche IA agnostique (openai/anthropic, retries, vision)
+  tailor.ts           Adaptation CV ↔ offre (prompt ATS, zéro invention)
+  cv-schema.ts        Schéma zod du CV structuré (source de vérité)
+  generate-cv.ts      Pipeline complet : débit → IA → rendu → stockage (remboursé si échec)
+  credits.ts          Débit/crédit atomique (transactions Serializable, jamais négatif)
+  payments.ts         Fulfillment Stripe idempotent
+  docx/               Moteur .docx piloté par définition de template
+  pdf/                Rendu HTML partagé (aperçu + PDF Playwright)
+  templates/          Définitions zod, templates officiels, fingerprint sha256 anti-doublon
+  storage.ts          Stockage fichiers : local (dev) / Supabase / S3
+prisma/               Schéma + migrations + seed (packs, templates, admins)
+```
+
+### Détection de doublon de template
+
+`fingerprint = sha256(définition canonique)` : JSON trié, couleurs normalisées. Unique en
+base — importer deux fois le même design renvoie le template existant au lieu de le dupliquer.
+Les nouveaux templates passent en statut `PENDING` (validation admin) mais restent utilisables
+immédiatement par leur auteur.
+
+### Crédits
+
+- 2 crédits offerts à l'inscription (`SIGNUP_BONUS`)
+- 1 génération = 1 crédit, débité **avant** l'appel IA, **remboursé** automatiquement si la
+  génération échoue — solde jamais négatif (transaction Serializable)
+- Packs éditables par l'admin (seed : 5 CV — 1,99 €, 20 CV — 5,99 €, 50 CV — 12,99 €)
+
+## Scripts
+
+| Commande | Rôle |
 |---|---|
-| `LLM_PROTOCOL` | `openai` (par défaut, marche partout) ou `anthropic` |
-| `LLM_BASE_URL` | l'adresse de l'API du fournisseur |
-| `LLM_API_KEY`  | votre clé |
-| `LLM_MODEL`    | le nom du modèle |
+| `npm run dev` / `build` / `start` | Next.js |
+| `npm run typecheck` | TypeScript strict |
+| `npm run db:migrate` / `db:studio` / `db:seed` | Prisma |
+| `npx tsx scripts/render-demo.ts [dossier]` | Génère un CV de démo (HTML+PDF+DOCX) avec chaque template officiel |
 
-`.env.local.example` contient déjà les blocs prêts à l'emploi pour chaque fournisseur :
-dé-commentez celui que vous voulez, collez votre clé, c'est tout.
+## Déploiement (Vercel + Neon)
 
-## Fournisseurs recommandés (du gratuit au payant)
+1. Créer une base **Neon** (ou Supabase) → `DATABASE_URL`.
+2. Importer le repo dans **Vercel** ; renseigner toutes les variables de `.env.local.example`
+   (avec `NEXTAUTH_URL=https://votre-domaine`).
+3. PDF serverless : Chromium complet n'est pas disponible sur Vercel — remplacer le launch de
+   `lib/pdf/index.ts` par `puppeteer-core` + `@sparticuz/chromium`, ou déporter la génération
+   PDF sur un petit service Node (Railway/Fly) avec Playwright. En VPS/Docker, Playwright
+   fonctionne tel quel.
+4. `npx prisma migrate deploy && npx prisma db seed` sur la base de production.
+5. Configurer le webhook Stripe de production → `https://votre-domaine/api/stripe/webhook`.
+6. Stockage fichiers : `STORAGE_DRIVER=supabase` + bucket, le driver local étant réservé au dev.
 
-> Les quotas des tiers gratuits changent souvent — vérifiez la page du fournisseur.
+## Sécurité
 
-| Fournisseur | Coût | Carte bancaire | `LLM_BASE_URL` | Modèle conseillé |
-|---|---|---|---|---|
-| **Google Gemini** | Gratuit (~1500 req/jour) | Non | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-2.5-flash` |
-| **Groq** | Gratuit (rapide, ~1000 req/jour) | Non | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` |
-| **Cerebras** | Gratuit (~1M tokens/jour) | Non | `https://api.cerebras.ai/v1` | `llama-3.3-70b` |
-| **Mistral** | Gratuit (quota généreux) | Oui (tél.) | `https://api.mistral.ai/v1` | `mistral-small-latest` |
-| **OpenRouter** | Gratuit (modèles `:free`) + payant | Non | `https://openrouter.ai/api/v1` | `meta-llama/llama-3.3-70b-instruct:free` |
-| **DeepSeek** | Très bon marché (~0,14 $/M tokens) | Oui | `https://api.deepseek.com` | `deepseek-chat` |
-| **OpenAI** | Payant | Oui | `https://api.openai.com/v1` | `gpt-4o-mini` |
-| **Anthropic Claude** | Payant (`LLM_PROTOCOL=anthropic`) | Oui | `https://api.anthropic.com` | `claude-sonnet-4-6` |
-
-**Pour démarrer sans rien payer** : Google Gemini ou Groq (aucune carte bancaire, une
-minute d'inscription). **Le meilleur rapport qualité/prix une fois en production** :
-DeepSeek (payant mais quelques centimes par mois pour cet usage).
-
-Où récupérer une clé :
-- Gemini → https://aistudio.google.com
-- Groq → https://console.groq.com
-- Cerebras → https://cloud.cerebras.ai
-- Mistral → https://console.mistral.ai
-- OpenRouter → https://openrouter.ai
-- DeepSeek → https://platform.deepseek.com
-
-## Structure du projet
-
-| Fichier | Rôle |
-|---|---|
-| `lib/cv-data.js` | vos données (source de vérité : coordonnées, expériences, compétences) |
-| `lib/llm.js` | **couche IA agnostique** — parle à n'importe quel fournisseur |
-| `lib/tailor.js` | extraction de l'offre + règles d'adaptation ATS |
-| `lib/docx-template.js` | le design Word exact (dégradé, logo, briques, liens) |
-| `app/page.js` | l'interface |
-| `assets/` | dégradé, logo IMIE, photo (remplacez `photo.png` par la vôtre) |
-
-## Notes
-
-- **Rien n'est inventé** : le prompt interdit d'ajouter des technos, chiffres ou
-  responsabilités ; l'IA se contente de reformuler et réordonner vos vraies infos.
-- **Sites qui bloquent les robots** (Indeed, LinkedIn…) : collez le texte de l'offre
-  dans le champ prévu, le résultat est identique.
-- **Format de sortie** : n'importe quel modèle correct sait renvoyer du JSON. Si un petit
-  modèle échoue au parsing, le code tente de récupérer le JSON automatiquement ; sinon,
-  changez de modèle (Gemini/Groq 70B/DeepSeek sont fiables).
-- **Déploiement** : fonctionne sur Vercel tel quel. Ajoutez les variables `LLM_*` dans
-  les variables d'environnement du projet.
+- Validation **zod** de toutes les entrées API ; uploads limités en taille et en types.
+- Rate-limiting sur `/api/generate`, `/api/import-cv` et `/api/templates`.
+- Webhooks Stripe : signature vérifiée + idempotence transactionnelle.
+- Clés LLM stockées chiffrées (AES-256-GCM, `ENCRYPTION_KEY`) ; aucun secret côté client.
+- RGPD : politique de confidentialité, suppression de compte + données en un clic
+  (Mon CV de base → Zone dangereuse).

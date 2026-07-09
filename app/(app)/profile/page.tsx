@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import { FileUp } from "lucide-react";
+import { FileUp, ShieldAlert } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
+import { deleteAccount } from "./actions";
 import { CvUpload } from "@/components/profile/cv-upload";
 import { ProfileForm } from "@/components/profile/profile-form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Mon CV de base" };
@@ -53,6 +57,39 @@ export default async function ProfilePage() {
             formulaire après un premier import.
           </p>
         )}
+      </section>
+
+      <section aria-labelledby="danger-title">
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle id="danger-title" className="flex items-center gap-2 text-base text-destructive">
+              <ShieldAlert className="size-4" aria-hidden />
+              Zone dangereuse
+            </CardTitle>
+            <CardDescription>
+              Supprime définitivement votre compte, votre CV de base, vos CV générés et vos
+              historiques de crédits et de paiements (RGPD). Cette action est irréversible.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={deleteAccount} className="flex flex-wrap items-end gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm-delete">Tapez SUPPRIMER pour confirmer</Label>
+                <Input
+                  id="confirm-delete"
+                  name="confirm"
+                  required
+                  pattern="SUPPRIMER"
+                  placeholder="SUPPRIMER"
+                  className="w-48"
+                />
+              </div>
+              <Button type="submit" variant="destructive">
+                Supprimer mon compte
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </section>
     </article>
   );

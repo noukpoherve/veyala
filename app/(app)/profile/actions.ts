@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { auth, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
 
@@ -25,4 +26,18 @@ export async function saveProfile(data: unknown): Promise<SaveProfileResult> {
 
   revalidatePath("/profile");
   return { ok: true };
+}
+
+/**
+ * GDPR account deletion: removes the user and, by cascade, sessions, credits,
+ * transactions, payments, base profile and generated CVs. Community templates
+ * are kept but unlinked (ownerId set to null).
+ */
+export async function deleteAccount(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+  if (formData.get("confirm") !== "SUPPRIMER") return;
+
+  await db.user.delete({ where: { id: session.user.id } });
+  await signOut({ redirectTo: "/" });
 }
