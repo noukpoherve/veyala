@@ -19,9 +19,16 @@ export interface LLMConfig {
   providerName: string;
 }
 
+export interface ChatImage {
+  /** image/png, image/jpeg or image/webp. */
+  mimeType: string;
+  base64: string;
+}
+
 export interface ChatParams {
   system: string;
   user: string;
+  images?: ChatImage[];
   maxTokens?: number;
   temperature?: number;
 }
@@ -121,9 +128,19 @@ function errorFromStatus(status: number, body: string, provider: string): LLMErr
 }
 
 async function chatOpenAI(
-  { system, user, maxTokens = 4000, temperature = 0.4 }: ChatParams,
+  { system, user, images, maxTokens = 4000, temperature = 0.4 }: ChatParams,
   cfg: LLMConfig
 ): Promise<string> {
+  const userContent = images?.length
+    ? [
+        { type: "text", text: user },
+        ...images.map((img) => ({
+          type: "image_url",
+          image_url: { url: `data:${img.mimeType};base64,${img.base64}` },
+        })),
+      ]
+    : user;
+
   const res = await fetch(`${cfg.baseUrl.replace(/\/$/, "")}/chat/completions`, {
     method: "POST",
     headers: {
@@ -136,7 +153,7 @@ async function chatOpenAI(
       temperature,
       messages: [
         { role: "system", content: system },
-        { role: "user", content: user },
+        { role: "user", content: userContent },
       ],
     }),
   });
@@ -148,9 +165,19 @@ async function chatOpenAI(
 }
 
 async function chatAnthropic(
-  { system, user, maxTokens = 4000, temperature = 0.4 }: ChatParams,
+  { system, user, images, maxTokens = 4000, temperature = 0.4 }: ChatParams,
   cfg: LLMConfig
 ): Promise<string> {
+  const userContent = images?.length
+    ? [
+        ...images.map((img) => ({
+          type: "image",
+          source: { type: "base64", media_type: img.mimeType, data: img.base64 },
+        })),
+        { type: "text", text: user },
+      ]
+    : user;
+
   const res = await fetch(`${cfg.baseUrl.replace(/\/$/, "")}/v1/messages`, {
     method: "POST",
     headers: {
@@ -163,7 +190,7 @@ async function chatAnthropic(
       max_tokens: maxTokens,
       temperature,
       system,
-      messages: [{ role: "user", content: user }],
+      messages: [{ role: "user", content: userContent }],
     }),
   });
   if (!res.ok) throw errorFromStatus(res.status, await res.text(), cfg.providerName);
