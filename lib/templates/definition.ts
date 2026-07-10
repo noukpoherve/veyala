@@ -42,6 +42,12 @@ export const templateDefinitionSchema = z.object({
   photo: z.boolean().default(false),
   /** Skill rendering: "bricks" (chips), "list" (bullets) or "inline" (dot-separated). */
   skillsStyle: z.enum(["bricks", "list", "inline"]).default("inline"),
+  /** Section titles: filled color band or plain text with an underline rule. */
+  headerStyle: z.enum(["band", "underline"]).default("band"),
+  /** Where the candidate's name block lives (sidebar-left layout only). */
+  namePlacement: z.enum(["main", "sidebar"]).default("main"),
+  /** Dates next to job titles: inline text or right-aligned pill. */
+  datesStyle: z.enum(["inline", "pill"]).default("inline"),
   /** Sections shown in the sidebar (sidebar-left layout only), in order. */
   sidebarSections: z.array(sectionIdSchema).default([]),
   /** Sections of the main column, in order. */

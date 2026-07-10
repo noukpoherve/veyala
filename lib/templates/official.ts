@@ -27,9 +27,39 @@ const signature: OfficialTemplate = {
     fonts: { heading: "Century Gothic", body: "Century Gothic" },
     photo: true,
     skillsStyle: "bricks",
+    headerStyle: "band",
+    namePlacement: "main",
+    datesStyle: "inline",
     sidebarSections: ["contact", "skills", "languages"],
     mainSections: ["summary", "experience", "education"],
     sidebarImageAsset: "assets/sidebar.png",
+  },
+};
+
+/** Light sidebar, blue accents, underlined titles, date pills — "Cadre" style. */
+const cadre: OfficialTemplate = {
+  name: "Cadre — bleu",
+  slug: "cadre-bleu",
+  engine: "HTML",
+  definition: {
+    layout: "sidebar-left",
+    colors: {
+      sidebar: ["#f4f6f9"],
+      sidebarText: "#1f2937",
+      band: "#3b5bdb",
+      bandText: "#ffffff",
+      heading: "#111827",
+      body: "#4b5563",
+      link: "#3b5bdb",
+    },
+    fonts: { heading: "Helvetica", body: "Helvetica" },
+    photo: false,
+    skillsStyle: "bricks",
+    headerStyle: "underline",
+    namePlacement: "sidebar",
+    datesStyle: "pill",
+    sidebarSections: ["contact", "skills", "languages", "interests"],
+    mainSections: ["summary", "experience", "education"],
   },
 };
 
@@ -52,6 +82,9 @@ const clarte: OfficialTemplate = {
     fonts: { heading: "Georgia", body: "Helvetica" },
     photo: false,
     skillsStyle: "inline",
+    headerStyle: "band",
+    namePlacement: "main",
+    datesStyle: "inline",
     sidebarSections: [],
     mainSections: ["contact", "summary", "experience", "skills", "education", "languages", "interests"],
   },
@@ -76,9 +109,12 @@ const horizon: OfficialTemplate = {
     fonts: { heading: "Trebuchet MS", body: "Trebuchet MS" },
     photo: true,
     skillsStyle: "list",
+    headerStyle: "band",
+    namePlacement: "main",
+    datesStyle: "inline",
     sidebarSections: ["contact", "skills", "languages", "interests"],
     mainSections: ["summary", "experience", "education"],
   },
 };
 
-export const OFFICIAL_TEMPLATES: OfficialTemplate[] = [signature, clarte, horizon];
+export const OFFICIAL_TEMPLATES: OfficialTemplate[] = [signature, cadre, clarte, horizon];

@@ -18,6 +18,16 @@ function gradientCss(stops: string[]): string {
   return `linear-gradient(180deg, ${stops.map((c, i) => `${c} ${Math.round(i * step)}%`).join(", ")})`;
 }
 
+/** Relative luminance of a #rrggbb color (0 = black, 1 = white). */
+function luminance(hex: string): number {
+  const chan = (i: number) => parseInt(hex.slice(i, i + 2), 16) / 255;
+  return 0.2126 * chan(1) + 0.7152 * chan(3) + 0.0722 * chan(5);
+}
+
+function isLightSidebar(def: TemplateDefinition): boolean {
+  return luminance(def.colors.sidebar[0]!) > 0.6;
+}
+
 function contactSection(cv: CVData, inSidebar: boolean): string {
   const { email, phone, location, links } = cv.contact;
   const items = [
@@ -61,31 +71,48 @@ function summarySection(cv: CVData): string {
   return `<section class="summary"><h2>Profil</h2><p>${esc(cv.summary)}</p></section>`;
 }
 
-function experienceSection(cv: CVData): string {
+function jobHead(title: string, dates: string, def: TemplateDefinition): string {
+  if (def.datesStyle === "pill") {
+    return `<div class="job-head"><h3>${title}</h3>${dates ? `<p class="meta"><strong>${esc(dates)}</strong></p>` : ""}</div>`;
+  }
+  return `<h3>${title}</h3>`;
+}
+
+function experienceSection(cv: CVData, def: TemplateDefinition): string {
   if (cv.experiences.length === 0) return "";
   const items = cv.experiences
-    .map(
-      (e) => `<article class="job">
-      <h3>${esc(e.title)}${e.company ? ` — ${esc(e.company)}` : ""}</h3>
-      <p class="meta"><strong>${esc(e.dates)}</strong>${e.place ? `<em> · ${esc(e.place)}</em>` : ""}</p>
+    .map((e) => {
+      const companyLine = [e.company, e.place].filter(Boolean).map(esc).join(" — ");
+      const inlineMeta =
+        def.datesStyle === "pill"
+          ? ""
+          : `<p class="meta"><strong>${esc(e.dates)}</strong>${e.place && !companyLine ? `<em> · ${esc(e.place)}</em>` : ""}</p>`;
+      return `<article class="job">
+      ${jobHead(esc(e.title), e.dates, def)}
+      ${companyLine ? `<p class="company">${companyLine}</p>` : ""}
+      ${inlineMeta}
       ${e.bullets.length ? `<ul>${e.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}
       ${e.stack.length ? `<p class="stack"><strong>Stack :</strong> <em>${e.stack.map(esc).join(", ")}</em></p>` : ""}
-    </article>`
-    )
+    </article>`;
+    })
     .join("");
   return `<section class="experience"><h2>Expériences professionnelles</h2>${items}</section>`;
 }
 
-function educationSection(cv: CVData): string {
+function educationSection(cv: CVData, def: TemplateDefinition): string {
   if (cv.education.length === 0) return "";
   const items = cv.education
-    .map(
-      (e) => `<article class="job">
-      <h3>${esc(e.degree)}${e.school ? ` — ${esc(e.school)}` : ""}</h3>
-      <p class="meta"><strong>${esc(e.dates)}</strong>${e.place ? `<em> · ${esc(e.place)}</em>` : ""}</p>
+    .map((e) => {
+      const schoolLine = [e.school, e.place].filter(Boolean).map(esc).join(" — ");
+      const inlineMeta =
+        def.datesStyle === "pill" ? "" : `<p class="meta"><strong>${esc(e.dates)}</strong></p>`;
+      return `<article class="job">
+      ${jobHead(esc(e.degree), e.dates, def)}
+      ${schoolLine ? `<p class="company">${schoolLine}</p>` : ""}
+      ${inlineMeta}
       ${e.details ? `<p>${esc(e.details)}</p>` : ""}
-    </article>`
-    )
+    </article>`;
+    })
     .join("");
   return `<section class="education"><h2>Formation</h2>${items}</section>`;
 }
@@ -111,9 +138,9 @@ function renderSection(id: SectionId, cv: CVData, def: TemplateDefinition, inSid
     case "summary":
       return summarySection(cv);
     case "experience":
-      return experienceSection(cv);
+      return experienceSection(cv, def);
     case "education":
-      return educationSection(cv);
+      return educationSection(cv, def);
     case "skills":
       return skillsSection(cv, def);
     case "languages":
@@ -123,6 +150,14 @@ function renderSection(id: SectionId, cv: CVData, def: TemplateDefinition, inSid
   }
 }
 
+/** Name heading; in sidebar placement the last word gets the accent color. */
+function nameHtml(cv: CVData, def: TemplateDefinition, accentLastWord: boolean): string {
+  const words = cv.identity.fullName.trim().split(/\s+/);
+  if (!accentLastWord || words.length < 2) return `<h1>${esc(cv.identity.fullName)}</h1>`;
+  const last = words.pop()!;
+  return `<h1>${esc(words.join(" "))}<br /><span style="color:${def.colors.band}">${esc(last)}</span></h1>`;
+}
+
 function headerHtml(cv: CVData, def: TemplateDefinition): string {
   const photo =
     def.photo && cv.identity.photoUrl
@@ -130,7 +165,7 @@ function headerHtml(cv: CVData, def: TemplateDefinition): string {
       : "";
   return `<header class="identity">
     <div>
-      <h1>${esc(cv.identity.fullName)}</h1>
+      ${nameHtml(cv, def, false)}
       ${cv.identity.headline ? `<p class="headline">${esc(cv.identity.headline)}</p>` : ""}
     </div>
     ${photo}
@@ -139,6 +174,20 @@ function headerHtml(cv: CVData, def: TemplateDefinition): string {
 
 function baseCss(def: TemplateDefinition): string {
   const c = def.colors;
+  const headerCss =
+    def.headerStyle === "underline"
+      ? `color: ${c.heading}; background: none; padding: 0 0 1mm;
+         border-bottom: 2px solid ${c.band}; margin-bottom: 2.6mm;`
+      : `background: ${c.band}; color: ${c.bandText}; padding: 1.4mm 2.5mm; margin-bottom: 2.4mm;`;
+  const datesCss =
+    def.datesStyle === "pill"
+      ? `.job .job-head { display: flex; justify-content: space-between; align-items: baseline; gap: 3mm; }
+         .job .meta strong {
+           border: 1px solid ${c.band}; color: ${c.heading}; border-radius: 1.5mm;
+           padding: .4mm 2mm; font-size: 7.8pt; white-space: nowrap;
+         }`
+      : `.job .job-head { display: block; }`;
+
   return `
   * { margin: 0; padding: 0; box-sizing: border-box; }
   @page { size: A4; margin: 0; }
@@ -150,27 +199,25 @@ function baseCss(def: TemplateDefinition): string {
   }
   a { color: ${c.link}; text-decoration: underline; }
   h1, h2, h3 { font-family: "${def.fonts.heading}", "Segoe UI", Arial, sans-serif; }
-  h1 { font-size: 19pt; letter-spacing: .5px; color: ${c.heading}; }
+  h1 { font-size: 19pt; letter-spacing: .5px; color: ${c.heading}; line-height: 1.15; }
   .headline { font-size: 10.5pt; font-style: italic; margin-top: 2mm; color: ${c.heading}; }
   section { margin-bottom: 4mm; }
   section > h2 {
-    background: ${c.band}; color: ${c.bandText};
     font-size: 10pt; text-transform: uppercase; letter-spacing: 1.2px;
-    padding: 1.4mm 2.5mm; margin-bottom: 2.4mm;
+    ${headerCss}
   }
   .job { margin-bottom: 3mm; page-break-inside: avoid; }
   .job h3 { font-size: 10pt; color: ${c.heading}; }
+  .job .company { color: ${c.band}; font-weight: 600; font-size: 9pt; }
   .job .meta { font-size: 8.6pt; margin: .6mm 0 1.2mm; }
+  ${datesCss}
   .job ul { padding-left: 4.5mm; }
   .job li { margin-bottom: .8mm; }
   .job .stack { font-size: 8.4pt; margin-top: 1mm; color: ${c.heading}; }
   .job .stack em { color: ${c.body}; }
   .photo { width: 30mm; height: 34mm; object-fit: cover; border: 1.5px solid #ffffffcc; }
   .bricks { list-style: none; display: flex; flex-wrap: wrap; gap: 1.4mm; }
-  .bricks li {
-    background: #ffffff22; border: 1px solid #ffffff55;
-    padding: .8mm 2mm; border-radius: 1.2mm; font-size: 8pt;
-  }
+  .bricks li { padding: .8mm 2mm; border-radius: 1.2mm; font-size: 8pt; }
   .skill-list { padding-left: 4.5mm; }
   .contact ul, .languages ul { list-style: none; }
   .contact li, .languages li { margin-bottom: 1.2mm; word-break: break-word; }
@@ -179,12 +226,35 @@ function baseCss(def: TemplateDefinition): string {
 
 function sidebarLayout(cv: CVData, def: TemplateDefinition): string {
   const c = def.colors;
+  const light = isLightSidebar(def);
   const sidebar = def.sidebarSections.map((s) => renderSection(s, cv, def, true)).join("");
   const main = def.mainSections.map((s) => renderSection(s, cv, def, false)).join("");
   const photo =
     def.photo && cv.identity.photoUrl
       ? `<img class="photo" src="${esc(cv.identity.photoUrl)}" alt="Photo de ${esc(cv.identity.fullName)}" />`
       : "";
+  const nameInSidebar = def.namePlacement === "sidebar";
+
+  const sidebarName = nameInSidebar
+    ? `<header class="identity">
+        ${nameHtml(cv, def, true)}
+        ${cv.identity.headline ? `<p class="headline">${esc(cv.identity.headline)}</p>` : ""}
+      </header>`
+    : "";
+  const mainHeader = nameInSidebar
+    ? ""
+    : `<header class="identity">
+        <div>
+          ${nameHtml(cv, def, false)}
+          ${cv.identity.headline ? `<p class="headline">${esc(cv.identity.headline)}</p>` : ""}
+        </div>
+      </header>`;
+
+  // Chip and rule colors adapt to light vs dark sidebars.
+  const chipCss = light
+    ? `background: #ffffff; border: 1px solid #d5d9e2; color: ${c.body};`
+    : `background: #ffffff22; border: 1px solid #ffffff55; color: ${c.sidebarText};`;
+  const ruleColor = light ? c.band : "#ffffff66";
 
   return `<style>
     ${baseCss(def)}
@@ -193,28 +263,31 @@ function sidebarLayout(cv: CVData, def: TemplateDefinition): string {
       width: 62mm; flex: none; padding: 8mm 5.5mm;
       background: ${gradientCss(c.sidebar)}; color: ${c.sidebarText};
     }
-    .sidebar a { color: ${c.sidebarText}; }
+    .sidebar a { color: ${light ? c.link : c.sidebarText}; }
+    .sidebar .identity { display: block; margin-bottom: 6mm; }
+    .sidebar .identity h1 { font-size: 15pt; }
+    .sidebar .identity .headline { font-size: 8.8pt; margin-top: 1.5mm; font-style: normal;
+      color: ${light ? c.body : c.sidebarText}; }
     .sidebar section > h2 {
-      background: none; padding: 0; margin: 4.5mm 0 2mm;
-      border-bottom: 1px solid #ffffff66; padding-bottom: 1mm;
+      background: none; padding: 0 0 1mm; margin: 4.5mm 0 2mm;
+      border-bottom: 1px solid ${ruleColor};
+      color: ${light ? c.heading : c.sidebarText};
     }
-    .sidebar h3 { font-size: 8.8pt; margin: 2.2mm 0 1mm; }
+    .sidebar h3 { font-size: 8.8pt; margin: 2.2mm 0 1mm; color: ${light ? c.heading : c.sidebarText}; }
     .sidebar .photo { display: block; margin: 0 auto 4mm; }
     .sidebar .inline-skills { font-size: 8.4pt; }
+    .sidebar .bricks li { ${chipCss} }
     .main { flex: 1; padding: 8mm 7mm 8mm 7mm; background: #ffffff; }
+    .main .bricks li { background: #ffffff; border: 1px solid #d5d9e2; color: ${c.body}; }
     .identity { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5mm; }
   </style>
   <div class="sidebar">
+    ${sidebarName}
     ${photo}
     ${sidebar}
   </div>
   <main class="main">
-    <header class="identity">
-      <div>
-        <h1>${esc(cv.identity.fullName)}</h1>
-        ${cv.identity.headline ? `<p class="headline">${esc(cv.identity.headline)}</p>` : ""}
-      </div>
-    </header>
+    ${mainHeader}
     ${main}
   </main>`;
 }
@@ -227,6 +300,7 @@ function singleColumnLayout(cv: CVData, def: TemplateDefinition): string {
     .identity { display: flex; justify-content: space-between; align-items: center;
       border-bottom: 2px solid ${def.colors.heading}; padding-bottom: 3mm; margin-bottom: 5mm; }
     .contact ul { display: flex; flex-wrap: wrap; gap: 1mm 5mm; }
+    .bricks li { background: #ffffff; border: 1px solid #d5d9e2; color: ${def.colors.body}; }
   </style>
   ${headerHtml(cv, def)}
   <main>${main}</main>`;

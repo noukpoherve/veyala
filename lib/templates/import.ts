@@ -21,6 +21,9 @@ Règles :
 - "fonts.heading" / "fonts.body" : familles de police les plus proches parmi : "Century Gothic", "Georgia", "Helvetica", "Trebuchet MS", "Arial", "Times New Roman".
 - "photo" : true si le modèle affiche une photo.
 - "skillsStyle" : "bricks" si les compétences sont des pastilles/briques, "list" si liste à puces, "inline" sinon.
+- "headerStyle" : "band" si les titres de sections sont sur un fond de couleur pleine, "underline" s'ils sont en texte souligné d'un trait de couleur.
+- "namePlacement" : "sidebar" si le nom du candidat est affiché dans la colonne latérale, "main" sinon.
+- "datesStyle" : "pill" si les dates sont dans des pastilles/badges alignés à droite des intitulés, "inline" sinon.
 - "sidebarSections" / "mainSections" : sections détectées dans l'ordre. Utilise EXACTEMENT ces identifiants anglais (jamais les titres affichés sur l'image) : "contact", "summary", "experience", "education", "skills", "languages", "interests". "mainSections" contient au moins "experience".
 - Réponds UNIQUEMENT avec l'objet JSON, sans backticks ni texte autour.`;
 
@@ -86,6 +89,13 @@ function coerceDefinition(raw: unknown): TemplateDefinition {
     skillsStyle: ["bricks", "list", "inline"].includes(String(value.skillsStyle))
       ? value.skillsStyle
       : undefined,
+    headerStyle: ["band", "underline"].includes(String(value.headerStyle))
+      ? value.headerStyle
+      : undefined,
+    namePlacement: ["main", "sidebar"].includes(String(value.namePlacement))
+      ? value.namePlacement
+      : undefined,
+    datesStyle: ["inline", "pill"].includes(String(value.datesStyle)) ? value.datesStyle : undefined,
     sidebarSections: normalizeSections(value.sidebarSections),
     mainSections,
   });

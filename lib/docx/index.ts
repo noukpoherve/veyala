@@ -54,6 +54,24 @@ interface Ctx {
 // ---------- shared paragraph helpers ----------
 
 function bandTitle(text: string, ctx: Ctx): Paragraph {
+  if (ctx.def.headerStyle === "underline") {
+    return new Paragraph({
+      spacing: { before: 110, after: 80 },
+      border: {
+        bottom: { style: BorderStyle.SINGLE, size: 12, color: hex(ctx.def.colors.band), space: 2 },
+      },
+      children: [
+        new TextRun({
+          text: text.toUpperCase(),
+          bold: true,
+          color: hex(ctx.def.colors.heading),
+          size: 20,
+          font: ctx.font,
+          characterSpacing: 20,
+        }),
+      ],
+    });
+  }
   return new Paragraph({
     spacing: { before: 110, after: 80 },
     shading: { type: ShadingType.CLEAR, fill: hex(ctx.def.colors.band), color: "auto" },
@@ -337,9 +355,45 @@ function nameHeader(ctx: Ctx): Paragraph[] {
   return out;
 }
 
+/** Name block for a sidebar placement, sized for the narrow column. */
+function sidebarNameHeader(ctx: Ctx): Paragraph[] {
+  const out = [
+    new Paragraph({
+      spacing: { before: 40, after: 20 },
+      children: [
+        new TextRun({
+          text: ctx.cv.identity.fullName,
+          bold: true,
+          color: hex(ctx.def.colors.heading),
+          size: 30,
+          font: ctx.font,
+        }),
+      ],
+    }),
+  ];
+  if (ctx.cv.identity.headline) {
+    out.push(
+      new Paragraph({
+        spacing: { after: 60 },
+        children: [
+          new TextRun({
+            text: ctx.cv.identity.headline,
+            color: hex(ctx.def.colors.body),
+            size: 16,
+            font: ctx.font,
+          }),
+        ],
+      })
+    );
+  }
+  return out;
+}
+
 async function sidebarDocument(ctx: Ctx): Promise<Document> {
   const { cv, def } = ctx;
   const left: Paragraph[] = [];
+
+  if (def.namePlacement === "sidebar") left.push(...sidebarNameHeader(ctx));
 
   if (def.photo && cv.identity.photoUrl) {
     const photo = await loadPhoto(cv.identity.photoUrl);
@@ -357,7 +411,7 @@ async function sidebarDocument(ctx: Ctx): Promise<Document> {
   }
   for (const id of def.sidebarSections) left.push(...sectionParagraphs(id, ctx, true));
 
-  const right: Paragraph[] = [...nameHeader(ctx)];
+  const right: Paragraph[] = def.namePlacement === "sidebar" ? [] : [...nameHeader(ctx)];
   for (const id of def.mainSections) right.push(...sectionParagraphs(id, ctx, false));
 
   // Full-height gradient behind the sidebar column, drawn from the header
