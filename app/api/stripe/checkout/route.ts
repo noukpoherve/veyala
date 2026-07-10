@@ -40,7 +40,7 @@ export async function POST(req: Request) {
             currency: "eur",
             unit_amount: pack.priceCents,
             product_data: {
-              name: `CVGen — Pack ${pack.label}`,
+              name: `Veyala — Pack ${pack.label}`,
               description: `${pack.credits} générations de CV`,
             },
           },

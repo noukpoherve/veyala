@@ -4,50 +4,53 @@
 
 @layer base {
   :root {
-    --background: 220 33% 98%;
-    --foreground: 213 44% 22%;
+    /* Veyala brand — derived from the landing page (blue-600 primary, slate neutrals) */
+    --background: 210 40% 99%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 213 44% 22%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 213 44% 22%;
-    /* Brand indigo (from the signature CV gradient rail) */
-    --primary: 231 32% 42%;
+    --popover-foreground: 222 47% 11%;
+    /* Blue 600 (#2563EB) */
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 226 28% 94%;
-    --secondary-foreground: 213 44% 24%;
-    --muted: 226 28% 94%;
-    --muted-foreground: 215 12% 42%;
-    /* Gradient purple accent */
-    --accent: 270 34% 94%;
-    --accent-foreground: 270 34% 34%;
-    --destructive: 351 44% 44%;
+    /* Blue 50 (#EFF6FF) */
+    --secondary: 214 100% 97%;
+    --secondary-foreground: 224 64% 33%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    /* Blue 50 tint with blue-700 text for active/hover states */
+    --accent: 214 100% 97%;
+    --accent-foreground: 224 76% 48%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 225 24% 90%;
-    --input: 225 24% 90%;
-    --ring: 231 32% 42%;
-    --radius: 0.625rem;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222 30% 9%;
-    --foreground: 220 25% 94%;
-    --card: 222 28% 12%;
-    --card-foreground: 220 25% 94%;
-    --popover: 222 28% 12%;
-    --popover-foreground: 220 25% 94%;
-    --primary: 219 55% 62%;
-    --primary-foreground: 222 30% 9%;
-    --secondary: 222 20% 17%;
-    --secondary-foreground: 220 25% 94%;
-    --muted: 222 20% 17%;
-    --muted-foreground: 220 12% 60%;
-    --accent: 270 26% 24%;
-    --accent-foreground: 270 40% 88%;
-    --destructive: 351 55% 55%;
+    /* Veyala dark — navy from the landing CTA section (#0B1527) */
+    --background: 218 56% 10%;
+    --foreground: 214 32% 91%;
+    --card: 218 45% 13%;
+    --card-foreground: 214 32% 91%;
+    --popover: 218 45% 13%;
+    --popover-foreground: 214 32% 91%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 218 40% 18%;
+    --secondary-foreground: 214 32% 91%;
+    --muted: 218 40% 18%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 221 60% 22%;
+    --accent-foreground: 213 94% 78%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 222 16% 22%;
-    --input: 222 16% 22%;
-    --ring: 219 55% 62%;
+    --border: 218 34% 20%;
+    --input: 218 34% 20%;
+    --ring: 217 91% 60%;
   }
 }
 
@@ -72,18 +75,202 @@
 }
 
 @layer utilities {
-  /* Signature gradient blue → indigo → purple → burgundy → red, from the CV. */
+  /* Veyala signature gradients — blue brand ramp from the landing page. */
   .bg-signature {
-    background: linear-gradient(
-      180deg,
-      #5491c7 0%,
-      #49558f 16%,
-      #583974 38%,
-      #883454 62%,
-      #a03e50 100%
-    );
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 55%, #1d4ed8 100%);
   }
   .bg-signature-x {
-    background: linear-gradient(90deg, #49558f, #583974 55%, #883454);
+    background: linear-gradient(90deg, #1d4ed8, #2563eb 45%, #3b82f6);
+  }
+
+  /* ── Veyala landing page ─────────────────────────────── */
+  /* Slow aurora-style drifting gradient (hero background). */
+  .bg-aurora {
+    background: linear-gradient(
+      -45deg,
+      #eff6ff,
+      #e8f3ff,
+      #f0f8ff,
+      #eaf4ff,
+      #e5f0ff,
+      #eff6ff,
+      #ecf5ff,
+      #eff6ff
+    );
+    background-size: 600% 600%;
+    animation: aurora 18s ease infinite;
+  }
+  /* Dark variant for the final CTA section. */
+  .bg-aurora-dark {
+    background: linear-gradient(-45deg, #04111f, #071a35, #0b2347, #04111f, #061628);
+    background-size: 400% 400%;
+    animation: aurora 14s ease infinite;
+  }
+  /* Animated gradient text sweep (hero + final CTA accent words). */
+  .shimmer-text {
+    background: linear-gradient(
+      90deg,
+      #1d4ed8 0%,
+      #2563eb 28%,
+      #60a5fa 50%,
+      #2563eb 72%,
+      #1d4ed8 100%
+    );
+    background-size: 200%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 5s linear infinite;
+  }
+  .animate-float {
+    animation: float-y 6s ease-in-out infinite;
+  }
+  .animate-float-b {
+    animation: float-b 5s ease-in-out infinite;
+  }
+  .animate-spin-slow {
+    animation: spin-slow 24s linear infinite;
+  }
+  /* Soft pulsing radial orb (decorative backgrounds). */
+  .orb {
+    position: absolute;
+    border-radius: 9999px;
+    pointer-events: none;
+    animation: pulse-soft 8s ease-in-out infinite;
+  }
+  /* ATS progress bar fill-in (hero mockup). */
+  .ats-bar {
+    animation: progress-fill 1.8s ease-out both;
+  }
+  /* Typing indicator dots ("IA en cours" card). */
+  .typing-dot {
+    animation: typing-dot 1.2s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  /* Springy hover easing (buttons, cards, toggles). */
+  .transition-bounce {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer components {
+  /* Scroll-triggered reveal: the Reveal component adds .reveal-visible on intersect. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms);
+  }
+  .reveal-visible {
+    opacity: 1;
+    transform: none;
+  }
+  .tab-panel {
+    animation: tab-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@keyframes aurora {
+  0%,
+  100% {
+    background-position: 0% 60%;
+  }
+  50% {
+    background-position: 100% 40%;
+  }
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+@keyframes float-b {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(2deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes spin-slow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes progress-fill {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 94%;
+  }
+}
+
+@keyframes typing-dot {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes tab-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

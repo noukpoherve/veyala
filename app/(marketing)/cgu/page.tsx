@@ -9,7 +9,7 @@ export default function CguPage() {
       <section>
         <h2>1. Objet</h2>
         <p>
-          Les présentes CGU encadrent l&apos;utilisation de CVGen, service de génération de
+          Les présentes CGU encadrent l&apos;utilisation de Veyala, service de génération de
           CV assistée par intelligence artificielle. La création d&apos;un compte vaut
           acceptation des présentes conditions.
         </p>
@@ -51,7 +51,7 @@ export default function CguPage() {
         <h2>6. Résiliation</h2>
         <p>
           Vous pouvez supprimer votre compte et vos données à tout moment depuis la page
-          Confidentialité ou en nous contactant. CVGen peut suspendre un compte en cas de
+          Confidentialité ou en nous contactant. Veyala peut suspendre un compte en cas de
           violation des présentes CGU.
         </p>
       </section>
