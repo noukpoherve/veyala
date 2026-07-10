@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CheckCircle2, Coins, XCircle } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getActivePacks } from "@/lib/cached";
 import { getBalance } from "@/lib/credits";
 import { BuyPackButton } from "@/components/billing/buy-pack-button";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +40,7 @@ export default async function BillingPage({
 
   const [balance, packs, payments, transactions] = await Promise.all([
     getBalance(userId),
-    db.pack.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+    getActivePacks(),
     db.payment.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 }),
     db.creditTransaction.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 30 }),
   ]);
