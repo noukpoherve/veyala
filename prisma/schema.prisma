@@ -162,6 +162,8 @@ model Template {
   status          TemplateStatus @default(DRAFT)
   engine          TemplateEngine @default(HTML)
   fingerprint     String         @unique
+  /** sha256 of the uploaded reference image: exact re-uploads dedupe without the LLM. */
+  sourceImageHash String?        @unique
   previewImageUrl String?
   definition      Json
   isPublic        Boolean        @default(false)

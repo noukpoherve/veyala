@@ -94,7 +94,14 @@ const MAX_RETRIES = 3;
 
 /** Sends system + user prompts to the configured provider, returns raw text. */
 export async function chat(params: ChatParams, config?: LLMConfig): Promise<string> {
-  const cfg = config ?? (await resolveLLMConfig());
+  let cfg = config ?? (await resolveLLMConfig());
+
+  // Image inputs need a vision-capable model; most cheap text models reject
+  // array content. LLM_VISION_MODEL overrides the model for these calls only.
+  if (params.images?.length) {
+    const visionModel = process.env.LLM_VISION_MODEL;
+    if (visionModel) cfg = { ...cfg, model: visionModel };
+  }
 
   let lastError: LLMError | null = null;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -135,6 +142,12 @@ function errorFromStatus(status: number, body: string, provider: string, headers
   }
   if (status === 401 || status === 403) {
     return new LLMError(`Clé API refusée par ${provider}. Vérifiez la configuration.`, status);
+  }
+  if (status === 400 && /content must be a string|image/i.test(body)) {
+    return new LLMError(
+      `Le modèle configuré chez ${provider} ne supporte pas les images : définissez LLM_VISION_MODEL avec un modèle vision (ex. meta-llama/llama-4-scout-17b-16e-instruct sur Groq).`,
+      status
+    );
   }
   return new LLMError(
     `Erreur API ${provider} (${status}) : ${body.slice(0, 300)}`,
