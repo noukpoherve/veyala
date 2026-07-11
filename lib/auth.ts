@@ -1,5 +1,6 @@
 import { cache } from "react";
 import NextAuth from "next-auth";
+import { compare } from "bcryptjs";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
 import Nodemailer from "next-auth/providers/nodemailer";
@@ -42,6 +43,29 @@ if (process.env.EMAIL_SERVER && process.env.EMAIL_FROM) {
     })
   );
 }
+
+// Classic email + password sign-in (accounts created via /register).
+providers.push(
+  Credentials({
+    id: "credentials",
+    name: "Email et mot de passe",
+    credentials: {
+      email: { label: "Email", type: "email" },
+      password: { label: "Mot de passe", type: "password" },
+    },
+    async authorize(credentials) {
+      const email = String(credentials?.email ?? "")
+        .trim()
+        .toLowerCase();
+      const password = String(credentials?.password ?? "");
+      if (!email || !password) return null;
+      const user = await db.user.findUnique({ where: { email } });
+      if (!user?.passwordHash) return null;
+      const valid = await compare(password, user.passwordHash);
+      return valid ? user : null;
+    },
+  })
+);
 
 // Local sign-in without SMTP or OAuth, enabled outside production only.
 if (process.env.NODE_ENV !== "production") {

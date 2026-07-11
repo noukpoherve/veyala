@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Mail, TerminalSquare } from "lucide-react";
+import { AuthError } from "next-auth";
+import { LogIn, Mail, TerminalSquare } from "lucide-react";
 import { auth, signIn } from "@/lib/auth";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,20 @@ export default async function LoginPage({
   const hasGoogle = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   const hasEmail = !!(process.env.EMAIL_SERVER && process.env.EMAIL_FROM);
   const hasDevLogin = process.env.NODE_ENV !== "production";
-  const hasAnyProvider = hasGoogle || hasEmail || hasDevLogin;
+
+  async function loginWithPassword(formData: FormData) {
+    "use server";
+    try {
+      await signIn("credentials", {
+        email: formData.get("email"),
+        password: formData.get("password"),
+        redirectTo: callbackUrl,
+      });
+    } catch (error) {
+      if (error instanceof AuthError) redirect("/login?error=credentials");
+      throw error;
+    }
+  }
 
   return (
     <main className="bg-aurora relative flex min-h-screen items-center justify-center overflow-hidden p-4">
@@ -72,22 +86,46 @@ export default async function LoginPage({
         <CardContent className="space-y-4">
           {searchParams.error ? (
             <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              La connexion a échoué. Réessayez ou utilisez une autre méthode.
+              {searchParams.error === "credentials"
+                ? "Email ou mot de passe incorrect."
+                : "La connexion a échoué. Réessayez ou utilisez une autre méthode."}
             </p>
           ) : null}
 
-          {!hasAnyProvider ? (
-            <div
-              role="alert"
-              className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
-            >
-              <p className="font-semibold">Aucune méthode de connexion configurée.</p>
-              <p>
-                Le serveur ne voit ni <code>GOOGLE_CLIENT_ID</code>/<code>GOOGLE_CLIENT_SECRET</code>{" "}
-                ni <code>EMAIL_SERVER</code>/<code>EMAIL_FROM</code>. Ajoutez ces variables
-                d&apos;environnement (sur Vercel : Settings → Environment Variables, environnement{" "}
-                <strong>Production</strong>), puis redéployez.
-              </p>
+          <form className="space-y-3" action={loginWithPassword}>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Adresse email</Label>
+              <Input id="email" name="email" type="email" required placeholder="vous@exemple.fr" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                placeholder="Votre mot de passe"
+              />
+            </div>
+            <Button type="submit" variant="gradient" className="w-full">
+              <LogIn />
+              Se connecter
+            </Button>
+          </form>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Pas encore de compte ?{" "}
+            <Link href="/register" className="font-medium text-blue-600 hover:underline">
+              Créer un compte
+            </Link>
+          </p>
+
+          {hasGoogle || hasEmail ? (
+            <div className="flex items-center gap-3">
+              <Separator className="flex-1" />
+              <span className="text-xs uppercase text-muted-foreground">ou</span>
+              <Separator className="flex-1" />
             </div>
           ) : null}
 
@@ -106,34 +144,31 @@ export default async function LoginPage({
           ) : null}
 
           {hasEmail ? (
-            <>
-              {hasGoogle ? (
-                <div className="flex items-center gap-3">
-                  <Separator className="flex-1" />
-                  <span className="text-xs uppercase text-muted-foreground">ou</span>
-                  <Separator className="flex-1" />
-                </div>
-              ) : null}
-              <form
-                className="space-y-3"
-                action={async (formData: FormData) => {
-                  "use server";
-                  await signIn("nodemailer", {
-                    email: formData.get("email"),
-                    redirectTo: callbackUrl,
-                  });
-                }}
-              >
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Adresse email</Label>
-                  <Input id="email" name="email" type="email" required placeholder="vous@exemple.fr" />
-                </div>
-                <Button type="submit" variant="gradient" className="w-full">
-                  <Mail />
-                  Recevoir un lien magique
-                </Button>
-              </form>
-            </>
+            <form
+              className="space-y-3"
+              action={async (formData: FormData) => {
+                "use server";
+                await signIn("nodemailer", {
+                  email: formData.get("email"),
+                  redirectTo: callbackUrl,
+                });
+              }}
+            >
+              <div className="space-y-1.5">
+                <Label htmlFor="magic-email">Adresse email</Label>
+                <Input
+                  id="magic-email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="vous@exemple.fr"
+                />
+              </div>
+              <Button type="submit" variant="outline" className="w-full">
+                <Mail />
+                Recevoir un lien magique
+              </Button>
+            </form>
           ) : null}
 
           {hasDevLogin ? (
