@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import { LogIn, Mail, TerminalSquare } from "lucide-react";
 import { auth, signIn } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +34,7 @@ function GoogleIcon() {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { callbackUrl?: string; error?: string };
+  searchParams: { callbackUrl?: string; error?: string; verified?: string };
 }) {
   const session = await auth();
   if (session?.user) redirect("/dashboard");
@@ -47,14 +48,24 @@ export default async function LoginPage({
 
   async function loginWithPassword(formData: FormData) {
     "use server";
+    const email = String(formData.get("email") ?? "")
+      .trim()
+      .toLowerCase();
     try {
       await signIn("credentials", {
-        email: formData.get("email"),
+        email,
         password: formData.get("password"),
         redirectTo: callbackUrl,
       });
     } catch (error) {
-      if (error instanceof AuthError) redirect("/login?error=credentials");
+      if (error instanceof AuthError) {
+        // Unverified password accounts are sent back to the OTP step.
+        const user = await db.user.findUnique({ where: { email } });
+        if (user?.passwordHash && !user.emailVerified) {
+          redirect(`/verify-email?email=${encodeURIComponent(email)}`);
+        }
+        redirect("/login?error=credentials");
+      }
       throw error;
     }
   }
@@ -84,6 +95,12 @@ export default async function LoginPage({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {searchParams.verified ? (
+            <p role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">
+              Email vérifié — vous pouvez maintenant vous connecter.
+            </p>
+          ) : null}
+
           {searchParams.error ? (
             <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {searchParams.error === "credentials"

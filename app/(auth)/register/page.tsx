@@ -8,6 +8,7 @@ import { z } from "zod";
 import { auth, isAdminEmail, signIn, SIGNUP_BONUS_CREDITS } from "@/lib/auth";
 import { creditCredits } from "@/lib/credits";
 import { db } from "@/lib/db";
+import { sendVerificationCode, verificationRequired } from "@/lib/verification";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,10 +63,22 @@ export default async function RegisterPage({
     if (existing) redirect("/register?error=exists");
 
     const passwordHash = await hash(parsed.data.password, 12);
+    const requireOtp = verificationRequired();
     const user = await db.user.create({
-      data: { email, passwordHash, role: isAdminEmail(email) ? "ADMIN" : "USER" },
+      data: {
+        email,
+        passwordHash,
+        role: isAdminEmail(email) ? "ADMIN" : "USER",
+        // Without a mail transport (SMTP not configured), skip OTP gracefully.
+        emailVerified: requireOtp ? null : new Date(),
+      },
     });
     await creditCredits(user.id, SIGNUP_BONUS_CREDITS, "SIGNUP_BONUS");
+
+    if (requireOtp) {
+      await sendVerificationCode(user.id, email);
+      redirect(`/verify-email?email=${encodeURIComponent(email)}`);
+    }
 
     try {
       await signIn("credentials", {

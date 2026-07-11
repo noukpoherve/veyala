@@ -32,6 +32,19 @@ model User {
   baseProfile        BaseProfile?
   templates          Template[]
   generatedCVs       GeneratedCV[]
+  emailVerification  EmailVerification?
+}
+
+// One-time 6-digit code emailed at sign-up; the hash only is stored.
+model EmailVerification {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  codeHash   String
+  expiresAt  DateTime
+  lastSentAt DateTime @default(now())
+  attempts   Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {

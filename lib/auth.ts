@@ -61,6 +61,8 @@ providers.push(
       if (!email || !password) return null;
       const user = await db.user.findUnique({ where: { email } });
       if (!user?.passwordHash) return null;
+      // Password accounts must confirm their email (OTP) before signing in.
+      if (!user.emailVerified) return null;
       const valid = await compare(password, user.passwordHash);
       return valid ? user : null;
     },
