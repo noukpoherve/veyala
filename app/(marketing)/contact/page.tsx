@@ -9,8 +9,8 @@ export default function ContactPage() {
     <LegalArticle title="Contact" updated="9 juillet 2026">
       <section>
         <p>
-          Une question, un problème de génération ou une demande liée à vos données ?
-          Écrivez-nous, nous répondons sous 48 h ouvrées.
+          Une question, un problème de génération ou une demande liée à vos données ? Écrivez-nous,
+          nous répondons sous 48 h ouvrées.
         </p>
         <p className="mt-4">
           <a
@@ -18,7 +18,7 @@ export default function ContactPage() {
             className="inline-flex items-center gap-2 font-medium text-primary underline"
           >
             <Mail className="size-4" aria-hidden />
-            contact@cvgen.example
+            contact@velaya.fr
           </a>
         </p>
       </section>

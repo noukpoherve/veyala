@@ -1,20 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AuthError } from "next-auth";
 import { MailCheck, RefreshCw } from "lucide-react";
+import { signIn } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { sendVerificationCode, verifyCode } from "@/lib/verification";
+import { createSigninToken, sendVerificationCode, verifyCode } from "@/lib/verification";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Vérifiez votre email" };
 
@@ -58,7 +54,14 @@ export default async function VerifyEmailPage({
     if (result !== "ok") {
       redirect(`/verify-email?email=${encodeURIComponent(email)}&status=${result}`);
     }
-    redirect("/login?verified=1");
+    // Sign the user straight in: no detour through the login page.
+    const token = await createSigninToken(email);
+    try {
+      await signIn("otp-signin", { email, token, redirectTo: "/dashboard" });
+    } catch (error) {
+      if (error instanceof AuthError) redirect("/login?verified=1");
+      throw error;
+    }
   }
 
   async function resendCode() {
@@ -66,7 +69,9 @@ export default async function VerifyEmailPage({
     const account = await db.user.findUnique({ where: { email } });
     if (!account) redirect("/register");
     const sent = await sendVerificationCode(account.id, email);
-    redirect(`/verify-email?email=${encodeURIComponent(email)}&status=${sent ? "resent" : "cooldown"}`);
+    redirect(
+      `/verify-email?email=${encodeURIComponent(email)}&status=${sent ? "resent" : "cooldown"}`
+    );
   }
 
   return (

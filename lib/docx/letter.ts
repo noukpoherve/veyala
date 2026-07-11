@@ -23,7 +23,9 @@ export async function renderCoverLetterDocx(
   const children: Paragraph[] = [
     new Paragraph({
       spacing: { after: 40 },
-      children: [new TextRun({ text: cv.identity.fullName, bold: true, size: 30, color: heading, font })],
+      children: [
+        new TextRun({ text: cv.identity.fullName, bold: true, size: 30, color: heading, font }),
+      ],
     }),
     new Paragraph({
       spacing: { after: 240 },
@@ -60,7 +62,9 @@ export async function renderCoverLetterDocx(
       ),
     new Paragraph({
       spacing: { before: 320 },
-      children: [new TextRun({ text: cv.identity.fullName, bold: true, size: 21, color: heading, font })],
+      children: [
+        new TextRun({ text: cv.identity.fullName, bold: true, size: 21, color: heading, font }),
+      ],
     }),
   ];
 

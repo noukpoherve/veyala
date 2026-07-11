@@ -25,7 +25,11 @@ export async function extractText(buffer: Buffer, mimeType: string): Promise<str
 }
 
 function normalize(text: string): string {
-  const clean = text.replace(/\r/g, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+  const clean = text
+    .replace(/\r/g, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
   if (clean.length < 80) {
     throw new Error(
       "Impossible d'extraire assez de texte de ce fichier (scan ou document vide ?)."

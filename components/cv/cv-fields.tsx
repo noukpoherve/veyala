@@ -85,7 +85,7 @@ function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
         // eslint-disable-next-line @next/next/no-img-element -- data URL preview
         <img
           src={photoUrl}
-          alt="Photo du CV"
+          alt="Portrait du candidat"
           className="h-20 w-16 rounded-md border object-cover"
         />
       ) : (
@@ -108,7 +108,12 @@ function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
           }}
         />
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => inputRef.current?.click()}
+          >
             <ImagePlus />
             {photoUrl ? "Changer la photo" : "Ajouter une photo"}
           </Button>
@@ -151,7 +156,11 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="headline">Titre / accroche</Label>
-            <Input id="headline" {...register("identity.headline")} placeholder="Développeur Full-Stack — React, Node" />
+            <Input
+              id="headline"
+              {...register("identity.headline")}
+              placeholder="Développeur Full-Stack — React, Node"
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
@@ -170,12 +179,21 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
           <Label>Liens (LinkedIn, GitHub, portfolio…)</Label>
           {links.fields.map((field, i) => (
             <div key={field.id} className="flex gap-2">
-              <Input className="w-40" placeholder="Label" {...register(`contact.links.${i}.label`)} />
+              <Input
+                className="w-40"
+                placeholder="Label"
+                {...register(`contact.links.${i}.label`)}
+              />
               <Input placeholder="https://…" {...register(`contact.links.${i}.url`)} />
               <RemoveButton onClick={() => links.remove(i)} label={`Supprimer le lien ${i + 1}`} />
             </div>
           ))}
-          <Button type="button" variant="outline" size="sm" onClick={() => links.append({ label: "", url: "" })}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => links.append({ label: "", url: "" })}
+          >
             <Plus />
             Ajouter un lien
           </Button>
@@ -208,12 +226,17 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                   <Input {...register(`experiences.${i}.dates`)} placeholder="2023 — 2025" />
                 </div>
               </div>
-              <RemoveButton onClick={() => experiences.remove(i)} label={`Supprimer l'expérience ${i + 1}`} />
+              <RemoveButton
+                onClick={() => experiences.remove(i)}
+                label={`Supprimer l'expérience ${i + 1}`}
+              />
             </div>
             <LinesField
               label="Réalisations (une par ligne)"
               value={getValues(`experiences.${i}.bullets`)}
-              onChange={(lines) => setValue(`experiences.${i}.bullets`, lines, { shouldDirty: true })}
+              onChange={(lines) =>
+                setValue(`experiences.${i}.bullets`, lines, { shouldDirty: true })
+              }
             />
             <LinesField
               label="Stack technique (une techno par ligne)"
@@ -228,7 +251,14 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
           variant="outline"
           size="sm"
           onClick={() =>
-            experiences.append({ title: "", company: "", place: "", dates: "", bullets: [], stack: [] })
+            experiences.append({
+              title: "",
+              company: "",
+              place: "",
+              dates: "",
+              bullets: [],
+              stack: [],
+            })
           }
         >
           <Plus />
@@ -261,14 +291,19 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                 <Input {...register(`education.${i}.details`)} />
               </div>
             </div>
-            <RemoveButton onClick={() => education.remove(i)} label={`Supprimer la formation ${i + 1}`} />
+            <RemoveButton
+              onClick={() => education.remove(i)}
+              label={`Supprimer la formation ${i + 1}`}
+            />
           </div>
         ))}
         <Button
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => education.append({ degree: "", school: "", place: "", dates: "", details: "" })}
+          onClick={() =>
+            education.append({ degree: "", school: "", place: "", dates: "", details: "" })
+          }
         >
           <Plus />
           Ajouter une formation
@@ -290,10 +325,18 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                 onChange={(lines) => setValue(`skills.${i}.items`, lines, { shouldDirty: true })}
               />
             </div>
-            <RemoveButton onClick={() => skills.remove(i)} label={`Supprimer la catégorie ${i + 1}`} />
+            <RemoveButton
+              onClick={() => skills.remove(i)}
+              label={`Supprimer la catégorie ${i + 1}`}
+            />
           </div>
         ))}
-        <Button type="button" variant="outline" size="sm" onClick={() => skills.append({ category: "", items: [] })}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => skills.append({ category: "", items: [] })}
+        >
           <Plus />
           Ajouter une catégorie
         </Button>
@@ -306,10 +349,18 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             <div key={field.id} className="flex gap-2">
               <Input className="w-48" placeholder="Français" {...register(`languages.${i}.name`)} />
               <Input placeholder="Courant, C1…" {...register(`languages.${i}.level`)} />
-              <RemoveButton onClick={() => languages.remove(i)} label={`Supprimer la langue ${i + 1}`} />
+              <RemoveButton
+                onClick={() => languages.remove(i)}
+                label={`Supprimer la langue ${i + 1}`}
+              />
             </div>
           ))}
-          <Button type="button" variant="outline" size="sm" onClick={() => languages.append({ name: "", level: "" })}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => languages.append({ name: "", level: "" })}
+          >
             <Plus />
             Ajouter une langue
           </Button>

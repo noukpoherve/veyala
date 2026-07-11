@@ -11,10 +11,9 @@ import type { EditorTemplate } from "@/components/cv/cv-editor";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Heavy client editor: lazy-loaded so its chunk doesn't weigh on the shared bundle.
-const CvEditor = dynamic(
-  () => import("@/components/cv/cv-editor").then((mod) => mod.CvEditor),
-  { loading: () => <Skeleton className="mx-auto h-[70vh] max-w-4xl rounded-2xl" /> }
-);
+const CvEditor = dynamic(() => import("@/components/cv/cv-editor").then((mod) => mod.CvEditor), {
+  loading: () => <Skeleton className="mx-auto h-[70vh] max-w-4xl rounded-2xl" />,
+});
 
 export const metadata: Metadata = { title: "Éditeur de CV" };
 

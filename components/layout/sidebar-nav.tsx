@@ -75,10 +75,15 @@ export function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
   const [adminOpen, setAdminOpen] = useState(onAdminPage);
 
   const isActive = (href: string) =>
-    href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`);
+    href === "/admin"
+      ? pathname === "/admin"
+      : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3" aria-label="Navigation principale">
+    <nav
+      className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
+      aria-label="Navigation principale"
+    >
       {MAIN_ITEMS.map((item) => (
         <NavLink key={item.href} {...item} active={isActive(item.href)} />
       ))}

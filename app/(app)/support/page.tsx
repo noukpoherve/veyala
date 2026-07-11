@@ -29,11 +29,7 @@ const STATUS_MESSAGES: Record<string, { text: string; tone: "ok" | "error" }> = 
   },
 };
 
-export default async function SupportPage({
-  searchParams,
-}: {
-  searchParams: { status?: string };
-}) {
+export default async function SupportPage({ searchParams }: { searchParams: { status?: string } }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -144,8 +140,7 @@ export default async function SupportPage({
                           message.fromAdmin ? "text-muted-foreground" : "text-blue-100"
                         )}
                       >
-                        {message.fromAdmin ? "Équipe Veyala" : "Vous"} ·{" "}
-                        {dateFr(message.createdAt)}
+                        {message.fromAdmin ? "Équipe Veyala" : "Vous"} · {dateFr(message.createdAt)}
                       </p>
                     </li>
                   ))}

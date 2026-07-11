@@ -46,7 +46,9 @@ export default async function AdminTemplatesPage() {
                     <CardTitle className="text-base">{template.name}</CardTitle>
                     <p className="text-xs text-muted-foreground">
                       Proposé par {template.owner?.email ?? "?"} ·{" "}
-                      {new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(template.createdAt)}
+                      {new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(
+                        template.createdAt
+                      )}
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -60,7 +62,11 @@ export default async function AdminTemplatesPage() {
                         unoptimized
                       />
                     ) : null}
-                    <TemplateSwatch layout={def.layout} colors={def.colors.sidebar} band={def.colors.band} />
+                    <TemplateSwatch
+                      layout={def.layout}
+                      colors={def.colors.sidebar}
+                      band={def.colors.band}
+                    />
                     <div className="flex gap-2">
                       <form action={reviewTemplate} className="flex-1">
                         <input type="hidden" name="templateId" value={template.id} />
@@ -95,17 +101,27 @@ export default async function AdminTemplatesPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th scope="col" className="p-3 font-medium">Template</th>
-                <th scope="col" className="p-3 font-medium">Auteur</th>
-                <th scope="col" className="p-3 font-medium">Statut</th>
-                <th scope="col" className="p-3 font-medium">Public</th>
+                <th scope="col" className="p-3 font-medium">
+                  Template
+                </th>
+                <th scope="col" className="p-3 font-medium">
+                  Auteur
+                </th>
+                <th scope="col" className="p-3 font-medium">
+                  Statut
+                </th>
+                <th scope="col" className="p-3 font-medium">
+                  Public
+                </th>
               </tr>
             </thead>
             <tbody>
               {others.map((template) => (
                 <tr key={template.id} className="border-t">
                   <td className="p-3 font-medium">{template.name}</td>
-                  <td className="p-3 text-muted-foreground">{template.owner?.email ?? "Officiel"}</td>
+                  <td className="p-3 text-muted-foreground">
+                    {template.owner?.email ?? "Officiel"}
+                  </td>
                   <td className="p-3">
                     <Badge variant={template.status === "APPROVED" ? "success" : "destructive"}>
                       {template.status === "APPROVED" ? "Approuvé" : "Rejeté"}

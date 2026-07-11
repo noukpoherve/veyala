@@ -13,13 +13,7 @@ import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Créer un compte" };
 
@@ -36,11 +30,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   unknown: "L'inscription a échoué. Réessayez.",
 };
 
-export default async function RegisterPage({
-  searchParams,
-}: {
-  searchParams: { error?: string };
-}) {
+export default async function RegisterPage({ searchParams }: { searchParams: { error?: string } }) {
   const session = await auth();
   if (session?.user) redirect("/dashboard");
 

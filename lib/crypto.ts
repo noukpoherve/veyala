@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
 const ALGO = "aes-256-gcm";
 const IV_LENGTH = 12;
@@ -16,7 +16,11 @@ export function encryptSecret(plain: string): string {
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(ALGO, getKey(), iv);
   const data = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
-  return [iv.toString("base64"), cipher.getAuthTag().toString("base64"), data.toString("base64")].join(".");
+  return [
+    iv.toString("base64"),
+    cipher.getAuthTag().toString("base64"),
+    data.toString("base64"),
+  ].join(".");
 }
 
 export function decryptSecret(payload: string): string {
@@ -24,5 +28,7 @@ export function decryptSecret(payload: string): string {
   if (!iv || !tag || !data) throw new Error("Secret chiffré illisible.");
   const decipher = createDecipheriv(ALGO, getKey(), Buffer.from(iv, "base64"));
   decipher.setAuthTag(Buffer.from(tag, "base64"));
-  return Buffer.concat([decipher.update(Buffer.from(data, "base64")), decipher.final()]).toString("utf8");
+  return Buffer.concat([decipher.update(Buffer.from(data, "base64")), decipher.final()]).toString(
+    "utf8"
+  );
 }

@@ -34,9 +34,7 @@ function contactSection(cv: CVData, inSidebar: boolean): string {
     phone && `<li>${esc(phone)}</li>`,
     email && `<li><a href="mailto:${esc(email)}">${esc(email)}</a></li>`,
     location && `<li>${esc(location)}</li>`,
-    ...links.map(
-      (l) => `<li><a href="${esc(httpUrl(l.url))}">${esc(l.label || l.url)}</a></li>`
-    ),
+    ...links.map((l) => `<li><a href="${esc(httpUrl(l.url))}">${esc(l.label || l.url)}</a></li>`),
   ].filter(Boolean);
   if (items.length === 0) return "";
   return `<section class="contact">
@@ -131,7 +129,12 @@ function interestsSection(cv: CVData): string {
   </section>`;
 }
 
-function renderSection(id: SectionId, cv: CVData, def: TemplateDefinition, inSidebar: boolean): string {
+function renderSection(
+  id: SectionId,
+  cv: CVData,
+  def: TemplateDefinition,
+  inSidebar: boolean
+): string {
   switch (id) {
     case "contact":
       return contactSection(cv, inSidebar);
@@ -308,7 +311,8 @@ function singleColumnLayout(cv: CVData, def: TemplateDefinition): string {
 
 /** Full standalone HTML document for a CV + template definition. */
 export function renderCVHtml(cv: CVData, def: TemplateDefinition): string {
-  const content = def.layout === "sidebar-left" ? sidebarLayout(cv, def) : singleColumnLayout(cv, def);
+  const content =
+    def.layout === "sidebar-left" ? sidebarLayout(cv, def) : singleColumnLayout(cv, def);
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>

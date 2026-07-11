@@ -73,9 +73,7 @@ export default async function AdminThreadPage({ params }: { params: { id: string
                 key={message.id}
                 className={cn(
                   "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
-                  message.fromAdmin
-                    ? "ml-auto bg-blue-600 text-white"
-                    : "bg-muted text-foreground"
+                  message.fromAdmin ? "ml-auto bg-blue-600 text-white" : "bg-muted text-foreground"
                 )}
               >
                 <p className="whitespace-pre-wrap">{message.body}</p>
@@ -92,7 +90,10 @@ export default async function AdminThreadPage({ params }: { params: { id: string
             ))}
           </ol>
 
-          <form className="flex items-end gap-2 border-t border-border pt-4" action={adminReplyToThread}>
+          <form
+            className="flex items-end gap-2 border-t border-border pt-4"
+            action={adminReplyToThread}
+          >
             <input type="hidden" name="threadId" value={thread.id} />
             <Textarea
               name="body"

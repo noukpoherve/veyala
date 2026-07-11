@@ -1,5 +1,5 @@
-import { readFile } from "fs/promises";
-import path from "path";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import {
   AlignmentType,
   BorderStyle,
@@ -92,7 +92,13 @@ function itemTitle(text: string, ctx: Ctx): Paragraph {
   return new Paragraph({
     spacing: { before: 90, after: 10 },
     children: [
-      new TextRun({ text, bold: true, color: hex(ctx.def.colors.heading), size: 18, font: ctx.font }),
+      new TextRun({
+        text,
+        bold: true,
+        color: hex(ctx.def.colors.heading),
+        size: 18,
+        font: ctx.font,
+      }),
     ],
   });
 }
@@ -103,7 +109,13 @@ function metaLine(dates: string, place: string, ctx: Ctx): Paragraph {
   ];
   if (place) {
     children.push(
-      new TextRun({ text: `   ·   ${place}`, italics: true, color: hex(ctx.def.colors.body), size: 14, font: ctx.font })
+      new TextRun({
+        text: `   ·   ${place}`,
+        italics: true,
+        color: hex(ctx.def.colors.body),
+        size: 14,
+        font: ctx.font,
+      })
     );
   }
   return new Paragraph({ spacing: { after: 22 }, children });
@@ -145,7 +157,11 @@ function sideTitle(text: string, ctx: Ctx): Paragraph {
   });
 }
 
-function sideText(text: string, ctx: Ctx, opts: { bold?: boolean; after?: number } = {}): Paragraph {
+function sideText(
+  text: string,
+  ctx: Ctx,
+  opts: { bold?: boolean; after?: number } = {}
+): Paragraph {
   return new Paragraph({
     spacing: { after: opts.after ?? 26 },
     children: [
@@ -190,19 +206,27 @@ function contactParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
   const line = (text: string) => (inSidebar ? sideText(text, ctx) : bodyText(text, ctx));
   if (contact.phone) out.push(line(contact.phone));
   if (contact.email) {
-    out.push(inSidebar ? sideLink(contact.email, `mailto:${contact.email}`, ctx) : bodyText(contact.email, ctx));
+    out.push(
+      inSidebar
+        ? sideLink(contact.email, `mailto:${contact.email}`, ctx)
+        : bodyText(contact.email, ctx)
+    );
   }
   if (contact.location) out.push(line(contact.location));
   for (const l of contact.links) {
     const url = /^https?:\/\//i.test(l.url) ? l.url : `https://${l.url}`;
-    out.push(inSidebar ? sideLink(l.label || l.url, url, ctx) : bodyText(`${l.label} : ${url}`, ctx));
+    out.push(
+      inSidebar ? sideLink(l.label || l.url, url, ctx) : bodyText(`${l.label} : ${url}`, ctx)
+    );
   }
   return out;
 }
 
 function skillsParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
   if (ctx.cv.skills.length === 0) return [];
-  const out: Paragraph[] = [inSidebar ? sideTitle("Compétences", ctx) : bandTitle("Compétences", ctx)];
+  const out: Paragraph[] = [
+    inSidebar ? sideTitle("Compétences", ctx) : bandTitle("Compétences", ctx),
+  ];
   for (const group of ctx.cv.skills) {
     if (inSidebar) {
       out.push(sideText(group.category, ctx, { bold: true, after: 40 }));
@@ -240,8 +264,20 @@ function experienceParagraphs(ctx: Ctx): Paragraph[] {
           spacing: { after: 20, line: 222, lineRule: "auto" },
           indent: { left: 160 },
           children: [
-            new TextRun({ text: "Stack : ", bold: true, color: hex(ctx.def.colors.heading), size: 13, font: ctx.font }),
-            new TextRun({ text: exp.stack.join(", "), italics: true, color: hex(ctx.def.colors.body), size: 13, font: ctx.font }),
+            new TextRun({
+              text: "Stack : ",
+              bold: true,
+              color: hex(ctx.def.colors.heading),
+              size: 13,
+              font: ctx.font,
+            }),
+            new TextRun({
+              text: exp.stack.join(", "),
+              italics: true,
+              color: hex(ctx.def.colors.body),
+              size: 13,
+              font: ctx.font,
+            }),
           ],
         })
       );
@@ -338,7 +374,13 @@ function nameHeader(ctx: Ctx): Paragraph[] {
     new Paragraph({
       spacing: { before: 40, after: 0 },
       children: [
-        new TextRun({ text: ctx.cv.identity.fullName, bold: true, color: "111111", size: 40, font: ctx.font }),
+        new TextRun({
+          text: ctx.cv.identity.fullName,
+          bold: true,
+          color: "111111",
+          size: 40,
+          font: ctx.font,
+        }),
       ],
     }),
   ];
@@ -347,7 +389,13 @@ function nameHeader(ctx: Ctx): Paragraph[] {
       new Paragraph({
         spacing: { before: 60, after: 40 },
         children: [
-          new TextRun({ text: ctx.cv.identity.headline, italics: true, color: "1A1A1A", size: 17, font: ctx.font }),
+          new TextRun({
+            text: ctx.cv.identity.headline,
+            italics: true,
+            color: "1A1A1A",
+            size: 17,
+            font: ctx.font,
+          }),
         ],
       })
     );
@@ -428,7 +476,10 @@ async function sidebarDocument(ctx: Ctx): Promise<Document> {
                   data: sidebarImage,
                   transformation: { width: 302, height: 1123 },
                   floating: {
-                    horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 0 },
+                    horizontalPosition: {
+                      relative: HorizontalPositionRelativeFrom.PAGE,
+                      offset: 0,
+                    },
                     verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 0 },
                     behindDocument: true,
                     allowOverlap: true,
@@ -473,11 +524,16 @@ async function sidebarDocument(ctx: Ctx): Promise<Document> {
   });
 
   return new Document({
-    styles: { default: { hyperlink: { run: { color: hex(ctx.def.colors.sidebarText), underline: {} } } } },
+    styles: {
+      default: { hyperlink: { run: { color: hex(ctx.def.colors.sidebarText), underline: {} } } },
+    },
     sections: [
       {
         properties: {
-          page: { size: A4, margin: { top: 0, bottom: 0, left: 0, right: 0, header: 0, footer: 0 } },
+          page: {
+            size: A4,
+            margin: { top: 0, bottom: 0, left: 0, right: 0, header: 0, footer: 0 },
+          },
         },
         ...(headers ? { headers: { default: headers.default, first: headers.default } } : {}),
         children: [table],

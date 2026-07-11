@@ -29,7 +29,9 @@ export default async function AdminInboxPage() {
           <h1 className="font-display text-2xl font-bold">Boîte de réception</h1>
           <p className="text-sm text-muted-foreground">
             {threads.length} conversation{threads.length > 1 ? "s" : ""}
-            {unreadTotal > 0 ? ` · ${unreadTotal} message${unreadTotal > 1 ? "s" : ""} non lu${unreadTotal > 1 ? "s" : ""}` : ""}
+            {unreadTotal > 0
+              ? ` · ${unreadTotal} message${unreadTotal > 1 ? "s" : ""} non lu${unreadTotal > 1 ? "s" : ""}`
+              : ""}
           </p>
         </div>
       </header>

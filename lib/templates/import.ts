@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import type { Template } from "@prisma/client";
 import { db } from "@/lib/db";
 import { chatJSON } from "@/lib/llm";
@@ -42,10 +42,7 @@ function normalizeSections(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   const out: string[] = [];
   for (const raw of value) {
-    const label = String(raw)
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "");
+    const label = String(raw).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     const match = SECTION_ALIASES.find(([re]) => re.test(label))?.[1];
     if (match && !out.includes(match)) out.push(match);
   }
@@ -55,11 +52,17 @@ function normalizeSections(value: unknown): string[] {
 /** Tolerant coercion of the vision model's output into a valid definition. */
 function coerceDefinition(raw: unknown): TemplateDefinition {
   const value = (typeof raw === "object" && raw !== null ? raw : {}) as Record<string, unknown>;
-  const colors = (typeof value.colors === "object" && value.colors !== null ? value.colors : {}) as Record<string, unknown>;
-  const fonts = (typeof value.fonts === "object" && value.fonts !== null ? value.fonts : {}) as Record<string, unknown>;
+  const colors = (
+    typeof value.colors === "object" && value.colors !== null ? value.colors : {}
+  ) as Record<string, unknown>;
+  const fonts = (
+    typeof value.fonts === "object" && value.fonts !== null ? value.fonts : {}
+  ) as Record<string, unknown>;
 
   const cleanHex = (c: unknown): string | undefined => {
-    const hex = String(c ?? "").trim().toLowerCase();
+    const hex = String(c ?? "")
+      .trim()
+      .toLowerCase();
     return /^#[0-9a-f]{6}$/.test(hex) ? hex : undefined;
   };
 
@@ -95,7 +98,9 @@ function coerceDefinition(raw: unknown): TemplateDefinition {
     namePlacement: ["main", "sidebar"].includes(String(value.namePlacement))
       ? value.namePlacement
       : undefined,
-    datesStyle: ["inline", "pill"].includes(String(value.datesStyle)) ? value.datesStyle : undefined,
+    datesStyle: ["inline", "pill"].includes(String(value.datesStyle))
+      ? value.datesStyle
+      : undefined,
     sidebarSections: normalizeSections(value.sidebarSections),
     mainSections,
   });
@@ -156,9 +161,7 @@ export async function createCommunityTemplate(params: {
   const sourceImageHash = params.previewImage ? imageHash(params.previewImage.buffer) : undefined;
 
   const existing = await db.template.findFirst({
-    where: sourceImageHash
-      ? { OR: [{ fingerprint }, { sourceImageHash }] }
-      : { fingerprint },
+    where: sourceImageHash ? { OR: [{ fingerprint }, { sourceImageHash }] } : { fingerprint },
   });
   if (existing) return { outcome: "duplicate", template: existing };
 

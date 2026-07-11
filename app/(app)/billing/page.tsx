@@ -24,17 +24,16 @@ const REASON_LABELS: Record<string, string> = {
   REFUND: "Remboursement (échec)",
 };
 
-const STATUS_LABELS: Record<string, { label: string; variant: "success" | "secondary" | "destructive" }> = {
+const STATUS_LABELS: Record<
+  string,
+  { label: string; variant: "success" | "secondary" | "destructive" }
+> = {
   PAID: { label: "Payé", variant: "success" },
   PENDING: { label: "En attente", variant: "secondary" },
   FAILED: { label: "Échoué", variant: "destructive" },
 };
 
-export default async function BillingPage({
-  searchParams,
-}: {
-  searchParams: { status?: string };
-}) {
+export default async function BillingPage({ searchParams }: { searchParams: { status?: string } }) {
   const session = await auth();
   const userId = session!.user.id;
 
@@ -61,14 +60,20 @@ export default async function BillingPage({
       </header>
 
       {searchParams.status === "success" ? (
-        <p role="status" className="flex items-center gap-2 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900">
+        <p
+          role="status"
+          className="flex items-center gap-2 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900"
+        >
           <CheckCircle2 className="size-4" aria-hidden />
-          Paiement confirmé ! Vos crédits sont ajoutés dès la réception du webhook Stripe
-          (quelques secondes).
+          Paiement confirmé ! Vos crédits sont ajoutés dès la réception du webhook Stripe (quelques
+          secondes).
         </p>
       ) : null}
       {searchParams.status === "cancelled" ? (
-        <p role="status" className="flex items-center gap-2 rounded-md border bg-muted p-3 text-sm text-muted-foreground">
+        <p
+          role="status"
+          className="flex items-center gap-2 rounded-md border bg-muted p-3 text-sm text-muted-foreground"
+        >
           <XCircle className="size-4" aria-hidden />
           Paiement annulé — aucun montant débité.
         </p>
@@ -109,10 +114,18 @@ export default async function BillingPage({
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left">
                 <tr>
-                  <th scope="col" className="p-3 font-medium">Date</th>
-                  <th scope="col" className="p-3 font-medium">Montant</th>
-                  <th scope="col" className="p-3 font-medium">Crédits</th>
-                  <th scope="col" className="p-3 font-medium">Statut</th>
+                  <th scope="col" className="p-3 font-medium">
+                    Date
+                  </th>
+                  <th scope="col" className="p-3 font-medium">
+                    Montant
+                  </th>
+                  <th scope="col" className="p-3 font-medium">
+                    Crédits
+                  </th>
+                  <th scope="col" className="p-3 font-medium">
+                    Statut
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -146,9 +159,15 @@ export default async function BillingPage({
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left">
                 <tr>
-                  <th scope="col" className="p-3 font-medium">Date</th>
-                  <th scope="col" className="p-3 font-medium">Motif</th>
-                  <th scope="col" className="p-3 font-medium">Crédits</th>
+                  <th scope="col" className="p-3 font-medium">
+                    Date
+                  </th>
+                  <th scope="col" className="p-3 font-medium">
+                    Motif
+                  </th>
+                  <th scope="col" className="p-3 font-medium">
+                    Crédits
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -156,7 +175,9 @@ export default async function BillingPage({
                   <tr key={t.id} className="border-t">
                     <td className="p-3">{dateFr(t.createdAt)}</td>
                     <td className="p-3">{REASON_LABELS[t.reason] ?? t.reason}</td>
-                    <td className={`p-3 font-medium ${t.delta > 0 ? "text-emerald-600" : "text-destructive"}`}>
+                    <td
+                      className={`p-3 font-medium ${t.delta > 0 ? "text-emerald-600" : "text-destructive"}`}
+                    >
                       {t.delta > 0 ? `+${t.delta}` : t.delta}
                     </td>
                   </tr>

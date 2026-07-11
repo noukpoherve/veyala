@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Vérifiez votre boîte mail" };
 
@@ -28,8 +22,8 @@ export default function VerifyRequestPage() {
             Vérifiez votre boîte mail
           </CardTitle>
           <CardDescription>
-            Un lien de connexion vient de vous être envoyé. Cliquez dessus pour accéder à
-            votre espace.
+            Un lien de connexion vient de vous être envoyé. Cliquez dessus pour accéder à votre
+            espace.
           </CardDescription>
         </CardHeader>
         <CardContent>

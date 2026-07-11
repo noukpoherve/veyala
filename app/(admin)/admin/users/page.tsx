@@ -11,17 +11,18 @@ export const metadata: Metadata = { title: "Utilisateurs · Admin" };
 
 const dateFr = (d: Date) => new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(d);
 
-export default async function AdminUsersPage({
-  searchParams,
-}: {
-  searchParams: { q?: string };
-}) {
+export default async function AdminUsersPage({ searchParams }: { searchParams: { q?: string } }) {
   const session = await auth();
   const q = searchParams.q?.trim() ?? "";
 
   const users = await db.user.findMany({
     where: q
-      ? { OR: [{ email: { contains: q, mode: "insensitive" } }, { name: { contains: q, mode: "insensitive" } }] }
+      ? {
+          OR: [
+            { email: { contains: q, mode: "insensitive" } },
+            { name: { contains: q, mode: "insensitive" } },
+          ],
+        }
       : undefined,
     include: { credits: true, _count: { select: { generatedCVs: true } } },
     orderBy: { createdAt: "desc" },
@@ -32,11 +33,18 @@ export default async function AdminUsersPage({
     <article className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl font-bold">Utilisateurs</h1>
+        {/* biome-ignore lint/a11y/useSemanticElements: the <search> element lacks Safari support */}
         <form method="get" role="search" className="flex gap-2">
           <label htmlFor="q" className="sr-only">
             Rechercher un utilisateur
           </label>
-          <Input id="q" name="q" defaultValue={q} placeholder="Rechercher par email ou nom…" className="w-64" />
+          <Input
+            id="q"
+            name="q"
+            defaultValue={q}
+            placeholder="Rechercher par email ou nom…"
+            className="w-64"
+          />
           <Button type="submit" variant="outline">
             <Search />
             Rechercher
@@ -48,12 +56,24 @@ export default async function AdminUsersPage({
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left">
             <tr>
-              <th scope="col" className="p-3 font-medium">Utilisateur</th>
-              <th scope="col" className="p-3 font-medium">Rôle</th>
-              <th scope="col" className="p-3 font-medium">Crédits</th>
-              <th scope="col" className="p-3 font-medium">CV</th>
-              <th scope="col" className="p-3 font-medium">Inscrit le</th>
-              <th scope="col" className="p-3 font-medium">Actions</th>
+              <th scope="col" className="p-3 font-medium">
+                Utilisateur
+              </th>
+              <th scope="col" className="p-3 font-medium">
+                Rôle
+              </th>
+              <th scope="col" className="p-3 font-medium">
+                Crédits
+              </th>
+              <th scope="col" className="p-3 font-medium">
+                CV
+              </th>
+              <th scope="col" className="p-3 font-medium">
+                Inscrit le
+              </th>
+              <th scope="col" className="p-3 font-medium">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -64,7 +84,9 @@ export default async function AdminUsersPage({
                   {user.name ? <p className="text-xs text-muted-foreground">{user.name}</p> : null}
                 </td>
                 <td className="p-3">
-                  <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>{user.role}</Badge>
+                  <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>
+                    {user.role}
+                  </Badge>
                 </td>
                 <td className="p-3 font-medium">{user.credits?.balance ?? 0}</td>
                 <td className="p-3">{user._count.generatedCVs}</td>
@@ -92,7 +114,11 @@ export default async function AdminUsersPage({
                     {user.id !== session!.user.id ? (
                       <form action={setUserRole}>
                         <input type="hidden" name="userId" value={user.id} />
-                        <input type="hidden" name="role" value={user.role === "ADMIN" ? "USER" : "ADMIN"} />
+                        <input
+                          type="hidden"
+                          name="role"
+                          value={user.role === "ADMIN" ? "USER" : "ADMIN"}
+                        />
                         <Button type="submit" size="sm" variant="ghost">
                           {user.role === "ADMIN" ? "Rétrograder" : "Promouvoir admin"}
                         </Button>
@@ -106,7 +132,9 @@ export default async function AdminUsersPage({
         </table>
       </div>
       {users.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Aucun utilisateur ne correspond à la recherche.</p>
+        <p className="text-sm text-muted-foreground">
+          Aucun utilisateur ne correspond à la recherche.
+        </p>
       ) : null}
     </article>
   );

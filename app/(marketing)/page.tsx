@@ -346,17 +346,23 @@ export default async function LandingPage() {
         <div
           aria-hidden
           className="orb -top-40 left-[-8%] size-[560px] [animation-duration:9s]"
-          style={{ background: "radial-gradient(circle, rgba(37,99,235,0.14) 0%, transparent 70%)" }}
+          style={{
+            background: "radial-gradient(circle, rgba(37,99,235,0.14) 0%, transparent 70%)",
+          }}
         />
         <div
           aria-hidden
           className="orb right-[-10%] top-24 size-[480px] [animation-duration:7s]"
-          style={{ background: "radial-gradient(circle, rgba(96,165,250,0.12) 0%, transparent 70%)" }}
+          style={{
+            background: "radial-gradient(circle, rgba(96,165,250,0.12) 0%, transparent 70%)",
+          }}
         />
         <div
           aria-hidden
           className="orb bottom-0 left-1/3 size-[520px] [animation-duration:8s]"
-          style={{ background: "radial-gradient(circle, rgba(14,165,233,0.09) 0%, transparent 70%)" }}
+          style={{
+            background: "radial-gradient(circle, rgba(14,165,233,0.09) 0%, transparent 70%)",
+          }}
         />
 
         <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-20 text-center md:pt-28">
@@ -443,7 +449,10 @@ export default async function LandingPage() {
       </section>
 
       {/* 3. How it works */}
-      <section id="comment-ca-marche" className="scroll-mt-20 bg-gradient-to-b from-white via-blue-50/60 to-white">
+      <section
+        id="comment-ca-marche"
+        className="scroll-mt-20 bg-gradient-to-b from-white via-blue-50/60 to-white"
+      >
         <div className="mx-auto max-w-6xl px-6 py-24">
           <Reveal>
             <header className="mx-auto max-w-2xl text-center">
@@ -470,7 +479,10 @@ export default async function LandingPage() {
                     >
                       <step.icon className="size-5 text-white" aria-hidden />
                     </span>
-                    <span aria-hidden className="font-display text-5xl font-extrabold text-slate-200">
+                    <span
+                      aria-hidden
+                      className="font-display text-5xl font-extrabold text-slate-200"
+                    >
                       {step.number}
                     </span>
                   </div>
@@ -513,7 +525,8 @@ export default async function LandingPage() {
                 Fonctionnalités
               </span>
               <h2 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-                Tout ce qu&apos;il vous faut, <span className="text-blue-600">rien de superflu</span>
+                Tout ce qu&apos;il vous faut,{" "}
+                <span className="text-blue-600">rien de superflu</span>
               </h2>
               <p className="mt-4 text-lg text-slate-500">
                 Conçu pour être efficace dès la première utilisation — sans apprentissage, sans
@@ -526,7 +539,9 @@ export default async function LandingPage() {
             {FEATURES.map((feature, index) => (
               <Reveal key={feature.title} delay={(index % 3) * 120}>
                 <li className="h-full rounded-2xl border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
-                  <span className={`flex size-11 items-center justify-center rounded-xl ${feature.chip}`}>
+                  <span
+                    className={`flex size-11 items-center justify-center rounded-xl ${feature.chip}`}
+                  >
                     <feature.icon className="size-5" aria-hidden />
                   </span>
                   <h3 className="mt-5 text-base font-bold text-slate-900">{feature.title}</h3>
@@ -634,7 +649,10 @@ export default async function LandingPage() {
                       </Link>
                       <ul className="mt-7 space-y-3">
                         {meta.features(pack.credits).map((feature) => (
-                          <li key={feature} className="flex items-center gap-2.5 text-sm text-slate-600">
+                          <li
+                            key={feature}
+                            className="flex items-center gap-2.5 text-sm text-slate-600"
+                          >
                             <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
                               <Check className="size-3" aria-hidden />
                             </span>
@@ -682,9 +700,13 @@ export default async function LandingPage() {
               <Reveal key={testimonial.name} delay={index * 100}>
                 <li className="h-full">
                   <figure className="flex h-full flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
-                    <div className="flex gap-0.5" aria-label="5 étoiles sur 5">
+                    <div role="img" className="flex gap-0.5" aria-label="5 étoiles sur 5">
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className="size-3.5 fill-amber-400 text-amber-400" aria-hidden />
+                        <Star
+                          key={i}
+                          className="size-3.5 fill-amber-400 text-amber-400"
+                          aria-hidden
+                        />
                       ))}
                     </div>
                     <blockquote className="mt-4 flex-1 text-[15px] leading-relaxed text-slate-600">
@@ -745,7 +767,9 @@ export default async function LandingPage() {
         <div
           aria-hidden
           className="orb left-1/3 top-1/3 size-[420px] [animation-duration:7s]"
-          style={{ background: "radial-gradient(circle, rgba(96,165,250,0.12) 0%, transparent 70%)" }}
+          style={{
+            background: "radial-gradient(circle, rgba(96,165,250,0.12) 0%, transparent 70%)",
+          }}
         />
 
         <div className="relative mx-auto max-w-6xl px-6 py-28 text-center">
