@@ -10,7 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
+  # Lint + typecheck + unit tests with coverage: fast, no external services needed.
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,29 +21,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx biome ci .
-
-  typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx prisma generate
       - run: npx tsc --noEmit
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx prisma generate
       - run: npx vitest run --coverage
       - uses: actions/upload-artifact@v4
         if: always()
@@ -64,11 +43,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx prisma generate
       - run: npx next build
 
+  # Secrets, dependency vulnerabilities, OWASP static analysis and CodeQL, in one job.
   security:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -90,3 +72,7 @@ jobs:
         run: |
           pipx install semgrep
           semgrep scan --config p/owasp-top-ten --config p/secrets --error --exclude node_modules
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3
