@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash, randomInt } from "crypto";
+import { createHash, randomBytes, randomInt } from "crypto";
 import { db } from "@/lib/db";
 import { isMailerConfigured, sendVerificationCodeEmail } from "@/lib/mailer";
 
@@ -59,4 +59,36 @@ export async function verifyCode(userId: string, code: string): Promise<VerifyRe
     db.emailVerification.delete({ where: { userId } }),
   ]);
   return "ok";
+}
+
+// ---- One-time sign-in token: logs the user straight in after OTP success ----
+
+const SIGNIN_TOKEN_TTL_MS = 5 * 60 * 1000;
+const signinIdentifier = (email: string) => `otp-signin:${email}`;
+
+/** Issues a short-lived single-use token consumed by the "otp-signin" provider. */
+export async function createSigninToken(email: string): Promise<string> {
+  const token = randomBytes(32).toString("hex");
+  await db.verificationToken.deleteMany({ where: { identifier: signinIdentifier(email) } });
+  await db.verificationToken.create({
+    data: {
+      identifier: signinIdentifier(email),
+      token: hashCode(token),
+      expires: new Date(Date.now() + SIGNIN_TOKEN_TTL_MS),
+    },
+  });
+  return token;
+}
+
+/** Validates and destroys a sign-in token; returns the verified user or null. */
+export async function consumeSigninToken(email: string, token: string) {
+  const identifier = signinIdentifier(email);
+  const record = await db.verificationToken.findFirst({
+    where: { identifier, token: hashCode(token) },
+  });
+  if (!record) return null;
+  await db.verificationToken.deleteMany({ where: { identifier } });
+  if (record.expires.getTime() < Date.now()) return null;
+  const user = await db.user.findUnique({ where: { email } });
+  return user?.emailVerified ? user : null;
 }
