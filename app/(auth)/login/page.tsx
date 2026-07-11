@@ -1,0 +1,161 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Mail, TerminalSquare } from "lucide-react";
+import { auth, signIn } from "@/lib/auth";
+import { VeyalaLogo } from "@/components/landing/logo";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+
+export const metadata: Metadata = { title: "Connexion" };
+
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"
+      />
+    </svg>
+  );
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: { callbackUrl?: string; error?: string };
+}) {
+  const session = await auth();
+  if (session?.user) redirect("/dashboard");
+
+  const callbackUrl = searchParams.callbackUrl ?? "/dashboard";
+  const hasGoogle = !!process.env.GOOGLE_CLIENT_ID;
+  const hasEmail = !!process.env.EMAIL_SERVER;
+  const hasDevLogin = process.env.NODE_ENV !== "production";
+
+  return (
+    <main className="bg-aurora relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      <div
+        aria-hidden
+        className="orb -top-32 left-[-6%] size-[480px] [animation-duration:9s]"
+        style={{ background: "radial-gradient(circle, rgba(37,99,235,0.14) 0%, transparent 70%)" }}
+      />
+      <div
+        aria-hidden
+        className="orb -bottom-24 right-[-8%] size-[420px] [animation-duration:7s]"
+        style={{ background: "radial-gradient(circle, rgba(96,165,250,0.12) 0%, transparent 70%)" }}
+      />
+      <Card className="relative w-full max-w-md rounded-3xl border-slate-100 shadow-xl shadow-blue-900/5">
+        <CardHeader className="items-center text-center">
+          <Link href="/" className="mb-2" aria-label="Veyala — accueil">
+            <VeyalaLogo />
+          </Link>
+          <CardTitle className="font-display text-2xl font-extrabold tracking-tight">
+            Connexion
+          </CardTitle>
+          <CardDescription>
+            Accédez à votre espace pour générer des CV sur mesure.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {searchParams.error ? (
+            <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              La connexion a échoué. Réessayez ou utilisez une autre méthode.
+            </p>
+          ) : null}
+
+          {hasGoogle ? (
+            <form
+              action={async () => {
+                "use server";
+                await signIn("google", { redirectTo: callbackUrl });
+              }}
+            >
+              <Button variant="outline" className="w-full" type="submit">
+                <GoogleIcon />
+                Continuer avec Google
+              </Button>
+            </form>
+          ) : null}
+
+          {hasEmail ? (
+            <>
+              {hasGoogle ? (
+                <div className="flex items-center gap-3">
+                  <Separator className="flex-1" />
+                  <span className="text-xs uppercase text-muted-foreground">ou</span>
+                  <Separator className="flex-1" />
+                </div>
+              ) : null}
+              <form
+                className="space-y-3"
+                action={async (formData: FormData) => {
+                  "use server";
+                  await signIn("nodemailer", {
+                    email: formData.get("email"),
+                    redirectTo: callbackUrl,
+                  });
+                }}
+              >
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Adresse email</Label>
+                  <Input id="email" name="email" type="email" required placeholder="vous@exemple.fr" />
+                </div>
+                <Button type="submit" variant="gradient" className="w-full">
+                  <Mail />
+                  Recevoir un lien magique
+                </Button>
+              </form>
+            </>
+          ) : null}
+
+          {hasDevLogin ? (
+            <form
+              className="space-y-3 rounded-md border border-dashed p-3"
+              action={async (formData: FormData) => {
+                "use server";
+                await signIn("dev-login", {
+                  email: formData.get("email"),
+                  redirectTo: callbackUrl,
+                });
+              }}
+            >
+              <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                <TerminalSquare className="size-3.5" aria-hidden />
+                Mode développement : connexion directe sans email.
+              </p>
+              <div className="space-y-1.5">
+                <Label htmlFor="dev-email">Email (dev)</Label>
+                <Input id="dev-email" name="email" type="email" required placeholder="dev@local.test" />
+              </div>
+              <Button type="submit" variant="secondary" className="w-full">
+                Connexion dev
+              </Button>
+            </form>
+          ) : null}
+
+          <p className="text-center text-xs text-muted-foreground">
+            En vous connectant, vous acceptez nos{" "}
+            <Link href="/cgu" className="underline">
+              CGU
+            </Link>{" "}
+            et notre{" "}
+            <Link href="/confidentialite" className="underline">
+              politique de confidentialité
+            </Link>
+            .
+          </p>
+        </CardContent>
+      </Card>
+    </main>
+  );
+}
