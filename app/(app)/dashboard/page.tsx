@@ -5,13 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getBalance } from "@/lib/credits";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
@@ -52,8 +46,8 @@ export default async function DashboardPage() {
             <FileText className="size-10 text-muted-foreground" aria-hidden />
             <CardTitle>Aucun CV généré pour le moment</CardTitle>
             <CardDescription>
-              Importez d&apos;abord votre CV de base, puis collez une offre d&apos;emploi
-              pour obtenir un CV sur mesure.
+              Importez d&apos;abord votre CV de base, puis collez une offre d&apos;emploi pour
+              obtenir un CV sur mesure.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center gap-3 pb-8">
@@ -74,9 +68,7 @@ export default async function DashboardPage() {
                   <CardTitle className="line-clamp-2 text-base">{cv.jobTitle}</CardTitle>
                   <CardDescription>
                     {cv.template.name} ·{" "}
-                    {new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(
-                      cv.createdAt
-                    )}
+                    {new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(cv.createdAt)}
                   </CardDescription>
                 </CardHeader>
               </Card>

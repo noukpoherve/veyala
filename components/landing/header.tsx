@@ -64,7 +64,10 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
             className="group inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/25 transition-bounce hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30"
           >
             {isAuthenticated ? "Mon espace" : "Générer mon CV"}
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+            <ArrowRight
+              className="size-4 transition-transform group-hover:translate-x-0.5"
+              aria-hidden
+            />
           </Link>
         </div>
 
@@ -75,12 +78,19 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
           aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
           onClick={() => setMenuOpen((open) => !open)}
         >
-          {menuOpen ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
+          {menuOpen ? (
+            <X className="size-5" aria-hidden />
+          ) : (
+            <Menu className="size-5" aria-hidden />
+          )}
         </button>
       </div>
 
       {menuOpen ? (
-        <nav aria-label="Navigation mobile" className="border-t border-slate-100 bg-white/95 px-6 py-4 md:hidden">
+        <nav
+          aria-label="Navigation mobile"
+          className="border-t border-slate-100 bg-white/95 px-6 py-4 md:hidden"
+        >
           <ul className="space-y-3 text-sm font-medium text-slate-700">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>

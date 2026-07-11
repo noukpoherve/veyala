@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   }
 
   const pack = await db.pack.findUnique({ where: { id: parsed.data.packId } });
-  if (!pack || !pack.active) {
+  if (!pack?.active) {
     return NextResponse.json({ error: "Ce pack n'est plus disponible." }, { status: 404 });
   }
 

@@ -77,7 +77,9 @@ export function FaqAccordion() {
               )}
             >
               <div className="overflow-hidden">
-                <p className="px-6 pb-5 text-[15px] leading-relaxed text-slate-500">{item.answer}</p>
+                <p className="px-6 pb-5 text-[15px] leading-relaxed text-slate-500">
+                  {item.answer}
+                </p>
               </div>
             </div>
           </div>

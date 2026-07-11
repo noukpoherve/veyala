@@ -115,7 +115,12 @@ if (process.env.NODE_ENV !== "production") {
   );
 }
 
-const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
+const {
+  handlers,
+  auth: uncachedAuth,
+  signIn,
+  signOut,
+} = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(db),
   providers,

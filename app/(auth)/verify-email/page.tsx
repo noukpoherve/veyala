@@ -10,13 +10,7 @@ import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Vérifiez votre email" };
 
@@ -75,7 +69,9 @@ export default async function VerifyEmailPage({
     const account = await db.user.findUnique({ where: { email } });
     if (!account) redirect("/register");
     const sent = await sendVerificationCode(account.id, email);
-    redirect(`/verify-email?email=${encodeURIComponent(email)}&status=${sent ? "resent" : "cooldown"}`);
+    redirect(
+      `/verify-email?email=${encodeURIComponent(email)}&status=${sent ? "resent" : "cooldown"}`
+    );
   }
 
   return (

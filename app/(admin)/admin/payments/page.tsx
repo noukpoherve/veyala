@@ -11,11 +11,12 @@ const euros = (cents: number) =>
 const dateFr = (d: Date) =>
   new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(d);
 
-const STATUS: Record<string, { label: string; variant: "success" | "secondary" | "destructive" }> = {
-  PAID: { label: "Payé", variant: "success" },
-  PENDING: { label: "En attente", variant: "secondary" },
-  FAILED: { label: "Échoué", variant: "destructive" },
-};
+const STATUS: Record<string, { label: string; variant: "success" | "secondary" | "destructive" }> =
+  {
+    PAID: { label: "Payé", variant: "success" },
+    PENDING: { label: "En attente", variant: "secondary" },
+    FAILED: { label: "Échoué", variant: "destructive" },
+  };
 
 export default async function AdminPaymentsPage() {
   const payments = await db.payment.findMany({
@@ -32,12 +33,24 @@ export default async function AdminPaymentsPage() {
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left">
             <tr>
-              <th scope="col" className="p-3 font-medium">Date</th>
-              <th scope="col" className="p-3 font-medium">Utilisateur</th>
-              <th scope="col" className="p-3 font-medium">Montant</th>
-              <th scope="col" className="p-3 font-medium">Crédits</th>
-              <th scope="col" className="p-3 font-medium">Statut</th>
-              <th scope="col" className="p-3 font-medium">Stripe</th>
+              <th scope="col" className="p-3 font-medium">
+                Date
+              </th>
+              <th scope="col" className="p-3 font-medium">
+                Utilisateur
+              </th>
+              <th scope="col" className="p-3 font-medium">
+                Montant
+              </th>
+              <th scope="col" className="p-3 font-medium">
+                Crédits
+              </th>
+              <th scope="col" className="p-3 font-medium">
+                Statut
+              </th>
+              <th scope="col" className="p-3 font-medium">
+                Stripe
+              </th>
             </tr>
           </thead>
           <tbody>

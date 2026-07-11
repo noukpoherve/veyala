@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash, randomBytes, randomInt } from "crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 import { db } from "@/lib/db";
 import { isMailerConfigured, sendVerificationCodeEmail } from "@/lib/mailer";
 

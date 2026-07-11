@@ -98,14 +98,19 @@ export async function tailorCV(params: TailorParams): Promise<TailorResult> {
   // Safety net: never let the model drop or invent structural data.
   const cv: CVData = {
     ...parsed.data,
-    identity: { ...parsed.data.identity, fullName: baseCV.identity.fullName, photoUrl: baseCV.identity.photoUrl },
+    identity: {
+      ...parsed.data.identity,
+      fullName: baseCV.identity.fullName,
+      photoUrl: baseCV.identity.photoUrl,
+    },
     contact: baseCV.contact,
     education: baseCV.education,
     languages: baseCV.languages,
     interests: baseCV.interests,
-    experiences: parsed.data.experiences.length === baseCV.experiences.length
-      ? parsed.data.experiences
-      : baseCV.experiences,
+    experiences:
+      parsed.data.experiences.length === baseCV.experiences.length
+        ? parsed.data.experiences
+        : baseCV.experiences,
     skills: parsed.data.skills.length === baseCV.skills.length ? parsed.data.skills : baseCV.skills,
   };
 

@@ -2,16 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  Check,
-  ChevronsUpDown,
-  LogOut,
-  Mail,
-  Monitor,
-  Moon,
-  Sun,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown, LogOut, Mail, Monitor, Moon, Sun } from "lucide-react";
 
 type Theme = "light" | "dark" | "system";
 const THEME_KEY = "veyala:theme";
@@ -29,7 +20,15 @@ function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle("dark", dark);
 }
 
-function Avatar({ name, email, image }: { name: string | null; email: string; image: string | null }) {
+function Avatar({
+  name,
+  email,
+  image,
+}: {
+  name: string | null;
+  email: string;
+  image: string | null;
+}) {
   if (image) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={image} alt="" className="size-9 shrink-0 rounded-full object-cover" />;

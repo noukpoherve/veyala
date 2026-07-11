@@ -12,11 +12,26 @@ type Template = {
 };
 
 const TEMPLATES: Template[] = [
-  { name: "Modern Blue", tag: "Populaire", layout: "header", gradient: "from-blue-600 to-blue-500" },
+  {
+    name: "Modern Blue",
+    tag: "Populaire",
+    layout: "header",
+    gradient: "from-blue-600 to-blue-500",
+  },
   { name: "Classic Noir", layout: "header", gradient: "from-slate-800 to-slate-600" },
   { name: "Sky Pro", tag: "Nouveau", layout: "sidebar", gradient: "from-sky-400 to-blue-600" },
-  { name: "Académique", tag: "Campus France", layout: "header", gradient: "from-blue-900 to-slate-900" },
-  { name: "International", tag: "Canada/Québec", layout: "header", gradient: "from-sky-400 to-sky-500" },
+  {
+    name: "Académique",
+    tag: "Campus France",
+    layout: "header",
+    gradient: "from-blue-900 to-slate-900",
+  },
+  {
+    name: "International",
+    tag: "Canada/Québec",
+    layout: "header",
+    gradient: "from-sky-400 to-sky-500",
+  },
   { name: "Compact Executive", layout: "sidebar", gradient: "from-indigo-900 to-blue-800" },
 ];
 
@@ -41,7 +56,12 @@ const TemplateCard = memo(function TemplateCard({ template }: { template: Templa
           </div>
         ) : (
           <div className="flex h-full">
-            <div className={cn("flex w-12 flex-col items-center gap-1.5 bg-gradient-to-b p-2", template.gradient)}>
+            <div
+              className={cn(
+                "flex w-12 flex-col items-center gap-1.5 bg-gradient-to-b p-2",
+                template.gradient
+              )}
+            >
               <span className="mb-1 block size-6 rounded-full bg-white/30" />
               <span className="block h-1 w-7 rounded-full bg-white/50" />
               <span className="block h-1 w-7 rounded-full bg-white/35" />
@@ -59,7 +79,9 @@ const TemplateCard = memo(function TemplateCard({ template }: { template: Templa
       </div>
       <footer className="border-t border-slate-100 px-3 py-2.5">
         <h3 className="text-sm font-semibold text-slate-900">{template.name}</h3>
-        {template.tag ? <p className="mt-0.5 text-xs font-semibold text-blue-600">{template.tag}</p> : null}
+        {template.tag ? (
+          <p className="mt-0.5 text-xs font-semibold text-blue-600">{template.tag}</p>
+        ) : null}
       </footer>
     </article>
   );
@@ -112,6 +134,7 @@ export function TemplatesCarousel({ heading }: { heading: ReactNode }) {
         </div>
       </div>
 
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: hover only pauses the auto-scroll, a non-essential enhancement */}
       <div
         ref={trackRef}
         onMouseEnter={() => {

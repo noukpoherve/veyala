@@ -11,11 +11,9 @@ const euros = (cents: number) =>
 function BarList({
   title,
   rows,
-  format,
 }: {
   title: string;
   rows: { label: string; value: number; display: string }[];
-  format?: never;
 }) {
   const max = Math.max(...rows.map((r) => r.value), 1);
   return (
@@ -31,7 +29,10 @@ function BarList({
             <tbody>
               {rows.map((row) => (
                 <tr key={row.label}>
-                  <th scope="row" className="w-32 py-1.5 pr-3 text-left font-normal text-muted-foreground">
+                  <th
+                    scope="row"
+                    className="w-32 py-1.5 pr-3 text-left font-normal text-muted-foreground"
+                  >
                     {row.label}
                   </th>
                   <td className="py-1.5">

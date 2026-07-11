@@ -18,9 +18,9 @@ export default function ConfidentialitePage() {
       <section>
         <h2>Finalités et bases légales</h2>
         <p>
-          Vos données servent exclusivement à fournir le service (exécution du contrat) :
-          adapter votre CV aux offres, générer les exports et gérer vos crédits. Aucune
-          revente de données, aucune publicité.
+          Vos données servent exclusivement à fournir le service (exécution du contrat) : adapter
+          votre CV aux offres, générer les exports et gérer vos crédits. Aucune revente de données,
+          aucune publicité.
         </p>
       </section>
       <section>
@@ -34,17 +34,17 @@ export default function ConfidentialitePage() {
       <section>
         <h2>Durées de conservation</h2>
         <p>
-          Vos données sont conservées tant que votre compte est actif, puis supprimées dans
-          les 30 jours suivant la suppression du compte.
+          Vos données sont conservées tant que votre compte est actif, puis supprimées dans les 30
+          jours suivant la suppression du compte.
         </p>
       </section>
       <section>
         <h2>Vos droits (RGPD)</h2>
         <p>
-          Vous disposez des droits d&apos;accès, de rectification, de portabilité,
-          d&apos;opposition et d&apos;effacement. La suppression de compte et de toutes les
-          données associées est disponible sur demande à contact@cvgen.example et depuis
-          votre espace. Vous pouvez saisir la CNIL pour toute réclamation.
+          Vous disposez des droits d&apos;accès, de rectification, de portabilité, d&apos;opposition
+          et d&apos;effacement. La suppression de compte et de toutes les données associées est
+          disponible sur demande à contact@cvgen.example et depuis votre espace. Vous pouvez saisir
+          la CNIL pour toute réclamation.
         </p>
       </section>
     </LegalArticle>

@@ -18,7 +18,9 @@ import type { Template, TemplateStatus } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Templates" };
 
-const STATUS_BADGES: Partial<Record<TemplateStatus, { label: string; variant: "secondary" | "success" | "destructive" }>> = {
+const STATUS_BADGES: Partial<
+  Record<TemplateStatus, { label: string; variant: "secondary" | "success" | "destructive" }>
+> = {
   PENDING: { label: "En validation", variant: "secondary" },
   APPROVED: { label: "Approuvé", variant: "success" },
   REJECTED: { label: "Rejeté", variant: "destructive" },
@@ -58,8 +60,7 @@ export default async function TemplatesPage() {
       <header className="space-y-1">
         <h1 className="font-display text-2xl font-bold">Templates</h1>
         <p className="text-sm text-muted-foreground">
-          Choisissez un template public ou proposez le vôtre à partir d&apos;une image de
-          référence.
+          Choisissez un template public ou proposez le vôtre à partir d&apos;une image de référence.
         </p>
       </header>
 
@@ -95,8 +96,7 @@ export default async function TemplatesPage() {
             </CardTitle>
             <CardDescription>
               Les doublons sont détectés automatiquement ; les nouveaux templates passent en
-              validation avant d&apos;être publics, mais restent utilisables par vous
-              immédiatement.
+              validation avant d&apos;être publics, mais restent utilisables par vous immédiatement.
             </CardDescription>
           </CardHeader>
           <CardContent>

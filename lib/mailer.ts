@@ -47,11 +47,7 @@ export async function sendSupportNotificationEmail(params: {
 }
 
 /** Sends the admin's reply to the user by email. */
-export async function sendSupportReplyEmail(params: {
-  to: string;
-  subject: string;
-  body: string;
-}) {
+export async function sendSupportReplyEmail(params: { to: string; subject: string; body: string }) {
   await transport().sendMail({
     from: process.env.EMAIL_FROM,
     to: params.to,

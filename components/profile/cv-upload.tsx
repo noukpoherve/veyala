@@ -54,7 +54,9 @@ export function CvUpload({ hasProfile }: { hasProfile: boolean }) {
         ) : (
           <>
             <UploadCloud />
-            {hasProfile ? "Réimporter un CV (remplace les données)" : "Importer mon CV (PDF ou DOCX)"}
+            {hasProfile
+              ? "Réimporter un CV (remplace les données)"
+              : "Importer mon CV (PDF ou DOCX)"}
           </>
         )}
       </Button>

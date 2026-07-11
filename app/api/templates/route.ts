@@ -35,13 +35,19 @@ export async function POST(req: Request) {
   const image = formData?.get("image");
 
   if (name.length < 3 || name.length > 60) {
-    return NextResponse.json({ error: "Nom du template requis (3 à 60 caractères)." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Nom du template requis (3 à 60 caractères)." },
+      { status: 400 }
+    );
   }
   if (!(image instanceof File)) {
     return NextResponse.json({ error: "Image de référence requise." }, { status: 400 });
   }
   if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
-    return NextResponse.json({ error: "Format d'image non supporté : PNG, JPEG ou WebP." }, { status: 415 });
+    return NextResponse.json(
+      { error: "Format d'image non supporté : PNG, JPEG ou WebP." },
+      { status: 415 }
+    );
   }
   if (image.size > MAX_IMAGE_BYTES) {
     return NextResponse.json({ error: "Image trop volumineuse (5 Mo max)." }, { status: 413 });

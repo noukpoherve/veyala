@@ -9,13 +9,7 @@ import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 export const metadata: Metadata = { title: "Connexion" };
@@ -90,9 +84,7 @@ export default async function LoginPage({
           <CardTitle className="font-display text-2xl font-extrabold tracking-tight">
             Connexion
           </CardTitle>
-          <CardDescription>
-            Accédez à votre espace pour générer des CV sur mesure.
-          </CardDescription>
+          <CardDescription>Accédez à votre espace pour générer des CV sur mesure.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {searchParams.verified ? (
@@ -205,7 +197,13 @@ export default async function LoginPage({
               </p>
               <div className="space-y-1.5">
                 <Label htmlFor="dev-email">Email (dev)</Label>
-                <Input id="dev-email" name="email" type="email" required placeholder="dev@local.test" />
+                <Input
+                  id="dev-email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="dev@local.test"
+                />
               </div>
               <Button type="submit" variant="secondary" className="w-full">
                 Connexion dev
