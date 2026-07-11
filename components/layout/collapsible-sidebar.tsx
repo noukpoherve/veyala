@@ -27,7 +27,7 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
     <>
       <aside
         className={cn(
-          "hidden h-full flex-col overflow-hidden border-r border-slate-100 bg-white transition-[width] duration-300 ease-in-out md:flex",
+          "hidden h-full flex-col overflow-hidden border-r border-border bg-card transition-[width] duration-300 ease-in-out md:flex",
           open ? "w-64" : "w-0 border-r-0"
         )}
         aria-hidden={!open}
@@ -42,7 +42,7 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
         aria-label={open ? "Masquer la navigation" : "Afficher la navigation"}
         aria-expanded={open}
         className={cn(
-          "fixed bottom-6 z-40 hidden size-11 items-center justify-center rounded-full bg-white text-blue-600 shadow-lg shadow-blue-900/10 ring-1 ring-slate-900/5 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-xl md:flex",
+          "fixed bottom-6 z-40 hidden size-11 items-center justify-center rounded-full bg-card text-blue-600 shadow-lg shadow-blue-900/10 ring-1 ring-border transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-accent hover:shadow-xl md:flex",
           open ? "left-[17.25rem]" : "left-4"
         )}
       >
