@@ -6,7 +6,9 @@ import { memo, useState } from "react";
 import {
   ChevronDown,
   CreditCard,
+  Inbox,
   LayoutDashboard,
+  LifeBuoy,
   Palette,
   Settings,
   ShieldCheck,
@@ -23,10 +25,12 @@ const MAIN_ITEMS = [
   { href: "/profile", label: "Mon CV de base", icon: UserRound },
   { href: "/templates", label: "Templates", icon: Palette },
   { href: "/billing", label: "Crédits & factures", icon: Wallet },
+  { href: "/support", label: "Support", icon: LifeBuoy },
 ];
 
 const ADMIN_ITEMS = [
   { href: "/admin", label: "Statistiques", icon: LayoutDashboard },
+  { href: "/admin/inbox", label: "Boîte de réception", icon: Inbox },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },
   { href: "/admin/templates", label: "Validation templates", icon: Palette },
   { href: "/admin/payments", label: "Paiements", icon: CreditCard },
