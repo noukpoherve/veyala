@@ -3,8 +3,14 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Runtime queries: pooled connection (IPv4-compatible, required for
+  // serverless — Supabase's direct host is IPv6-only on the free tier).
+  url       = env("DATABASE_URL")
+  // `prisma migrate` only: session-mode pooled connection (also IPv4,
+  // supports the advisory locks migrations need — the transaction pooler
+  // used by DATABASE_URL does not).
+  directUrl = env("DIRECT_URL")
 }
 
 // ---------- Auth (Auth.js v5) ----------

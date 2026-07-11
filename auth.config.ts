@@ -5,6 +5,9 @@ import type { NextAuthConfig } from "next-auth";
  * the (edge) middleware. The full config (Prisma, nodemailer) lives in lib/auth.ts.
  */
 export const authConfig = {
+  // Required behind Vercel's proxy / custom domains (veyala.fr): without it
+  // Auth.js rejects the request host as untrusted (errors.authjs.dev#untrustedhost).
+  trustHost: true,
   providers: [],
   session: { strategy: "jwt" },
   pages: { signIn: "/login", verifyRequest: "/login/verifie" },
