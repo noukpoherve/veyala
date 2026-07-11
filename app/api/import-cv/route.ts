@@ -57,6 +57,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, data });
   } catch (e) {
+    console.error("[import-cv]", e);
     const message = e instanceof Error ? e.message : "Erreur inconnue.";
     const status = e instanceof LLMError ? 502 : 422;
     return NextResponse.json({ error: message }, { status });
