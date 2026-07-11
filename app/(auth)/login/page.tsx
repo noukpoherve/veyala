@@ -38,9 +38,12 @@ export default async function LoginPage({
   if (session?.user) redirect("/dashboard");
 
   const callbackUrl = searchParams.callbackUrl ?? "/dashboard";
-  const hasGoogle = !!process.env.GOOGLE_CLIENT_ID;
-  const hasEmail = !!process.env.EMAIL_SERVER;
+  // Mirror the provider registration conditions in lib/auth.ts exactly,
+  // otherwise a half-configured provider shows a button that cannot work.
+  const hasGoogle = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const hasEmail = !!(process.env.EMAIL_SERVER && process.env.EMAIL_FROM);
   const hasDevLogin = process.env.NODE_ENV !== "production";
+  const hasAnyProvider = hasGoogle || hasEmail || hasDevLogin;
 
   return (
     <main className="bg-aurora relative flex min-h-screen items-center justify-center overflow-hidden p-4">
@@ -71,6 +74,21 @@ export default async function LoginPage({
             <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               La connexion a échoué. Réessayez ou utilisez une autre méthode.
             </p>
+          ) : null}
+
+          {!hasAnyProvider ? (
+            <div
+              role="alert"
+              className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+            >
+              <p className="font-semibold">Aucune méthode de connexion configurée.</p>
+              <p>
+                Le serveur ne voit ni <code>GOOGLE_CLIENT_ID</code>/<code>GOOGLE_CLIENT_SECRET</code>{" "}
+                ni <code>EMAIL_SERVER</code>/<code>EMAIL_FROM</code>. Ajoutez ces variables
+                d&apos;environnement (sur Vercel : Settings → Environment Variables, environnement{" "}
+                <strong>Production</strong>), puis redéployez.
+              </p>
+            </div>
           ) : null}
 
           {hasGoogle ? (
