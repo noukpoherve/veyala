@@ -9,7 +9,7 @@ export default function MentionsLegalesPage() {
       <section>
         <h2>Éditeur du site</h2>
         <p>
-          CVGen est édité par [Raison sociale à compléter], [forme juridique], immatriculée
+          Veyala est édité par [Raison sociale à compléter], [forme juridique], immatriculée
           sous le numéro [SIREN], dont le siège social est situé [adresse]. Directeur de la
           publication : [nom]. Contact : contact@cvgen.example.
         </p>

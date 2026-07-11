@@ -1,3 +1,4 @@
+import { cache } from "react";
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
@@ -69,7 +70,7 @@ if (process.env.NODE_ENV !== "production") {
   );
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(db),
   providers,
@@ -83,3 +84,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+/**
+ * Session getter memoized per request (React cache): layout, pages and
+ * helpers can all call auth() without re-decoding the session each time.
+ */
+const auth = cache(uncachedAuth);
+
+export { handlers, auth, signIn, signOut };

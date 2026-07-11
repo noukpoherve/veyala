@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
+import { PUBLIC_TEMPLATES_TAG } from "@/lib/cached";
 import { db } from "@/lib/db";
 
 const reviewSchema = z.object({
@@ -24,6 +25,7 @@ export async function reviewTemplate(formData: FormData) {
     where: { id: templateId },
     data: { status: decision, isPublic: decision === "APPROVED" },
   });
+  revalidateTag(PUBLIC_TEMPLATES_TAG);
   revalidatePath("/admin/templates");
   revalidatePath("/templates");
 }

@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getPublicTemplates } from "@/lib/cached";
 import { parseTemplateDefinition } from "@/lib/templates/definition";
 import { TemplateSwatch } from "@/components/templates/template-swatch";
-import { TemplateImportForm } from "@/components/templates/template-import-form";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Import form (upload + vision extraction UI) is heavy and below the fold: lazy-loaded.
+const TemplateImportForm = dynamic(
+  () => import("@/components/templates/template-import-form").then((mod) => mod.TemplateImportForm),
+  { loading: () => <Skeleton className="h-48 rounded-2xl" /> }
+);
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Template, TemplateStatus } from "@prisma/client";
@@ -41,10 +49,7 @@ export default async function TemplatesPage() {
   const userId = session!.user.id;
 
   const [publicTemplates, ownTemplates] = await Promise.all([
-    db.template.findMany({
-      where: { isPublic: true, status: "APPROVED" },
-      orderBy: { createdAt: "asc" },
-    }),
+    getPublicTemplates(),
     db.template.findMany({ where: { ownerId: userId }, orderBy: { createdAt: "desc" } }),
   ]);
 

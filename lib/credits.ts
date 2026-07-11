@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { CreditReason, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 
@@ -62,7 +63,8 @@ export async function creditCredits(
   });
 }
 
-export async function getBalance(userId: string) {
+/** Balance lookup memoized per request: shell + page can both call it, one query runs. */
+export const getBalance = cache(async (userId: string) => {
   const credits = await db.credits.findUnique({ where: { userId } });
   return credits?.balance ?? 0;
-}
+});

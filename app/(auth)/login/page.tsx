@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FileText, Mail, TerminalSquare } from "lucide-react";
+import { Mail, TerminalSquare } from "lucide-react";
 import { auth, signIn } from "@/lib/auth";
+import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,14 +43,25 @@ export default async function LoginPage({
   const hasDevLogin = process.env.NODE_ENV !== "production";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-md">
+    <main className="bg-aurora relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      <div
+        aria-hidden
+        className="orb -top-32 left-[-6%] size-[480px] [animation-duration:9s]"
+        style={{ background: "radial-gradient(circle, rgba(37,99,235,0.14) 0%, transparent 70%)" }}
+      />
+      <div
+        aria-hidden
+        className="orb -bottom-24 right-[-8%] size-[420px] [animation-duration:7s]"
+        style={{ background: "radial-gradient(circle, rgba(96,165,250,0.12) 0%, transparent 70%)" }}
+      />
+      <Card className="relative w-full max-w-md rounded-3xl border-slate-100 shadow-xl shadow-blue-900/5">
         <CardHeader className="items-center text-center">
-          <Link href="/" className="mb-2 flex items-center gap-2 font-display text-lg font-bold">
-            <FileText className="size-5 text-primary" aria-hidden />
-            CVGen
+          <Link href="/" className="mb-2" aria-label="Veyala — accueil">
+            <VeyalaLogo />
           </Link>
-          <CardTitle className="text-2xl">Connexion</CardTitle>
+          <CardTitle className="font-display text-2xl font-extrabold tracking-tight">
+            Connexion
+          </CardTitle>
           <CardDescription>
             Accédez à votre espace pour générer des CV sur mesure.
           </CardDescription>
