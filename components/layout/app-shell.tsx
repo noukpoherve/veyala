@@ -4,6 +4,7 @@ import { Coins, LogOut } from "lucide-react";
 import { auth, signOut } from "@/lib/auth";
 import { getBalance } from "@/lib/credits";
 import { SidebarNav } from "./sidebar-nav";
+import { CollapsibleSidebar } from "./collapsible-sidebar";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const balance = await getBalance(session.user.id);
 
   return (
-    <div className="flex min-h-screen bg-slate-50/60">
-      <aside className="hidden w-64 flex-col border-r border-slate-100 bg-white md:flex">
+    <div className="flex h-screen overflow-hidden bg-slate-50/60">
+      <CollapsibleSidebar>
         <Link href="/" className="border-b border-slate-100 p-4" aria-label="Veyala — accueil">
           <VeyalaLogo />
         </Link>
@@ -45,9 +46,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
           </form>
         </div>
-      </aside>
-      <div className="flex-1">
-        <header className="flex items-center justify-between border-b border-slate-100 bg-white p-4 md:hidden">
+      </CollapsibleSidebar>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <header className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white p-4 md:hidden">
           <Link href="/dashboard" aria-label="Veyala — tableau de bord">
             <VeyalaLogo />
           </Link>
@@ -56,7 +57,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             {balance}
           </Badge>
         </header>
-        <main className="p-6 md:p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 md:p-8">{children}</main>
       </div>
     </div>
   );
