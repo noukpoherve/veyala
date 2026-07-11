@@ -2,7 +2,8 @@
 
 | Variable | Rôle | Requis |
 | --- | --- | --- |
-| `DATABASE_URL` | Postgres (local : `127.0.0.1:55322` ; Vercel : URL poolée Supabase 6543) | oui |
+| `DATABASE_URL` | Postgres runtime — pooled/IPv4 (local : `127.0.0.1:55322` ; Vercel : **Transaction pooler** Supabase, port 6543, `?pgbouncer=true&connection_limit=1`) | oui |
+| `DIRECT_URL` | Postgres pour `prisma migrate` uniquement — pooled/IPv4 mais hors mode transaction (Vercel : **Session pooler** Supabase, port 5432 via l'hôte `pooler.supabase.com`, PAS `db.<ref>.supabase.co`) | oui |
 | `NEXTAUTH_URL` / `NEXTAUTH_SECRET` | Auth.js (URL publique + secret de session) | oui |
 | `ENCRYPTION_KEY` | Chiffrement des réglages admin (32 octets base64) | oui |
 | `ADMIN_EMAILS` | Emails promus ADMIN + destinataires des notifications support | oui |
