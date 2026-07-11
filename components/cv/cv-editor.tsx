@@ -141,7 +141,11 @@ export function CvEditor({
         <section aria-label="Aperçu en direct" className="lg:sticky lg:top-4 lg:self-start">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div role="tablist" aria-label="Document affiché" className="inline-flex rounded-md border p-0.5">
+              <div
+                role="tablist"
+                aria-label="Document affiché"
+                className="inline-flex rounded-md border p-0.5"
+              >
                 <button
                   type="button"
                   role="tab"
@@ -161,7 +165,9 @@ export function CvEditor({
                   aria-selected={tab === "letter"}
                   className={cn(
                     "flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium",
-                    tab === "letter" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                    tab === "letter"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground"
                   )}
                   onClick={() => setTab("letter")}
                 >
@@ -178,7 +184,9 @@ export function CvEditor({
                     title={t.name}
                     className={cn(
                       "w-14 cursor-pointer rounded-md border p-1 transition-colors",
-                      templateId === t.id ? "border-primary ring-2 ring-primary/30" : "hover:border-muted-foreground/40"
+                      templateId === t.id
+                        ? "border-primary ring-2 ring-primary/30"
+                        : "hover:border-muted-foreground/40"
                     )}
                   >
                     <input

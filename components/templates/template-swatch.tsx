@@ -6,8 +6,7 @@ export interface SwatchProps {
 
 /** Miniature layout preview built from a template definition's colors. */
 export function TemplateSwatch({ layout, colors, band }: SwatchProps) {
-  const gradient =
-    colors.length > 1 ? `linear-gradient(180deg, ${colors.join(", ")})` : colors[0];
+  const gradient = colors.length > 1 ? `linear-gradient(180deg, ${colors.join(", ")})` : colors[0];
   return (
     <span aria-hidden className="flex h-16 w-full overflow-hidden rounded-md border">
       {layout === "sidebar-left" ? (

@@ -32,7 +32,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Aucun fichier reçu." }, { status: 400 });
   }
   if (!ALLOWED_CV_TYPES[file.type]) {
-    return NextResponse.json({ error: "Format non supporté : PDF ou DOCX uniquement." }, { status: 415 });
+    return NextResponse.json(
+      { error: "Format non supporté : PDF ou DOCX uniquement." },
+      { status: 415 }
+    );
   }
   if (file.size > MAX_UPLOAD_BYTES) {
     return NextResponse.json({ error: "Fichier trop volumineux (8 Mo max)." }, { status: 413 });

@@ -86,7 +86,15 @@ const clarte: OfficialTemplate = {
     namePlacement: "main",
     datesStyle: "inline",
     sidebarSections: [],
-    mainSections: ["contact", "summary", "experience", "skills", "education", "languages", "interests"],
+    mainSections: [
+      "contact",
+      "summary",
+      "experience",
+      "skills",
+      "education",
+      "languages",
+      "interests",
+    ],
   },
 };
 

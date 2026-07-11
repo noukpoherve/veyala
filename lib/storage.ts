@@ -1,7 +1,7 @@
 import "server-only";
-import { mkdir, writeFile, readFile as fsReadFile } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
+import { mkdir, writeFile, readFile as fsReadFile } from "node:fs/promises";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
 
 /**
  * Configurable file storage (STORAGE_DRIVER):
@@ -52,7 +52,9 @@ async function s3Client() {
   const accessKeyId = process.env.S3_ACCESS_KEY_ID;
   const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
   if (!endpoint || !accessKeyId || !secretAccessKey) {
-    throw new Error("S3/R2 non configuré : S3_ENDPOINT, S3_ACCESS_KEY_ID et S3_SECRET_ACCESS_KEY requis.");
+    throw new Error(
+      "S3/R2 non configuré : S3_ENDPOINT, S3_ACCESS_KEY_ID et S3_SECRET_ACCESS_KEY requis."
+    );
   }
   const { S3Client } = await import("@aws-sdk/client-s3");
   return new S3Client({
@@ -100,7 +102,11 @@ function supabaseConfig() {
   const url = process.env.SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) throw new Error("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY manquants.");
-  return { url: url.replace(/\/$/, ""), serviceKey, bucket: process.env.SUPABASE_BUCKET || "cvgen" };
+  return {
+    url: url.replace(/\/$/, ""),
+    serviceKey,
+    bucket: process.env.SUPABASE_BUCKET || "cvgen",
+  };
 }
 
 async function saveSupabase(buffer: Buffer, key: string, contentType: string): Promise<StoredFile> {

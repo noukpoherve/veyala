@@ -120,7 +120,12 @@ export async function chat(params: ChatParams, config?: LLMConfig): Promise<stri
   throw lastError ?? new LLMError("Erreur LLM inconnue.");
 }
 
-function errorFromStatus(status: number, body: string, provider: string, headers?: Headers): LLMError {
+function errorFromStatus(
+  status: number,
+  body: string,
+  provider: string,
+  headers?: Headers
+): LLMError {
   if (status === 429) {
     // Groq/OpenAI put the suggested wait in Retry-After or in the message
     // ("Please try again in 7.66s").

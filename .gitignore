@@ -6,3 +6,6 @@ node_modules/
 /uploads
 *.tsbuildinfo
 /demo-output
+
+# test coverage
+coverage/

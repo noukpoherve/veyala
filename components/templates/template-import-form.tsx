@@ -40,14 +40,27 @@ export function TemplateImportForm() {
     <form onSubmit={onSubmit} className="space-y-4" aria-busy={submitting}>
       <div className="space-y-1.5">
         <Label htmlFor="template-name">Nom du template</Label>
-        <Input id="template-name" name="name" required minLength={3} maxLength={60} placeholder="Élégance corail" />
+        <Input
+          id="template-name"
+          name="name"
+          required
+          minLength={3}
+          maxLength={60}
+          placeholder="Élégance corail"
+        />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="template-image">Image de référence (PNG, JPEG ou WebP, 5 Mo max)</Label>
-        <Input id="template-image" name="image" type="file" required accept="image/png,image/jpeg,image/webp" />
+        <Input
+          id="template-image"
+          name="image"
+          type="file"
+          required
+          accept="image/png,image/jpeg,image/webp"
+        />
         <p className="text-xs text-muted-foreground">
-          Une capture ou photo du design de CV à reproduire : l&apos;IA en extrait les
-          couleurs, la mise en page et les sections.
+          Une capture ou photo du design de CV à reproduire : l&apos;IA en extrait les couleurs, la
+          mise en page et les sections.
         </p>
       </div>
       {feedback ? (

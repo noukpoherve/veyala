@@ -6,7 +6,9 @@ import { memo, useState } from "react";
 import {
   ChevronDown,
   CreditCard,
+  Inbox,
   LayoutDashboard,
+  LifeBuoy,
   Palette,
   Settings,
   ShieldCheck,
@@ -23,10 +25,12 @@ const MAIN_ITEMS = [
   { href: "/profile", label: "Mon CV de base", icon: UserRound },
   { href: "/templates", label: "Templates", icon: Palette },
   { href: "/billing", label: "Crédits & factures", icon: Wallet },
+  { href: "/support", label: "Support", icon: LifeBuoy },
 ];
 
 const ADMIN_ITEMS = [
   { href: "/admin", label: "Statistiques", icon: LayoutDashboard },
+  { href: "/admin/inbox", label: "Boîte de réception", icon: Inbox },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },
   { href: "/admin/templates", label: "Validation templates", icon: Palette },
   { href: "/admin/payments", label: "Paiements", icon: CreditCard },
@@ -71,10 +75,15 @@ export function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
   const [adminOpen, setAdminOpen] = useState(onAdminPage);
 
   const isActive = (href: string) =>
-    href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`);
+    href === "/admin"
+      ? pathname === "/admin"
+      : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <nav className="flex flex-1 flex-col gap-1 p-3" aria-label="Navigation principale">
+    <nav
+      className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
+      aria-label="Navigation principale"
+    >
       {MAIN_ITEMS.map((item) => (
         <NavLink key={item.href} {...item} active={isActive(item.href)} />
       ))}

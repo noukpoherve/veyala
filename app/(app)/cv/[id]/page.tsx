@@ -143,7 +143,10 @@ export default async function CvDetailPage({
       {letterHtml ? (
         <section aria-labelledby="letter-title" className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 id="letter-title" className="flex items-center gap-2 font-display text-lg font-semibold">
+            <h2
+              id="letter-title"
+              className="flex items-center gap-2 font-display text-lg font-semibold"
+            >
               <Mail className="size-5 text-primary" aria-hidden />
               Lettre de motivation
             </h2>
@@ -182,8 +185,8 @@ export default async function CvDetailPage({
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Ce CV a été généré avant l&apos;ajout des lettres de motivation. Régénérez-le
-              pour en obtenir une, ou rédigez-la dans l&apos;éditeur.
+              Ce CV a été généré avant l&apos;ajout des lettres de motivation. Régénérez-le pour en
+              obtenir une, ou rédigez-la dans l&apos;éditeur.
             </p>
           </CardContent>
         </Card>

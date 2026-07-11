@@ -1,5 +1,5 @@
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { cvSchema } from "../lib/cv-schema";
 import { OFFICIAL_TEMPLATES } from "../lib/templates/official";
 import { renderCVHtml } from "../lib/pdf/render-html";

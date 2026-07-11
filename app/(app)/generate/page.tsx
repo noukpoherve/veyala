@@ -43,8 +43,8 @@ export default async function GeneratePage() {
       <header className="space-y-1">
         <h1 className="font-display text-2xl font-bold">Générer un CV adapté</h1>
         <p className="text-sm text-muted-foreground">
-          Collez une offre d&apos;emploi : l&apos;IA adapte votre CV de base sans rien
-          inventer. Coût : 1 crédit par génération.
+          Collez une offre d&apos;emploi : l&apos;IA adapte votre CV de base sans rien inventer.
+          Coût : 1 crédit par génération.
         </p>
       </header>
 

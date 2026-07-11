@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { CreditReason, Prisma } from "@prisma/client";
+import { type CreditReason, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 
 export class InsufficientCreditsError extends Error {

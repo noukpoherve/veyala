@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
 import { Plus, Star, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
-import {
-  addPack,
-  addProvider,
-  deleteProvider,
-  setDefaultProvider,
-  updatePack,
-} from "./actions";
+import { addPack, addProvider, deleteProvider, setDefaultProvider, updatePack } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,9 +31,9 @@ export default async function AdminSettingsPage() {
               Fournisseurs IA
             </CardTitle>
             <CardDescription>
-              Le fournisseur par défaut est utilisé pour toutes les générations. Sans
-              fournisseur en base, l&apos;application retombe sur les variables
-              d&apos;environnement{envProvider ? ` (actuellement : ${envProvider})` : " (non configurées)"}.
+              Le fournisseur par défaut est utilisé pour toutes les générations. Sans fournisseur en
+              base, l&apos;application retombe sur les variables d&apos;environnement
+              {envProvider ? ` (actuellement : ${envProvider})` : " (non configurées)"}.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -72,7 +66,12 @@ export default async function AdminSettingsPage() {
                       ) : null}
                       <form action={deleteProvider}>
                         <input type="hidden" name="providerId" value={provider.id} />
-                        <Button type="submit" size="sm" variant="ghost" aria-label={`Supprimer ${provider.name}`}>
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant="ghost"
+                          aria-label={`Supprimer ${provider.name}`}
+                        >
                           <Trash2 className="text-destructive" />
                         </Button>
                       </form>
@@ -84,7 +83,10 @@ export default async function AdminSettingsPage() {
               <p className="text-sm text-muted-foreground">Aucun fournisseur en base.</p>
             )}
 
-            <form action={addProvider} className="grid gap-3 rounded-md border border-dashed p-4 sm:grid-cols-2">
+            <form
+              action={addProvider}
+              className="grid gap-3 rounded-md border border-dashed p-4 sm:grid-cols-2"
+            >
               <div className="space-y-1.5">
                 <Label htmlFor="p-name">Nom</Label>
                 <Input id="p-name" name="name" required placeholder="Groq" />
@@ -103,7 +105,13 @@ export default async function AdminSettingsPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="p-baseUrl">Base URL</Label>
-                <Input id="p-baseUrl" name="baseUrl" type="url" required placeholder="https://api.groq.com/openai/v1" />
+                <Input
+                  id="p-baseUrl"
+                  name="baseUrl"
+                  type="url"
+                  required
+                  placeholder="https://api.groq.com/openai/v1"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="p-model">Modèle</Label>
@@ -146,15 +154,32 @@ export default async function AdminSettingsPage() {
                 <input type="hidden" name="packId" value={pack.id} />
                 <div className="space-y-1.5">
                   <Label htmlFor={`label-${pack.id}`}>Libellé</Label>
-                  <Input id={`label-${pack.id}`} name="label" defaultValue={pack.label} className="w-32" />
+                  <Input
+                    id={`label-${pack.id}`}
+                    name="label"
+                    defaultValue={pack.label}
+                    className="w-32"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor={`price-${pack.id}`}>Prix (cts)</Label>
-                  <Input id={`price-${pack.id}`} name="priceCents" type="number" defaultValue={pack.priceCents} className="w-28" />
+                  <Input
+                    id={`price-${pack.id}`}
+                    name="priceCents"
+                    type="number"
+                    defaultValue={pack.priceCents}
+                    className="w-28"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor={`credits-${pack.id}`}>Crédits</Label>
-                  <Input id={`credits-${pack.id}`} name="credits" type="number" defaultValue={pack.credits} className="w-24" />
+                  <Input
+                    id={`credits-${pack.id}`}
+                    name="credits"
+                    type="number"
+                    defaultValue={pack.credits}
+                    className="w-24"
+                  />
                 </div>
                 <label className="flex h-9 items-center gap-2 text-sm">
                   <input type="checkbox" name="active" defaultChecked={pack.active} />
@@ -166,18 +191,35 @@ export default async function AdminSettingsPage() {
               </form>
             ))}
 
-            <form action={addPack} className="flex flex-wrap items-end gap-3 rounded-md border border-dashed p-3">
+            <form
+              action={addPack}
+              className="flex flex-wrap items-end gap-3 rounded-md border border-dashed p-3"
+            >
               <div className="space-y-1.5">
                 <Label htmlFor="new-label">Libellé</Label>
                 <Input id="new-label" name="label" required placeholder="100 CV" className="w-32" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="new-price">Prix (cts)</Label>
-                <Input id="new-price" name="priceCents" type="number" required placeholder="1999" className="w-28" />
+                <Input
+                  id="new-price"
+                  name="priceCents"
+                  type="number"
+                  required
+                  placeholder="1999"
+                  className="w-28"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="new-credits">Crédits</Label>
-                <Input id="new-credits" name="credits" type="number" required placeholder="100" className="w-24" />
+                <Input
+                  id="new-credits"
+                  name="credits"
+                  type="number"
+                  required
+                  placeholder="100"
+                  className="w-24"
+                />
               </div>
               <Button type="submit" size="sm">
                 <Plus />

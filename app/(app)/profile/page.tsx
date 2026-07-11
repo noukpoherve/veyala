@@ -25,8 +25,8 @@ export default async function ProfilePage() {
       <header className="space-y-1">
         <h1 className="font-display text-2xl font-bold">Mon CV de base</h1>
         <p className="text-sm text-muted-foreground">
-          C&apos;est la source de vérité utilisée pour toutes les générations : l&apos;IA
-          reformule et réordonne ces données, elle n&apos;invente jamais rien.
+          C&apos;est la source de vérité utilisée pour toutes les générations : l&apos;IA reformule
+          et réordonne ces données, elle n&apos;invente jamais rien.
         </p>
       </header>
 
@@ -38,8 +38,8 @@ export default async function ProfilePage() {
               Import automatique
             </CardTitle>
             <CardDescription>
-              Importez votre CV existant (PDF ou DOCX, 8 Mo max) : il est analysé puis
-              converti en données structurées éditables ci-dessous.
+              Importez votre CV existant (PDF ou DOCX, 8 Mo max) : il est analysé puis converti en
+              données structurées éditables ci-dessous.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -62,7 +62,10 @@ export default async function ProfilePage() {
       <section aria-labelledby="danger-title">
         <Card className="border-destructive/40">
           <CardHeader>
-            <CardTitle id="danger-title" className="flex items-center gap-2 text-base text-destructive">
+            <CardTitle
+              id="danger-title"
+              className="flex items-center gap-2 text-base text-destructive"
+            >
               <ShieldAlert className="size-4" aria-hidden />
               Zone dangereuse
             </CardTitle>

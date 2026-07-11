@@ -1,5 +1,6 @@
 import { cache } from "react";
 import NextAuth from "next-auth";
+import { compare } from "bcryptjs";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
 import Nodemailer from "next-auth/providers/nodemailer";
@@ -8,6 +9,7 @@ import type { Provider } from "next-auth/providers";
 import { authConfig } from "@/auth.config";
 import { db } from "@/lib/db";
 import { creditCredits } from "@/lib/credits";
+import { consumeSigninToken } from "@/lib/verification";
 
 export const SIGNUP_BONUS_CREDITS = 2;
 
@@ -43,6 +45,49 @@ if (process.env.EMAIL_SERVER && process.env.EMAIL_FROM) {
   );
 }
 
+// Classic email + password sign-in (accounts created via /register).
+providers.push(
+  Credentials({
+    id: "credentials",
+    name: "Email et mot de passe",
+    credentials: {
+      email: { label: "Email", type: "email" },
+      password: { label: "Mot de passe", type: "password" },
+    },
+    async authorize(credentials) {
+      const email = String(credentials?.email ?? "")
+        .trim()
+        .toLowerCase();
+      const password = String(credentials?.password ?? "");
+      if (!email || !password) return null;
+      const user = await db.user.findUnique({ where: { email } });
+      if (!user?.passwordHash) return null;
+      // Password accounts must confirm their email (OTP) before signing in.
+      if (!user.emailVerified) return null;
+      const valid = await compare(password, user.passwordHash);
+      return valid ? user : null;
+    },
+  })
+);
+
+// Single-use token sign-in, used right after a successful OTP verification
+// so new users land signed-in on the dashboard instead of the login page.
+providers.push(
+  Credentials({
+    id: "otp-signin",
+    name: "Connexion post-vérification",
+    credentials: { email: { type: "email" }, token: { type: "text" } },
+    async authorize(credentials) {
+      const email = String(credentials?.email ?? "")
+        .trim()
+        .toLowerCase();
+      const token = String(credentials?.token ?? "");
+      if (!email || !token) return null;
+      return consumeSigninToken(email, token);
+    },
+  })
+);
+
 // Local sign-in without SMTP or OAuth, enabled outside production only.
 if (process.env.NODE_ENV !== "production") {
   providers.push(
@@ -70,7 +115,12 @@ if (process.env.NODE_ENV !== "production") {
   );
 }
 
-const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
+const {
+  handlers,
+  auth: uncachedAuth,
+  signIn,
+  signOut,
+} = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(db),
   providers,

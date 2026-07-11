@@ -73,7 +73,11 @@ export function GenerateForm({
           <CardTitle className="text-base">1. L&apos;offre d&apos;emploi</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div role="tablist" aria-label="Source de l'offre" className="inline-flex rounded-md border p-0.5">
+          <div
+            role="tablist"
+            aria-label="Source de l'offre"
+            className="inline-flex rounded-md border p-0.5"
+          >
             <button
               type="button"
               role="tab"
@@ -116,8 +120,8 @@ export function GenerateForm({
               <Label htmlFor="jobUrl">URL de l&apos;offre</Label>
               <Input id="jobUrl" name="jobUrl" type="url" required placeholder="https://…" />
               <p className="text-xs text-muted-foreground">
-                Certains sites (Indeed, LinkedIn…) bloquent la lecture automatique : dans ce
-                cas, collez le texte.
+                Certains sites (Indeed, LinkedIn…) bloquent la lecture automatique : dans ce cas,
+                collez le texte.
               </p>
             </div>
           )}
@@ -136,7 +140,9 @@ export function GenerateForm({
                 key={t.id}
                 className={cn(
                   "cursor-pointer rounded-lg border p-3 transition-colors",
-                  templateId === t.id ? "border-primary ring-2 ring-primary/30" : "hover:border-muted-foreground/40"
+                  templateId === t.id
+                    ? "border-primary ring-2 ring-primary/30"
+                    : "hover:border-muted-foreground/40"
                 )}
               >
                 <input
@@ -190,7 +196,10 @@ export function GenerateForm({
       ) : null}
 
       {noCredits ? (
-        <p role="alert" className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+        <p
+          role="alert"
+          className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
+        >
           Solde de crédits épuisé —{" "}
           <Link href="/billing" className="font-medium underline">
             rechargez pour continuer
@@ -199,7 +208,12 @@ export function GenerateForm({
         </p>
       ) : null}
 
-      <Button type="submit" variant="gradient" size="lg" disabled={disabled || noCredits || submitting}>
+      <Button
+        type="submit"
+        variant="gradient"
+        size="lg"
+        disabled={disabled || noCredits || submitting}
+      >
         {submitting ? (
           <>
             <Loader2 className="animate-spin" />

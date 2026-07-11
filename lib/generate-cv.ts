@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import { db } from "@/lib/db";
 import { cvSchema, type CVData } from "@/lib/cv-schema";
 import { debitCredits, creditCredits, InsufficientCreditsError } from "@/lib/credits";

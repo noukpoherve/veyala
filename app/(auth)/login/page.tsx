@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Mail, TerminalSquare } from "lucide-react";
+import { AuthError } from "next-auth";
+import { LogIn, Mail, TerminalSquare } from "lucide-react";
 import { auth, signIn } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 export const metadata: Metadata = { title: "Connexion" };
@@ -32,15 +28,41 @@ function GoogleIcon() {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { callbackUrl?: string; error?: string };
+  searchParams: { callbackUrl?: string; error?: string; verified?: string };
 }) {
   const session = await auth();
   if (session?.user) redirect("/dashboard");
 
   const callbackUrl = searchParams.callbackUrl ?? "/dashboard";
-  const hasGoogle = !!process.env.GOOGLE_CLIENT_ID;
-  const hasEmail = !!process.env.EMAIL_SERVER;
+  // Mirror the provider registration conditions in lib/auth.ts exactly,
+  // otherwise a half-configured provider shows a button that cannot work.
+  const hasGoogle = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const hasEmail = !!(process.env.EMAIL_SERVER && process.env.EMAIL_FROM);
   const hasDevLogin = process.env.NODE_ENV !== "production";
+
+  async function loginWithPassword(formData: FormData) {
+    "use server";
+    const email = String(formData.get("email") ?? "")
+      .trim()
+      .toLowerCase();
+    try {
+      await signIn("credentials", {
+        email,
+        password: formData.get("password"),
+        redirectTo: callbackUrl,
+      });
+    } catch (error) {
+      if (error instanceof AuthError) {
+        // Unverified password accounts are sent back to the OTP step.
+        const user = await db.user.findUnique({ where: { email } });
+        if (user?.passwordHash && !user.emailVerified) {
+          redirect(`/verify-email?email=${encodeURIComponent(email)}`);
+        }
+        redirect("/login?error=credentials");
+      }
+      throw error;
+    }
+  }
 
   return (
     <main className="bg-aurora relative flex min-h-screen items-center justify-center overflow-hidden p-4">
@@ -62,15 +84,58 @@ export default async function LoginPage({
           <CardTitle className="font-display text-2xl font-extrabold tracking-tight">
             Connexion
           </CardTitle>
-          <CardDescription>
-            Accédez à votre espace pour générer des CV sur mesure.
-          </CardDescription>
+          <CardDescription>Accédez à votre espace pour générer des CV sur mesure.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {searchParams.verified ? (
+            <p role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">
+              Email vérifié — vous pouvez maintenant vous connecter.
+            </p>
+          ) : null}
+
           {searchParams.error ? (
             <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              La connexion a échoué. Réessayez ou utilisez une autre méthode.
+              {searchParams.error === "credentials"
+                ? "Email ou mot de passe incorrect."
+                : "La connexion a échoué. Réessayez ou utilisez une autre méthode."}
             </p>
+          ) : null}
+
+          <form className="space-y-3" action={loginWithPassword}>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Adresse email</Label>
+              <Input id="email" name="email" type="email" required placeholder="vous@exemple.fr" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                placeholder="Votre mot de passe"
+              />
+            </div>
+            <Button type="submit" variant="gradient" className="w-full">
+              <LogIn />
+              Se connecter
+            </Button>
+          </form>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Pas encore de compte ?{" "}
+            <Link href="/register" className="font-medium text-blue-600 hover:underline">
+              Créer un compte
+            </Link>
+          </p>
+
+          {hasGoogle || hasEmail ? (
+            <div className="flex items-center gap-3">
+              <Separator className="flex-1" />
+              <span className="text-xs uppercase text-muted-foreground">ou</span>
+              <Separator className="flex-1" />
+            </div>
           ) : null}
 
           {hasGoogle ? (
@@ -88,34 +153,31 @@ export default async function LoginPage({
           ) : null}
 
           {hasEmail ? (
-            <>
-              {hasGoogle ? (
-                <div className="flex items-center gap-3">
-                  <Separator className="flex-1" />
-                  <span className="text-xs uppercase text-muted-foreground">ou</span>
-                  <Separator className="flex-1" />
-                </div>
-              ) : null}
-              <form
-                className="space-y-3"
-                action={async (formData: FormData) => {
-                  "use server";
-                  await signIn("nodemailer", {
-                    email: formData.get("email"),
-                    redirectTo: callbackUrl,
-                  });
-                }}
-              >
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Adresse email</Label>
-                  <Input id="email" name="email" type="email" required placeholder="vous@exemple.fr" />
-                </div>
-                <Button type="submit" variant="gradient" className="w-full">
-                  <Mail />
-                  Recevoir un lien magique
-                </Button>
-              </form>
-            </>
+            <form
+              className="space-y-3"
+              action={async (formData: FormData) => {
+                "use server";
+                await signIn("nodemailer", {
+                  email: formData.get("email"),
+                  redirectTo: callbackUrl,
+                });
+              }}
+            >
+              <div className="space-y-1.5">
+                <Label htmlFor="magic-email">Adresse email</Label>
+                <Input
+                  id="magic-email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="vous@exemple.fr"
+                />
+              </div>
+              <Button type="submit" variant="outline" className="w-full">
+                <Mail />
+                Recevoir un lien magique
+              </Button>
+            </form>
           ) : null}
 
           {hasDevLogin ? (
@@ -135,7 +197,13 @@ export default async function LoginPage({
               </p>
               <div className="space-y-1.5">
                 <Label htmlFor="dev-email">Email (dev)</Label>
-                <Input id="dev-email" name="email" type="email" required placeholder="dev@local.test" />
+                <Input
+                  id="dev-email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="dev@local.test"
+                />
               </div>
               <Button type="submit" variant="secondary" className="w-full">
                 Connexion dev
