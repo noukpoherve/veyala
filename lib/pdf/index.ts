@@ -18,6 +18,9 @@ function isServerless(): boolean {
 async function launchBrowser(): Promise<Browser> {
   if (isServerless()) {
     const sparticuzChromium = (await import("@sparticuz/chromium")).default;
+    // CV/cover letter PDFs never need WebGL; disabling it cuts Chromium's
+    // memory footprint enough to avoid OOM kills under Lambda's memory cap.
+    sparticuzChromium.setGraphicsMode = false;
     return chromium.launch({
       args: sparticuzChromium.args,
       executablePath: await sparticuzChromium.executablePath(),
