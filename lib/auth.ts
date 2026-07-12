@@ -9,9 +9,20 @@ import type { Provider } from "next-auth/providers";
 import { authConfig } from "@/auth.config";
 import { db } from "@/lib/db";
 import { creditCredits } from "@/lib/credits";
+import { normalizeEmail } from "@/lib/utils";
 import { consumeSigninToken } from "@/lib/verification";
 
 export const SIGNUP_BONUS_CREDITS = 2;
+
+/**
+ * Which optional sign-in methods are configured. Single source of truth:
+ * both the provider registration below and the login page UI read these flags.
+ */
+export const authProviderFlags = {
+  google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+  magicLink: !!(process.env.EMAIL_SERVER && process.env.EMAIL_FROM),
+  devLogin: process.env.NODE_ENV !== "production",
+} as const;
 
 function adminEmails(): string[] {
   return (process.env.ADMIN_EMAILS ?? "")
@@ -26,17 +37,19 @@ export function isAdminEmail(email: string | null | undefined): boolean {
 
 const providers: Provider[] = [];
 
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+if (authProviderFlags.google) {
   providers.push(
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      // Low risk: Google only asserts verified emails, and password accounts
+      // must pass OTP verification before they can sign in.
       allowDangerousEmailAccountLinking: true,
     })
   );
 }
 
-if (process.env.EMAIL_SERVER && process.env.EMAIL_FROM) {
+if (authProviderFlags.magicLink) {
   providers.push(
     Nodemailer({
       server: process.env.EMAIL_SERVER,
@@ -55,9 +68,7 @@ providers.push(
       password: { label: "Mot de passe", type: "password" },
     },
     async authorize(credentials) {
-      const email = String(credentials?.email ?? "")
-        .trim()
-        .toLowerCase();
+      const email = normalizeEmail(credentials?.email);
       const password = String(credentials?.password ?? "");
       if (!email || !password) return null;
       const user = await db.user.findUnique({ where: { email } });
@@ -78,9 +89,7 @@ providers.push(
     name: "Connexion post-vérification",
     credentials: { email: { type: "email" }, token: { type: "text" } },
     async authorize(credentials) {
-      const email = String(credentials?.email ?? "")
-        .trim()
-        .toLowerCase();
+      const email = normalizeEmail(credentials?.email);
       const token = String(credentials?.token ?? "");
       if (!email || !token) return null;
       return consumeSigninToken(email, token);
@@ -89,16 +98,14 @@ providers.push(
 );
 
 // Local sign-in without SMTP or OAuth, enabled outside production only.
-if (process.env.NODE_ENV !== "production") {
+if (authProviderFlags.devLogin) {
   providers.push(
     Credentials({
       id: "dev-login",
       name: "Connexion dev (sans email)",
       credentials: { email: { label: "Email", type: "email" } },
       async authorize(credentials) {
-        const email = String(credentials?.email ?? "")
-          .trim()
-          .toLowerCase();
+        const email = normalizeEmail(credentials?.email);
         if (!email.includes("@")) return null;
         const user = await db.user.upsert({
           where: { email },
