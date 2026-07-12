@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getStripe } from "@/lib/stripe";
+import { siteUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Ce pack n'est plus disponible." }, { status: 404 });
   }
 
-  const origin = process.env.NEXTAUTH_URL ?? new URL(req.url).origin;
+  const origin = siteUrl();
 
   try {
     const stripe = getStripe();
