@@ -5,7 +5,8 @@ import { generateCV, GenerationError } from "@/lib/generate-cv";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+// Hobby plan caps at 60s; @sparticuz Chromium with WebGL disabled fits in 2048 MB.
+export const maxDuration = 60;
 
 const bodySchema = z
   .object({

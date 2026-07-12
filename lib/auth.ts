@@ -1,144 +1,119 @@
+import "server-only";
 import { cache } from "react";
-import NextAuth from "next-auth";
-import { compare } from "bcryptjs";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import Google from "next-auth/providers/google";
-import Nodemailer from "next-auth/providers/nodemailer";
-import Credentials from "next-auth/providers/credentials";
-import type { Provider } from "next-auth/providers";
-import { authConfig } from "@/auth.config";
+import { redirect } from "next/navigation";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
+import type { Role, User } from "@prisma/client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { creditCredits } from "@/lib/credits";
-import { consumeSigninToken } from "@/lib/verification";
+import { normalizeEmail } from "@/lib/utils";
 
 export const SIGNUP_BONUS_CREDITS = 2;
 
+/**
+ * OAuth providers surfaced in the UI. The provider itself must also be
+ * enabled on the Supabase side (config.toml locally, dashboard in cloud) —
+ * these flags only control the buttons, so keep both in sync.
+ */
+export const oauthProviderFlags = {
+  google: process.env.NEXT_PUBLIC_AUTH_GOOGLE === "true",
+  github: process.env.NEXT_PUBLIC_AUTH_GITHUB === "true",
+} as const;
+
+export type OAuthProvider = keyof typeof oauthProviderFlags;
+
+export type SessionUser = {
+  id: string;
+  email: string;
+  role: Role;
+  name: string | null;
+  image: string | null;
+};
+
+export type Session = { user: SessionUser };
+
 function adminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
+  return (process.env.ADMIN_EMAILS ?? "").split(",").map(normalizeEmail).filter(Boolean);
 }
 
 export function isAdminEmail(email: string | null | undefined): boolean {
-  return !!email && adminEmails().includes(email.toLowerCase());
+  return !!email && adminEmails().includes(normalizeEmail(email));
 }
 
-const providers: Provider[] = [];
-
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  providers.push(
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    })
-  );
+/** Role granted at profile creation: service-role metadata first, then env allow-list. */
+function initialRole(supabaseUser: SupabaseUser, email: string): Role {
+  // app_metadata is only writable with the service role key (admin invitations),
+  // unlike user_metadata which any user can edit — never trust the latter.
+  if (supabaseUser.app_metadata?.role === "ADMIN") return "ADMIN";
+  return isAdminEmail(email) ? "ADMIN" : "USER";
 }
-
-if (process.env.EMAIL_SERVER && process.env.EMAIL_FROM) {
-  providers.push(
-    Nodemailer({
-      server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM,
-    })
-  );
-}
-
-// Classic email + password sign-in (accounts created via /register).
-providers.push(
-  Credentials({
-    id: "credentials",
-    name: "Email et mot de passe",
-    credentials: {
-      email: { label: "Email", type: "email" },
-      password: { label: "Mot de passe", type: "password" },
-    },
-    async authorize(credentials) {
-      const email = String(credentials?.email ?? "")
-        .trim()
-        .toLowerCase();
-      const password = String(credentials?.password ?? "");
-      if (!email || !password) return null;
-      const user = await db.user.findUnique({ where: { email } });
-      if (!user?.passwordHash) return null;
-      // Password accounts must confirm their email (OTP) before signing in.
-      if (!user.emailVerified) return null;
-      const valid = await compare(password, user.passwordHash);
-      return valid ? user : null;
-    },
-  })
-);
-
-// Single-use token sign-in, used right after a successful OTP verification
-// so new users land signed-in on the dashboard instead of the login page.
-providers.push(
-  Credentials({
-    id: "otp-signin",
-    name: "Connexion post-vérification",
-    credentials: { email: { type: "email" }, token: { type: "text" } },
-    async authorize(credentials) {
-      const email = String(credentials?.email ?? "")
-        .trim()
-        .toLowerCase();
-      const token = String(credentials?.token ?? "");
-      if (!email || !token) return null;
-      return consumeSigninToken(email, token);
-    },
-  })
-);
-
-// Local sign-in without SMTP or OAuth, enabled outside production only.
-if (process.env.NODE_ENV !== "production") {
-  providers.push(
-    Credentials({
-      id: "dev-login",
-      name: "Connexion dev (sans email)",
-      credentials: { email: { label: "Email", type: "email" } },
-      async authorize(credentials) {
-        const email = String(credentials?.email ?? "")
-          .trim()
-          .toLowerCase();
-        if (!email.includes("@")) return null;
-        const user = await db.user.upsert({
-          where: { email },
-          create: { email, role: isAdminEmail(email) ? "ADMIN" : "USER" },
-          update: {},
-        });
-        const credits = await db.credits.findUnique({ where: { userId: user.id } });
-        if (!credits) {
-          await creditCredits(user.id, SIGNUP_BONUS_CREDITS, "SIGNUP_BONUS");
-        }
-        return user;
-      },
-    })
-  );
-}
-
-const {
-  handlers,
-  auth: uncachedAuth,
-  signIn,
-  signOut,
-} = NextAuth({
-  ...authConfig,
-  adapter: PrismaAdapter(db),
-  providers,
-  events: {
-    async createUser({ user }) {
-      if (!user.id) return;
-      if (isAdminEmail(user.email)) {
-        await db.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
-      }
-      await creditCredits(user.id, SIGNUP_BONUS_CREDITS, "SIGNUP_BONUS");
-    },
-  },
-});
 
 /**
- * Session getter memoized per request (React cache): layout, pages and
- * helpers can all call auth() without re-decoding the session each time.
+ * Maps the Supabase Auth user to the app profile (Prisma User, cuid ids kept
+ * for all FK relations). Links pre-migration accounts by email and creates
+ * the profile + signup bonus on first sign-in.
  */
-const auth = cache(uncachedAuth);
+async function ensureUser(supabaseUser: SupabaseUser): Promise<User> {
+  const byAuthId = await db.user.findUnique({ where: { authId: supabaseUser.id } });
+  if (byAuthId) return byAuthId;
 
-export { handlers, auth, signIn, signOut };
+  const email = normalizeEmail(supabaseUser.email);
+  if (!email) throw new Error("Compte Supabase sans email.");
+
+  const byEmail = await db.user.findUnique({ where: { email } });
+  if (byEmail) {
+    return db.user.update({ where: { id: byEmail.id }, data: { authId: supabaseUser.id } });
+  }
+
+  try {
+    const user = await db.user.create({
+      data: {
+        authId: supabaseUser.id,
+        email,
+        name: (supabaseUser.user_metadata?.full_name as string | undefined) ?? null,
+        emailVerified: supabaseUser.email_confirmed_at
+          ? new Date(supabaseUser.email_confirmed_at)
+          : null,
+        role: initialRole(supabaseUser, email),
+      },
+    });
+    await creditCredits(user.id, SIGNUP_BONUS_CREDITS, "SIGNUP_BONUS");
+    return user;
+  } catch {
+    // Unique-constraint race between two parallel first requests: one of them
+    // created the row — fetch it instead of failing the request.
+    const user = await db.user.findUnique({ where: { authId: supabaseUser.id } });
+    if (user) return user;
+    throw new Error("Création du profil utilisateur impossible.");
+  }
+}
+
+/**
+ * Session getter memoized per request (React cache). Same shape as before the
+ * Supabase migration so no call site changes: user.id is the Prisma cuid.
+ */
+export const auth = cache(async (): Promise<Session | null> => {
+  const supabase = createSupabaseServerClient();
+  const {
+    data: { user: supabaseUser },
+  } = await supabase.auth.getUser();
+  if (!supabaseUser) return null;
+
+  const user = await ensureUser(supabaseUser);
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name,
+      image: user.image,
+    },
+  };
+});
+
+/** Terminates the Supabase session then redirects. */
+export async function signOut({ redirectTo = "/" }: { redirectTo?: string } = {}): Promise<never> {
+  const supabase = createSupabaseServerClient();
+  await supabase.auth.signOut();
+  redirect(redirectTo);
+}

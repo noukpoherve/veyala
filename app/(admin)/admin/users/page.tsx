@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Search } from "lucide-react";
+import { Search, UserPlus } from "lucide-react";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { adjustCredits, setUserRole } from "./actions";
+import { adjustCredits, inviteAdmin, setUserRole } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,27 @@ export const metadata: Metadata = { title: "Utilisateurs · Admin" };
 
 const dateFr = (d: Date) => new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(d);
 
-export default async function AdminUsersPage({ searchParams }: { searchParams: { q?: string } }) {
+const INVITE_MESSAGES: Record<string, { text: string; tone: "success" | "error" }> = {
+  sent: {
+    text: "Invitation envoyée — l'administrateur recevra un lien par email.",
+    tone: "success",
+  },
+  exists: {
+    text: "Un compte existe déjà avec cet email (promouvez-le ci-dessous).",
+    tone: "error",
+  },
+  invalid: { text: "Adresse email invalide.", tone: "error" },
+  failed: { text: "L'envoi de l'invitation a échoué. Réessayez.", tone: "error" },
+};
+
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; invite?: string };
+}) {
   const session = await auth();
   const q = searchParams.q?.trim() ?? "";
+  const inviteMessage = searchParams.invite ? INVITE_MESSAGES[searchParams.invite] : null;
 
   const users = await db.user.findMany({
     where: q
@@ -51,6 +69,45 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: {
           </Button>
         </form>
       </header>
+
+      <section
+        aria-label="Inviter un administrateur"
+        className="rounded-lg border bg-card p-4 shadow-sm"
+      >
+        <h2 className="text-sm font-bold">Inviter un administrateur</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          La personne reçoit un lien d&apos;invitation par email et choisit son mot de passe.
+        </p>
+        {inviteMessage ? (
+          <p
+            role={inviteMessage.tone === "error" ? "alert" : "status"}
+            className={
+              inviteMessage.tone === "error"
+                ? "mt-2 rounded-md bg-destructive/10 p-2 text-sm text-destructive"
+                : "mt-2 rounded-md bg-emerald-50 p-2 text-sm text-emerald-700"
+            }
+          >
+            {inviteMessage.text}
+          </p>
+        ) : null}
+        <form action={inviteAdmin} className="mt-3 flex flex-wrap items-center gap-2">
+          <label htmlFor="invite-email" className="sr-only">
+            Email du nouvel administrateur
+          </label>
+          <Input
+            id="invite-email"
+            name="email"
+            type="email"
+            required
+            placeholder="admin@exemple.fr"
+            className="w-64"
+          />
+          <Button type="submit" variant="outline">
+            <UserPlus />
+            Inviter
+          </Button>
+        </form>
+      </section>
 
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">

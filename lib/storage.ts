@@ -34,7 +34,8 @@ function sanitizeExt(filename: string): string {
 function localPath(key: string): string {
   const safe = path.normalize(key).replace(/^(\.\.[/\\])+/, "");
   const target = path.join(UPLOADS_DIR, safe);
-  if (!target.startsWith(UPLOADS_DIR)) throw new Error("Chemin de fichier invalide.");
+  // path.sep suffix: "uploads-evil" must not pass as being inside "uploads".
+  if (!target.startsWith(UPLOADS_DIR + path.sep)) throw new Error("Chemin de fichier invalide.");
   return target;
 }
 
