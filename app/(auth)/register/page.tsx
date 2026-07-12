@@ -1,18 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthError } from "next-auth";
-import { hash } from "bcryptjs";
 import { UserPlus } from "lucide-react";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { auth, isAdminEmail, signIn, SIGNUP_BONUS_CREDITS } from "@/lib/auth";
-import { creditCredits } from "@/lib/credits";
-import { db } from "@/lib/db";
+import { auth, SIGNUP_BONUS_CREDITS } from "@/lib/auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { clientIp, rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import { normalizeEmail } from "@/lib/utils";
-import { sendVerificationCode, verificationRequired } from "@/lib/verification";
+import { normalizeEmail, siteUrl } from "@/lib/utils";
 import { VeyalaLogo } from "@/components/landing/logo";
+import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,52 +54,25 @@ export default async function RegisterPage({ searchParams }: { searchParams: { e
     }
 
     const email = normalizeEmail(parsed.data.email);
-    const existing = await db.user.findUnique({ where: { email } });
-    if (existing) redirect("/register?error=exists");
-
-    const passwordHash = await hash(parsed.data.password, 12);
-    const requireOtp = verificationRequired();
-    let user: { id: string };
-    try {
-      user = await db.user.create({
-        data: {
-          email,
-          passwordHash,
-          role: isAdminEmail(email) ? "ADMIN" : "USER",
-          // Without a mail transport (SMTP not configured), skip OTP gracefully.
-          emailVerified: requireOtp ? null : new Date(),
-        },
-      });
-    } catch (error) {
-      // Unique-constraint race: two concurrent submissions for the same email.
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    const supabase = createSupabaseServerClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: parsed.data.password,
+      options: { emailRedirectTo: `${siteUrl()}/auth/callback?next=/dashboard` },
+    });
+    if (error) {
+      if (error.code === "user_already_exists" || error.code === "email_exists") {
         redirect("/register?error=exists");
       }
-      throw error;
+      console.error("[register] signUp failed:", error);
+      redirect("/register?error=unknown");
     }
-    await creditCredits(user.id, SIGNUP_BONUS_CREDITS, "SIGNUP_BONUS");
+    // Existing confirmed accounts come back as an obfuscated user without identities.
+    if (data.user && data.user.identities?.length === 0) redirect("/register?error=exists");
 
-    if (requireOtp) {
-      try {
-        await sendVerificationCode(user.id, email);
-      } catch (error) {
-        // Account exists either way; the verify page offers a resend button.
-        console.error("[register] verification email failed:", error);
-      }
-      redirect(`/verify-email?email=${encodeURIComponent(email)}`);
-    }
-
-    try {
-      await signIn("credentials", {
-        email,
-        password: parsed.data.password,
-        redirectTo: "/dashboard",
-      });
-    } catch (error) {
-      // Account is created; fall back to the login page if auto sign-in fails.
-      if (error instanceof AuthError) redirect("/login");
-      throw error;
-    }
+    // Email confirmation required: the profile row and signup credits are
+    // created by ensureUser() on the first authenticated request.
+    redirect(`/verify-email?email=${encodeURIComponent(email)}`);
   }
 
   return (
@@ -167,6 +136,8 @@ export default async function RegisterPage({ searchParams }: { searchParams: { e
             Se connecter
           </Link>
         </p>
+
+        <OAuthButtons />
 
         <p className="text-center text-xs text-muted-foreground">
           En créant un compte, vous acceptez nos{" "}

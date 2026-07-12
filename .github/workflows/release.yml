@@ -13,8 +13,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # main is protected by the three required CI checks (quality, build,
-    # security), so anything landing here has already passed CI.
+    # main is protected by the required CI checks (quality, security),
+    # so anything landing here has already passed CI.
     steps:
       - uses: actions/checkout@v4
         with:

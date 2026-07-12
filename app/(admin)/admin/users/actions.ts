@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { creditCredits, debitCredits } from "@/lib/credits";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { normalizeEmail, siteUrl } from "@/lib/utils";
 
 const adjustSchema = z.object({
   userId: z.string().min(1),
@@ -48,4 +51,33 @@ export async function setUserRole(formData: FormData) {
 
   await db.user.update({ where: { id: parsed.data.userId }, data: { role: parsed.data.role } });
   revalidatePath("/admin/users");
+}
+
+/**
+ * Invites a new administrator: Supabase emails a magic invitation link; the
+ * invitee lands on /reset-password to choose their password. The ADMIN role is
+ * pinned in app_metadata (service-role only) and picked up at profile creation.
+ */
+export async function inviteAdmin(formData: FormData) {
+  await requireAdmin();
+  const email = normalizeEmail(formData.get("email"));
+  if (!z.string().email().safeParse(email).success) {
+    redirect("/admin/users?invite=invalid");
+  }
+  if (await db.user.findUnique({ where: { email } })) {
+    redirect("/admin/users?invite=exists");
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${siteUrl()}/auth/callback?next=/reset-password`,
+  });
+  if (error || !data.user) {
+    console.error("[admin] invitation failed:", error);
+    redirect("/admin/users?invite=failed");
+  }
+  await admin.auth.admin.updateUserById(data.user.id, { app_metadata: { role: "ADMIN" } });
+
+  revalidatePath("/admin/users");
+  redirect("/admin/users?invite=sent");
 }

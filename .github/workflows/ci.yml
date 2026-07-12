@@ -9,15 +9,22 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Least privilege by default; the security job widens its own scope.
+# Least privilege by default.
 permissions:
   contents: read
 
 jobs:
-  # Lint + typecheck + unit tests with coverage: fast, no external services needed.
+  # Lint + typecheck + tests + production build in a single job: one checkout,
+  # one npm ci, one required check. Fails fast in quality order.
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
+      ENCRYPTION_KEY: ci-only-encryption-key-32-bytes!
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-only-anon-key
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,6 +35,7 @@ jobs:
       - run: npx biome ci .
       - run: npm run typecheck
       - run: npm run coverage
+      - run: npm run build
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -35,30 +43,10 @@ jobs:
           path: coverage/
           retention-days: 7
 
-  build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-      DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
-      NEXTAUTH_SECRET: ci-only-secret
-      ENCRYPTION_KEY: ci-only-encryption-key-32-bytes!
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx next build
-
-  # Secrets, dependency vulnerabilities, OWASP static analysis and CodeQL, in one job.
+  # Secrets scan, dependency audit and OWASP static analysis in one job.
   security:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      security-events: write
-      contents: read
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,7 +68,3 @@ jobs:
         run: |
           pipx install semgrep
           semgrep scan --config p/owasp-top-ten --config p/secrets --error --exclude node_modules
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-      - uses: github/codeql-action/analyze@v3

@@ -1,51 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthError } from "next-auth";
 import { MailCheck, RefreshCw } from "lucide-react";
-import { signIn } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { clientIp, rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import { normalizeEmail } from "@/lib/utils";
-import { createSigninToken, sendVerificationCode, verifyCode } from "@/lib/verification";
+import { normalizeEmail, siteUrl } from "@/lib/utils";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Vérifiez votre email" };
 
 const MESSAGES: Record<string, { text: string; tone: "error" | "info" }> = {
-  invalid: { text: "Code incorrect. Vérifiez l'email reçu et réessayez.", tone: "error" },
-  expired: { text: "Ce code a expiré. Demandez un nouveau code ci-dessous.", tone: "error" },
-  locked: {
-    text: "Trop de tentatives. Demandez un nouveau code pour réessayer.",
-    tone: "error",
+  resent: { text: "Un nouveau lien vient de vous être envoyé.", tone: "info" },
+  cooldown: {
+    text: "Un email vient déjà d'être envoyé — patientez une minute avant d'en redemander un.",
+    tone: "info",
   },
   ratelimited: {
     text: "Trop d'essais rapprochés. Patientez quelques minutes avant de réessayer.",
     tone: "error",
   },
-  resent: { text: "Un nouveau code vient de vous être envoyé.", tone: "info" },
-  cooldown: {
-    text: "Un code vient déjà d'être envoyé — patientez une minute avant d'en redemander un.",
-    tone: "info",
-  },
 };
 
-const statusUrl = (email: string, status: string) =>
-  `/verify-email?email=${encodeURIComponent(email)}&status=${status}`;
-
-/** Shared OTP rate limit (submit + resend), keyed per client IP and email. */
-function assertOtpRateLimit(email: string) {
-  const { limit, windowMs } = RATE_LIMITS.otp;
-  if (!rateLimit(`otp:${clientIp()}:${email}`, limit, windowMs)) {
-    redirect(statusUrl(email, "ratelimited"));
-  }
-}
-
-export default async function VerifyEmailPage({
+export default function VerifyEmailPage({
   searchParams,
 }: {
   searchParams: { email?: string; status?: string };
@@ -53,40 +31,23 @@ export default async function VerifyEmailPage({
   const email = normalizeEmail(searchParams.email);
   if (!email) redirect("/register");
 
-  const user = await db.user.findUnique({ where: { email } });
-  if (!user) redirect("/register");
-  if (user.emailVerified) redirect("/login?verified=1");
-
   const message = searchParams.status ? MESSAGES[searchParams.status] : null;
 
-  async function submitCode(formData: FormData) {
+  async function resendConfirmation() {
     "use server";
-    assertOtpRateLimit(email);
-    const code = String(formData.get("code") ?? "").trim();
-    const account = await db.user.findUnique({ where: { email } });
-    if (!account) redirect("/register");
-    if (!/^\d{6}$/.test(code)) redirect(statusUrl(email, "invalid"));
-
-    const result = await verifyCode(account.id, code);
-    if (result !== "ok") redirect(statusUrl(email, result));
-
-    // Sign the user straight in: no detour through the login page.
-    const token = await createSigninToken(email);
-    try {
-      await signIn("otp-signin", { email, token, redirectTo: "/dashboard" });
-    } catch (error) {
-      if (error instanceof AuthError) redirect("/login?verified=1");
-      throw error;
+    const { limit, windowMs } = RATE_LIMITS.otp;
+    if (!rateLimit(`resend:${clientIp()}:${email}`, limit, windowMs)) {
+      redirect(`/verify-email?email=${encodeURIComponent(email)}&status=ratelimited`);
     }
-  }
-
-  async function resendCode() {
-    "use server";
-    assertOtpRateLimit(email);
-    const account = await db.user.findUnique({ where: { email } });
-    if (!account) redirect("/register");
-    const sent = await sendVerificationCode(account.id, email);
-    redirect(statusUrl(email, sent ? "resent" : "cooldown"));
+    const supabase = createSupabaseServerClient();
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: `${siteUrl()}/auth/callback?next=/dashboard` },
+    });
+    redirect(
+      `/verify-email?email=${encodeURIComponent(email)}&status=${error ? "cooldown" : "resent"}`
+    );
   }
 
   return (
@@ -102,8 +63,8 @@ export default async function VerifyEmailPage({
           Vérifiez votre email
         </CardTitle>
         <CardDescription>
-          Un code à 6 chiffres a été envoyé à <strong className="text-slate-700">{email}</strong>.
-          Il expire dans 15 minutes.
+          Un lien de confirmation a été envoyé à <strong className="text-slate-700">{email}</strong>
+          . Cliquez dessus pour activer votre compte et accéder à votre espace.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -120,31 +81,10 @@ export default async function VerifyEmailPage({
           </p>
         ) : null}
 
-        <form className="space-y-3" action={submitCode}>
-          <div className="space-y-1.5 text-left">
-            <Label htmlFor="code">Code de vérification</Label>
-            <Input
-              id="code"
-              name="code"
-              type="text"
-              inputMode="numeric"
-              pattern="\d{6}"
-              maxLength={6}
-              required
-              autoComplete="one-time-code"
-              placeholder="123456"
-              className="text-center text-2xl font-bold tracking-[0.5em]"
-            />
-          </div>
-          <Button type="submit" variant="gradient" className="w-full">
-            Vérifier mon compte
-          </Button>
-        </form>
-
-        <form action={resendCode}>
+        <form action={resendConfirmation}>
           <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground">
             <RefreshCw />
-            Renvoyer le code
+            Renvoyer le lien
           </Button>
         </form>
 

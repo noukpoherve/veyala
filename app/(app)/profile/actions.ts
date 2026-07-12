@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { cvSchema } from "@/lib/cv-schema";
 
 export type SaveProfileResult = { ok: true } | { ok: false; error: string };
@@ -38,6 +39,10 @@ export async function deleteAccount(formData: FormData) {
   if (!session?.user) redirect("/login");
   if (formData.get("confirm") !== "SUPPRIMER") return;
 
-  await db.user.delete({ where: { id: session.user.id } });
+  const user = await db.user.delete({ where: { id: session.user.id } });
+  if (user.authId) {
+    // Remove the Supabase Auth identity too (full GDPR erasure).
+    await createSupabaseAdminClient().auth.admin.deleteUser(user.authId);
+  }
   await signOut({ redirectTo: "/" });
 }

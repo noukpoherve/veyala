@@ -3,6 +3,7 @@ node_modules/
 .env.local
 
 .env
+supabase/.env.oauth
 /uploads
 *.tsbuildinfo
 /demo-output

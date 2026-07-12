@@ -1,72 +1,57 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthError } from "next-auth";
-import { LogIn, Mail, TerminalSquare } from "lucide-react";
-import { auth, authProviderFlags, signIn } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { LogIn } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { clientIp, rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { normalizeEmail } from "@/lib/utils";
 import { VeyalaLogo } from "@/components/landing/logo";
+import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 
 export const metadata: Metadata = { title: "Connexion" };
 
 const ERROR_MESSAGES: Record<string, string> = {
   credentials: "Email ou mot de passe incorrect.",
   ratelimited: "Trop de tentatives de connexion. Réessayez dans quelques minutes.",
-  default: "La connexion a échoué. Réessayez ou utilisez une autre méthode.",
+  confirmation: "Le lien de confirmation est invalide ou expiré. Reconnectez-vous.",
+  oauth: "La connexion via ce fournisseur a échoué. Réessayez.",
+  default: "La connexion a échoué. Réessayez.",
 };
-
-function GoogleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"
-      />
-    </svg>
-  );
-}
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { callbackUrl?: string; error?: string; verified?: string };
+  searchParams: { callbackUrl?: string; error?: string; verified?: string; reset?: string };
 }) {
   const session = await auth();
   if (session?.user) redirect("/dashboard");
 
-  const callbackUrl = searchParams.callbackUrl ?? "/dashboard";
+  const rawCallback = searchParams.callbackUrl ?? "/dashboard";
+  const callbackUrl = rawCallback.startsWith("/") ? rawCallback : "/dashboard";
 
   async function loginWithPassword(formData: FormData) {
     "use server";
     const email = normalizeEmail(formData.get("email"));
+    const password = String(formData.get("password") ?? "");
     const { limit, windowMs } = RATE_LIMITS.login;
     if (!rateLimit(`login:${clientIp()}:${email}`, limit, windowMs)) {
       redirect("/login?error=ratelimited");
     }
-    try {
-      await signIn("credentials", {
-        email,
-        password: formData.get("password"),
-        redirectTo: callbackUrl,
-      });
-    } catch (error) {
-      if (error instanceof AuthError) {
-        // Unverified password accounts are sent back to the OTP step.
-        const user = await db.user.findUnique({ where: { email } });
-        if (user?.passwordHash && !user.emailVerified) {
-          redirect(`/verify-email?email=${encodeURIComponent(email)}`);
-        }
-        redirect("/login?error=credentials");
+
+    const supabase = createSupabaseServerClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      if (error.code === "email_not_confirmed") {
+        redirect(`/verify-email?email=${encodeURIComponent(email)}`);
       }
-      throw error;
+      redirect("/login?error=credentials");
     }
+    redirect(callbackUrl);
   }
 
   return (
@@ -87,6 +72,12 @@ export default async function LoginPage({
           </p>
         ) : null}
 
+        {searchParams.reset ? (
+          <p role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">
+            Mot de passe mis à jour — reconnectez-vous.
+          </p>
+        ) : null}
+
         {searchParams.error ? (
           <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             {ERROR_MESSAGES[searchParams.error] ?? ERROR_MESSAGES.default}
@@ -99,7 +90,15 @@ export default async function LoginPage({
             <Input id="email" name="email" type="email" required placeholder="vous@exemple.fr" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password">Mot de passe</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-muted-foreground underline hover:text-foreground"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </div>
             <Input
               id="password"
               name="password"
@@ -122,86 +121,7 @@ export default async function LoginPage({
           </Link>
         </p>
 
-        {authProviderFlags.google || authProviderFlags.magicLink ? (
-          <div className="flex items-center gap-3">
-            <Separator className="flex-1" />
-            <span className="text-xs uppercase text-muted-foreground">ou</span>
-            <Separator className="flex-1" />
-          </div>
-        ) : null}
-
-        {authProviderFlags.google ? (
-          <form
-            action={async () => {
-              "use server";
-              await signIn("google", { redirectTo: callbackUrl });
-            }}
-          >
-            <Button variant="outline" className="w-full" type="submit">
-              <GoogleIcon />
-              Continuer avec Google
-            </Button>
-          </form>
-        ) : null}
-
-        {authProviderFlags.magicLink ? (
-          <form
-            className="space-y-3"
-            action={async (formData: FormData) => {
-              "use server";
-              await signIn("nodemailer", {
-                email: formData.get("email"),
-                redirectTo: callbackUrl,
-              });
-            }}
-          >
-            <div className="space-y-1.5">
-              <Label htmlFor="magic-email">Adresse email</Label>
-              <Input
-                id="magic-email"
-                name="email"
-                type="email"
-                required
-                placeholder="vous@exemple.fr"
-              />
-            </div>
-            <Button type="submit" variant="outline" className="w-full">
-              <Mail />
-              Recevoir un lien magique
-            </Button>
-          </form>
-        ) : null}
-
-        {authProviderFlags.devLogin ? (
-          <form
-            className="space-y-3 rounded-md border border-dashed p-3"
-            action={async (formData: FormData) => {
-              "use server";
-              await signIn("dev-login", {
-                email: formData.get("email"),
-                redirectTo: callbackUrl,
-              });
-            }}
-          >
-            <p className="flex items-center gap-2 text-xs text-muted-foreground">
-              <TerminalSquare className="size-3.5" aria-hidden />
-              Mode développement : connexion directe sans email.
-            </p>
-            <div className="space-y-1.5">
-              <Label htmlFor="dev-email">Email (dev)</Label>
-              <Input
-                id="dev-email"
-                name="email"
-                type="email"
-                required
-                placeholder="dev@local.test"
-              />
-            </div>
-            <Button type="submit" variant="secondary" className="w-full">
-              Connexion dev
-            </Button>
-          </form>
-        ) : null}
+        <OAuthButtons callbackUrl={callbackUrl} />
 
         <p className="text-center text-xs text-muted-foreground">
           En vous connectant, vous acceptez nos{" "}
