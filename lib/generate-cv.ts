@@ -82,12 +82,15 @@ export async function renderAndStoreExports(params: {
   const { userId, cv, letterBody, jobTitle, definition } = params;
   const letter = { body: letterBody, jobTitle };
 
-  const [cvPdf, cvDocx, letterPdf, letterDocx] = await Promise.all([
-    htmlToPdf(renderCVHtml(cv, definition)),
-    renderCVDocx(cv, definition),
-    htmlToPdf(renderCoverLetterHtml(cv, letter, definition)),
-    renderCoverLetterDocx(cv, letter, definition),
-  ]);
+  // The two PDFs share one single-process Chromium; rendering them concurrently
+  // doubles peak memory and OOM-crashes the serverless function ("Target page
+  // has been closed"). Serialize the PDF renders (cap browser concurrency at 1)
+  // while keeping the browser-less DOCX renders in flight alongside them.
+  const cvDocxPromise = renderCVDocx(cv, definition);
+  const letterDocxPromise = renderCoverLetterDocx(cv, letter, definition);
+  const cvPdf = await htmlToPdf(renderCVHtml(cv, definition));
+  const letterPdf = await htmlToPdf(renderCoverLetterHtml(cv, letter, definition));
+  const [cvDocx, letterDocx] = await Promise.all([cvDocxPromise, letterDocxPromise]);
 
   const base = `${slugify(cv.identity.fullName)}_${slugify(jobTitle)}`;
   const dir = `exports/${userId}`;
