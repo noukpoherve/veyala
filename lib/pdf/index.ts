@@ -86,9 +86,16 @@ function getBrowser(): Promise<Browser> {
   return browserPromise;
 }
 
-/** Renders a standalone HTML document to an A4 PDF buffer. */
-export async function htmlToPdf(html: string): Promise<Buffer> {
-  const browser = await getBrowser();
+async function renderPdfOnce(html: string): Promise<Buffer> {
+  let browser = await getBrowser();
+  // A previously shared browser may have died (e.g. OOM-killed on a serverless
+  // host) after the disconnect event already cleared browserPromise; a stale
+  // reference can also be returned before the event fires. Check liveness and
+  // relaunch instead of calling newPage() on a dead browser.
+  if (!browser.isConnected()) {
+    browserPromise = null;
+    browser = await getBrowser();
+  }
   const page = await browser.newPage();
   try {
     await page.setContent(html, { waitUntil: "networkidle" });
@@ -98,6 +105,21 @@ export async function htmlToPdf(html: string): Promise<Buffer> {
       preferCSSPageSize: true,
     });
   } finally {
-    await page.close();
+    await page.close().catch(() => {}); // browser may be gone already
+  }
+}
+
+/** Renders a standalone HTML document to an A4 PDF buffer. */
+export async function htmlToPdf(html: string): Promise<Buffer> {
+  try {
+    return await renderPdfOnce(html);
+  } catch (error) {
+    // "Target page, context or browser has been closed" means the shared
+    // Chromium crashed mid-render. Retry once on a fresh browser: transient
+    // memory pressure usually clears after the crashed process is reaped.
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/has been closed|browser.*disconnected|Target closed/i.test(message)) throw error;
+    browserPromise = null;
+    return renderPdfOnce(html);
   }
 }
