@@ -109,17 +109,32 @@ async function renderPdfOnce(html: string): Promise<Buffer> {
   }
 }
 
+/** Tears down the shared browser so the next render launches a fresh one. */
+async function closeBrowser(): Promise<void> {
+  const pending = browserPromise;
+  browserPromise = null;
+  if (pending) await pending.then((b) => b.close()).catch(() => {});
+}
+
 /** Renders a standalone HTML document to an A4 PDF buffer. */
 export async function htmlToPdf(html: string): Promise<Buffer> {
   try {
-    return await renderPdfOnce(html);
-  } catch (error) {
-    // "Target page, context or browser has been closed" means the shared
-    // Chromium crashed mid-render. Retry once on a fresh browser: transient
-    // memory pressure usually clears after the crashed process is reaped.
-    const message = error instanceof Error ? error.message : String(error);
-    if (!/has been closed|browser.*disconnected|Target closed/i.test(message)) throw error;
-    browserPromise = null;
-    return renderPdfOnce(html);
+    try {
+      return await renderPdfOnce(html);
+    } catch (error) {
+      // "Target page, context or browser has been closed" means the shared
+      // Chromium crashed mid-render. Retry once on a fresh browser: transient
+      // memory pressure usually clears after the crashed process is reaped.
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/has been closed|browser.*disconnected|Target closed/i.test(message)) throw error;
+      browserPromise = null;
+      return await renderPdfOnce(html);
+    }
+  } finally {
+    // Serverless functions are memory-capped (2048 MB on Vercel Hobby); keeping
+    // Chromium warm lets memory accumulate across the CV and cover-letter
+    // renders and OOM-kills the process. Close it after each render so peak
+    // usage is ever only a single render. Local dev keeps the browser warm.
+    if (isServerless()) await closeBrowser();
   }
 }
