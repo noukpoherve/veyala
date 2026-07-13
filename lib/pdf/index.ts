@@ -24,6 +24,15 @@ function isServerless(): boolean {
 }
 
 async function launchBundledChromium(): Promise<Browser> {
+  // @sparticuz/chromium only unpacks its bundled shared libraries (libnspr4,
+  // libnss3, …) AND sets LD_LIBRARY_PATH when it detects an Amazon Linux 2023
+  // runtime. On Vercel that detection hinges on process.env.VERCEL, which is
+  // absent unless "Automatically expose System Environment Variables" is on —
+  // so Chromium launches but dies on "libnspr4.so: cannot open shared object".
+  // We only reach this after isServerless() confirmed a serverless Linux host
+  // (and @sparticuz 149 ships only the AL2023 lib pack), so assert the signal
+  // BEFORE importing the module: its top-level code reads it to set up the libs.
+  process.env.VERCEL ??= "1";
   const sparticuzChromium = (await import("@sparticuz/chromium")).default;
   // CV/cover letter PDFs never need WebGL; disabling it cuts Chromium's
   // memory footprint enough to avoid OOM kills under Lambda's memory cap.
