@@ -21,7 +21,15 @@ const editSchema = z.object({
   coverLetter: z.string().max(8000),
 });
 
-export type SaveCvEditsResult = { ok: true } | { ok: false; error: string };
+export type SaveCvEditsResult =
+  | {
+      ok: true;
+      pdfUrl: string;
+      docxUrl: string;
+      coverLetterPdfUrl: string;
+      coverLetterDocxUrl: string;
+    }
+  | { ok: false; error: string };
 
 /**
  * Saves editor changes: validates the CV data, re-renders the four exports
@@ -63,14 +71,14 @@ export async function saveCvEdits(input: unknown): Promise<SaveCvEditsResult> {
       data: {
         tailoredData: data,
         coverLetter,
-        templateId,
+        template: { connect: { id: templateId } },
         styleOverride: styleOverride ?? Prisma.DbNull,
         ...urls,
       },
     });
 
     revalidatePath(`/cv/${cvId}`);
-    return { ok: true };
+    return { ok: true, ...urls };
   } catch (e) {
     return {
       ok: false,

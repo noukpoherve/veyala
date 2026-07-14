@@ -47,6 +47,8 @@ export default async function CvEditPage({ params }: { params: { id: string } })
       initialLetter={cv.coverLetter}
       initialTemplateId={cv.templateId}
       initialStyleOverride={parseStyleOverride(cv.styleOverride)}
+      initialPdfUrl={cv.pdfUrl}
+      initialDocxUrl={cv.docxUrl}
       templates={editorTemplates}
     />
   );

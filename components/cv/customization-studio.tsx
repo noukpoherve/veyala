@@ -188,10 +188,11 @@ export function CustomizationStudio({
           </div>
         </aside>
 
-        {/* Centre: the CV, sized to fit the available height so it's fully
-            visible without scrolling; the A4 ratio derives the width. */}
-        <div className="flex min-h-[60vh] items-center justify-center bg-muted/40 p-4 sm:p-6 lg:min-h-0">
-          <div className="aspect-[210/297] w-full max-w-full overflow-hidden rounded-xl border bg-white shadow-lg lg:h-full lg:w-auto lg:max-h-full">
+        {/* Centre: the CV as a document viewer — a readable-width page that
+            fills the height, scrolling internally to reveal multi-page CVs
+            (a fixed A4 ratio would crop anything past the first page). */}
+        <div className="flex min-h-0 justify-center overflow-hidden bg-muted/40 p-4 sm:p-6">
+          <div className="h-[70vh] w-full max-w-[54rem] overflow-hidden rounded-xl border bg-white shadow-lg lg:h-full">
             <iframe
               srcDoc={cvHtml}
               title="Aperçu du CV"
