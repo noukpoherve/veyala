@@ -3,9 +3,9 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { Check, Search, Wand2, X } from "lucide-react";
 import type { EditorTemplate } from "@/components/cv/cv-editor";
-import { ColorPalettePanel } from "@/components/cv/color-palette-panel";
+import { DesignControls } from "@/components/cv/design-controls";
 import { TemplateSwatch } from "@/components/templates/template-swatch";
-import type { StyleOverride, TemplateDefinition } from "@/lib/templates/definition";
+import type { ColorsOverride, TemplateDefinition } from "@/lib/templates/definition";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -29,9 +29,14 @@ export function CustomizationStudio({
   selectedId,
   onSelect,
   colors,
+  photo,
+  photoShape,
+  hasPhoto,
   hasOverride,
   onChangeColors,
-  onResetColors,
+  onChangePhoto,
+  onChangePhotoShape,
+  onReset,
   cvHtml,
 }: {
   open: boolean;
@@ -40,9 +45,14 @@ export function CustomizationStudio({
   selectedId: string;
   onSelect: (id: string) => void;
   colors: TemplateDefinition["colors"];
+  photo: boolean;
+  photoShape: "circle" | "square";
+  hasPhoto: boolean;
   hasOverride: boolean;
-  onChangeColors: (patch: StyleOverride) => void;
-  onResetColors: () => void;
+  onChangeColors: (patch: ColorsOverride) => void;
+  onChangePhoto: (show: boolean) => void;
+  onChangePhotoShape: (shape: "circle" | "square") => void;
+  onReset: () => void;
   cvHtml: string;
 }) {
   const [query, setQuery] = useState("");
@@ -178,27 +188,31 @@ export function CustomizationStudio({
           </div>
         </aside>
 
-        {/* Centre: large live CV */}
-        <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-muted/40 p-4 sm:p-8">
-          <div className="w-full max-w-[46rem]">
-            <div className="overflow-hidden rounded-xl border bg-white shadow-lg">
-              <iframe
-                srcDoc={cvHtml}
-                title="Aperçu du CV"
-                className="aspect-[210/297] w-full bg-white"
-                sandbox=""
-              />
-            </div>
+        {/* Centre: the CV, sized to fit the available height so it's fully
+            visible without scrolling; the A4 ratio derives the width. */}
+        <div className="flex min-h-[60vh] items-center justify-center bg-muted/40 p-4 sm:p-6 lg:min-h-0">
+          <div className="aspect-[210/297] w-full max-w-full overflow-hidden rounded-xl border bg-white shadow-lg lg:h-full lg:w-auto lg:max-h-full">
+            <iframe
+              srcDoc={cvHtml}
+              title="Aperçu du CV"
+              className="size-full bg-white"
+              sandbox=""
+            />
           </div>
         </div>
 
-        {/* Right rail: colours */}
+        {/* Right rail: appearance controls */}
         <aside className="min-h-0 overflow-y-auto border-t bg-muted/20 p-3 lg:border-l lg:border-t-0">
-          <ColorPalettePanel
+          <DesignControls
             colors={colors}
+            photo={photo}
+            photoShape={photoShape}
+            hasPhoto={hasPhoto}
             hasOverride={hasOverride}
-            onChange={onChangeColors}
-            onReset={onResetColors}
+            onChangeColors={onChangeColors}
+            onChangePhoto={onChangePhoto}
+            onChangePhotoShape={onChangePhotoShape}
+            onReset={onReset}
           />
         </aside>
       </div>

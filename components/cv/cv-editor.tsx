@@ -7,6 +7,8 @@ import { ArrowLeft, CheckCircle2, FileText, Loader2, Mail, Palette, Save } from 
 import type { CVData } from "@/lib/cv-schema";
 import {
   applyStyleOverride,
+  type ColorsOverride,
+  isEmptyStyleOverride,
   type StyleOverride,
   type TemplateDefinition,
 } from "@/lib/templates/definition";
@@ -69,7 +71,11 @@ export function CvEditor({
     return applyStyleOverride(base, styleOverride);
   }, [templates, templateId, styleOverride]);
 
-  const patchColors = (patch: StyleOverride) => setStyleOverride((prev) => ({ ...prev, ...patch }));
+  const patchColors = (patch: ColorsOverride) =>
+    setStyleOverride((prev) => ({ ...prev, colors: { ...prev?.colors, ...patch } }));
+  const setPhoto = (show: boolean) => setStyleOverride((prev) => ({ ...prev, photo: show }));
+  const setPhotoShape = (shape: "circle" | "square") =>
+    setStyleOverride((prev) => ({ ...prev, photoShape: shape }));
 
   const parsedData = useMemo(() => JSON.parse(deferred) as CVData, [deferred]);
   // The CV is rendered on its own (not just when its tab is active) so the
@@ -221,9 +227,14 @@ export function CvEditor({
         selectedId={templateId}
         onSelect={setTemplateId}
         colors={definition.colors}
-        hasOverride={Boolean(styleOverride && Object.keys(styleOverride).length > 0)}
+        photo={definition.photo}
+        photoShape={definition.photoShape}
+        hasPhoto={Boolean(parsedData.identity.photoUrl)}
+        hasOverride={!isEmptyStyleOverride(styleOverride)}
         onChangeColors={patchColors}
-        onResetColors={() => setStyleOverride(undefined)}
+        onChangePhoto={setPhoto}
+        onChangePhotoShape={setPhotoShape}
+        onReset={() => setStyleOverride(undefined)}
         cvHtml={cvHtml}
       />
     </div>

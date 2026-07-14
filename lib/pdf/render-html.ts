@@ -218,7 +218,7 @@ function baseCss(def: TemplateDefinition): string {
   .job li { margin-bottom: .8mm; }
   .job .stack { font-size: 8.4pt; margin-top: 1mm; color: ${c.heading}; }
   .job .stack em { color: ${c.body}; }
-  .photo { width: 30mm; height: 34mm; object-fit: cover; border: 1.5px solid #ffffffcc; }
+  .photo { width: 30mm; height: ${def.photoShape === "circle" ? "30mm" : "34mm"}; object-fit: cover; border: 1.5px solid #ffffffcc; border-radius: ${def.photoShape === "circle" ? "50%" : "1.5mm"}; }
   .bricks { list-style: none; display: flex; flex-wrap: wrap; gap: 1.4mm; }
   .bricks li { padding: .8mm 2mm; border-radius: 1.2mm; font-size: 8pt; }
   .skill-list { padding-left: 4.5mm; }
