@@ -29,12 +29,15 @@ function isLightSidebar(def: TemplateDefinition): boolean {
 }
 
 function contactSection(cv: CVData, inSidebar: boolean): string {
-  const { email, phone, location, links } = cv.contact;
+  const { email, phone, location, links, details } = cv.contact;
   const items = [
     phone && `<li>${esc(phone)}</li>`,
     email && `<li><a href="mailto:${esc(email)}">${esc(email)}</a></li>`,
     location && `<li>${esc(location)}</li>`,
     ...links.map((l) => `<li><a href="${esc(httpUrl(l.url))}">${esc(l.label || l.url)}</a></li>`),
+    ...details.map(
+      (d) => `<li><strong>${esc(d.label)}</strong>${d.value ? ` : ${esc(d.value)}` : ""}</li>`
+    ),
   ].filter(Boolean);
   if (items.length === 0) return "";
   return `<section class="contact">
