@@ -1,16 +1,22 @@
 "use server";
 
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
-import { parseTemplateDefinition } from "@/lib/templates/definition";
+import {
+  applyStyleOverride,
+  parseTemplateDefinition,
+  styleOverrideSchema,
+} from "@/lib/templates/definition";
 import { renderAndStoreExports } from "@/lib/generate-cv";
 
 const editSchema = z.object({
   cvId: z.string().min(1),
   templateId: z.string().min(1),
+  styleOverride: styleOverrideSchema.optional(),
   data: cvSchema,
   coverLetter: z.string().max(8000),
 });
@@ -30,7 +36,7 @@ export async function saveCvEdits(input: unknown): Promise<SaveCvEditsResult> {
   if (!parsed.success) {
     return { ok: false, error: "Données invalides : le nom complet est obligatoire." };
   }
-  const { cvId, templateId, data, coverLetter } = parsed.data;
+  const { cvId, templateId, styleOverride, data, coverLetter } = parsed.data;
 
   const cv = await db.generatedCV.findUnique({ where: { id: cvId } });
   if (!cv || cv.userId !== session.user.id) {
@@ -49,12 +55,18 @@ export async function saveCvEdits(input: unknown): Promise<SaveCvEditsResult> {
       cv: data,
       letterBody: coverLetter,
       jobTitle: cv.jobTitle,
-      definition: parseTemplateDefinition(template.definition),
+      definition: applyStyleOverride(parseTemplateDefinition(template.definition), styleOverride),
     });
 
     await db.generatedCV.update({
       where: { id: cvId },
-      data: { tailoredData: data, coverLetter, templateId, ...urls },
+      data: {
+        tailoredData: data,
+        coverLetter,
+        templateId,
+        styleOverride: styleOverride ?? Prisma.DbNull,
+        ...urls,
+      },
     });
 
     revalidatePath(`/cv/${cvId}`);

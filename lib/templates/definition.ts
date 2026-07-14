@@ -61,3 +61,38 @@ export type TemplateDefinition = z.infer<typeof templateDefinitionSchema>;
 export function parseTemplateDefinition(data: unknown): TemplateDefinition {
   return templateDefinitionSchema.parse(data);
 }
+
+/**
+ * Per-CV colour override: a partial of a template's palette that a user tweaks
+ * in the editor. Stored on GeneratedCV.styleOverride and merged over the
+ * template's own colours at render time.
+ */
+export const styleOverrideSchema = z
+  .object({
+    sidebar: z.array(hexColor).min(1).max(6),
+    sidebarText: hexColor,
+    band: hexColor,
+    bandText: hexColor,
+    heading: hexColor,
+    body: hexColor,
+    link: hexColor,
+  })
+  .partial();
+
+export type StyleOverride = z.infer<typeof styleOverrideSchema>;
+
+/** Parses an unknown value (e.g. a DB Json column) into a StyleOverride. */
+export function parseStyleOverride(data: unknown): StyleOverride | undefined {
+  if (data == null) return undefined;
+  const parsed = styleOverrideSchema.safeParse(data);
+  return parsed.success ? parsed.data : undefined;
+}
+
+/** Applies a colour override on top of a template definition (non-mutating). */
+export function applyStyleOverride(
+  def: TemplateDefinition,
+  override?: StyleOverride | null
+): TemplateDefinition {
+  if (!override || Object.keys(override).length === 0) return def;
+  return { ...def, colors: { ...def.colors, ...override } };
+}

@@ -5,13 +5,18 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { ArrowLeft, CheckCircle2, FileText, Loader2, Mail, Save } from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
-import type { TemplateDefinition } from "@/lib/templates/definition";
+import {
+  applyStyleOverride,
+  type StyleOverride,
+  type TemplateDefinition,
+} from "@/lib/templates/definition";
 import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { saveCvEdits } from "@/app/(app)/cv/[id]/edit/actions";
 import { cn } from "@/lib/utils";
 import { CvFields } from "@/components/cv/cv-fields";
 import { TemplatePickerDialog } from "@/components/cv/template-picker-dialog";
+import { ColorPalettePanel } from "@/components/cv/color-palette-panel";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +35,7 @@ export function CvEditor({
   initialData,
   initialLetter,
   initialTemplateId,
+  initialStyleOverride,
   templates,
 }: {
   cvId: string;
@@ -37,11 +43,15 @@ export function CvEditor({
   initialData: CVData;
   initialLetter: string;
   initialTemplateId: string;
+  initialStyleOverride?: StyleOverride;
   templates: EditorTemplate[];
 }) {
   const form = useForm<CVData>({ defaultValues: initialData });
   const [letter, setLetter] = useState(initialLetter);
   const [templateId, setTemplateId] = useState(initialTemplateId);
+  const [styleOverride, setStyleOverride] = useState<StyleOverride | undefined>(
+    initialStyleOverride
+  );
   const [tab, setTab] = useState<PreviewTab>("cv");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -52,10 +62,14 @@ export function CvEditor({
   const deferred = useDeferredValue(JSON.stringify(values));
   const deferredLetter = useDeferredValue(letter);
 
-  const definition = useMemo(
-    () => templates.find((t) => t.id === templateId)?.definition ?? templates[0]!.definition,
-    [templates, templateId]
-  );
+  // Effective definition: the chosen template's palette with the user's
+  // per-CV colour overrides merged on top, so the preview reflects both.
+  const definition = useMemo(() => {
+    const base = templates.find((t) => t.id === templateId)?.definition ?? templates[0]!.definition;
+    return applyStyleOverride(base, styleOverride);
+  }, [templates, templateId, styleOverride]);
+
+  const patchColors = (patch: StyleOverride) => setStyleOverride((prev) => ({ ...prev, ...patch }));
 
   const previewHtml = useMemo(() => {
     const data = JSON.parse(deferred) as CVData;
@@ -70,6 +84,7 @@ export function CvEditor({
     const result = await saveCvEdits({
       cvId,
       templateId,
+      styleOverride,
       data: form.getValues(),
       coverLetter: letter,
     });
@@ -182,6 +197,13 @@ export function CvEditor({
                 onSelect={setTemplateId}
               />
             </div>
+
+            <ColorPalettePanel
+              colors={definition.colors}
+              hasOverride={Boolean(styleOverride && Object.keys(styleOverride).length > 0)}
+              onChange={patchColors}
+              onReset={() => setStyleOverride(undefined)}
+            />
 
             <div className="overflow-hidden rounded-xl border shadow-sm">
               <iframe
