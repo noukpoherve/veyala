@@ -5,7 +5,11 @@ import { ArrowLeft, Download, FileText, Mail, PenLine, RefreshCw } from "lucide-
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
-import { parseTemplateDefinition } from "@/lib/templates/definition";
+import {
+  applyStyleOverride,
+  parseStyleOverride,
+  parseTemplateDefinition,
+} from "@/lib/templates/definition";
 import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { generateCV, GenerationError } from "@/lib/generate-cv";
@@ -30,7 +34,10 @@ export default async function CvDetailPage({
   if (!cv || cv.userId !== session!.user.id) notFound();
 
   const data = cvSchema.parse(cv.tailoredData);
-  const definition = parseTemplateDefinition(cv.template.definition);
+  const definition = applyStyleOverride(
+    parseTemplateDefinition(cv.template.definition),
+    parseStyleOverride(cv.styleOverride)
+  );
   const previewHtml = renderCVHtml(data, definition);
   const letterHtml = cv.coverLetter
     ? renderCoverLetterHtml(data, { body: cv.coverLetter, jobTitle: cv.jobTitle }, definition)
