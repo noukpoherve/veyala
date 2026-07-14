@@ -10,6 +10,12 @@ export const linkSchema = z.object({
   url: z.string().min(1),
 });
 
+/** Free-form info without a URL, e.g. "Permis" → "B", "Nationalité" → "…". */
+export const detailSchema = z.object({
+  label: z.string().min(1),
+  value: z.string().default(""),
+});
+
 export const experienceSchema = z.object({
   title: z.string().min(1),
   company: z.string().default(""),
@@ -48,6 +54,7 @@ export const cvSchema = z.object({
     phone: z.string().default(""),
     location: z.string().default(""),
     links: z.array(linkSchema).default([]),
+    details: z.array(detailSchema).default([]),
   }),
   summary: z.string().default(""),
   experiences: z.array(experienceSchema).default([]),
@@ -80,7 +87,8 @@ export const CV_JSON_SHAPE = `{
   "identity": { "fullName": string, "headline": string, "photoUrl": string },
   "contact": {
     "email": string, "phone": string, "location": string,
-    "links": [{ "label": string, "url": string }]
+    "links": [{ "label": string, "url": string }],
+    "details": [{ "label": string, "value": string }]
   },
   "summary": string,
   "experiences": [{
