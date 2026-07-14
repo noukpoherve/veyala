@@ -96,6 +96,7 @@ export function CvEditor({
   const setPhoto = (show: boolean) => setStyleOverride((prev) => ({ ...prev, photo: show }));
   const setPhotoShape = (shape: "circle" | "square") =>
     setStyleOverride((prev) => ({ ...prev, photoShape: shape }));
+  const setLogo = (dataUrl: string) => setStyleOverride((prev) => ({ ...prev, logo: dataUrl }));
 
   // Any edit after mount makes the saved exports stale until the next save.
   const mounted = useRef(false);
@@ -294,10 +295,12 @@ export function CvEditor({
         photo={definition.photo}
         photoShape={definition.photoShape}
         hasPhoto={Boolean(parsedData.identity.photoUrl)}
+        logo={definition.logo}
         hasOverride={!isEmptyStyleOverride(styleOverride)}
         onChangeColors={patchColors}
         onChangePhoto={setPhoto}
         onChangePhotoShape={setPhotoShape}
+        onChangeLogo={setLogo}
         onReset={() => setStyleOverride(undefined)}
         cvHtml={cvHtml}
       />

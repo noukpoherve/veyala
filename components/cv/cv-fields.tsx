@@ -5,6 +5,7 @@ import { useFieldArray, type UseFormReturn } from "react-hook-form";
 import { ArrowDownWideNarrow, ImagePlus, Plus, Trash2 } from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
 import { sortByDatesDesc } from "@/lib/cv-sort";
+import { fileToDataUrl } from "@/lib/image-file";
 import { SortableList } from "@/components/cv/sortable-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,18 +64,6 @@ function LinesField({
       />
     </div>
   );
-}
-
-/** Downscales the photo client-side and returns a compact JPEG data URL. */
-async function fileToDataUrl(file: File): Promise<string> {
-  const bitmap = await createImageBitmap(file);
-  const max = 400;
-  const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", 0.85);
 }
 
 function PhotoField({ form }: { form: UseFormReturn<CVData> }) {

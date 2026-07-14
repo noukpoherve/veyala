@@ -42,6 +42,8 @@ export const templateDefinitionSchema = z.object({
   photo: z.boolean().default(false),
   /** Photo frame shape. */
   photoShape: z.enum(["circle", "square"]).default("square"),
+  /** Optional logo (data URL) shown as a watermark in the top-right corner. */
+  logo: z.string().optional(),
   /** Skill rendering: "bricks" (chips), "list" (bullets) or "inline" (dot-separated). */
   skillsStyle: z.enum(["bricks", "list", "inline"]).default("inline"),
   /** Section titles: filled color band or plain text with an underline rule. */
@@ -87,6 +89,8 @@ export const styleOverrideSchema = z.object({
   colors: colorsOverrideSchema.optional(),
   photo: z.boolean().optional(),
   photoShape: z.enum(["circle", "square"]).optional(),
+  /** Logo (data URL); empty string clears an inherited logo. */
+  logo: z.string().optional(),
 });
 
 export type StyleOverride = z.infer<typeof styleOverrideSchema>;
@@ -94,9 +98,12 @@ export type StyleOverride = z.infer<typeof styleOverrideSchema>;
 /** True when an override carries no actual customisation. */
 export function isEmptyStyleOverride(override?: StyleOverride | null): boolean {
   if (!override) return true;
-  const { colors, photo, photoShape } = override;
+  const { colors, photo, photoShape, logo } = override;
   return (
-    (!colors || Object.keys(colors).length === 0) && photo === undefined && photoShape === undefined
+    (!colors || Object.keys(colors).length === 0) &&
+    photo === undefined &&
+    photoShape === undefined &&
+    logo === undefined
   );
 }
 
@@ -119,5 +126,6 @@ export function applyStyleOverride(
   }
   if (typeof override!.photo === "boolean") next = { ...next, photo: override!.photo };
   if (override!.photoShape) next = { ...next, photoShape: override!.photoShape };
+  if (override!.logo !== undefined) next = { ...next, logo: override!.logo || undefined };
   return next;
 }
