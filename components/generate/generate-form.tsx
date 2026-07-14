@@ -57,8 +57,21 @@ export function GenerateForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const body = (await res.json()) as { id?: string; error?: string };
-      if (!res.ok || !body.id) throw new Error(body.error ?? "La génération a échoué.");
+      // A serverless timeout/crash returns an HTML error page, not JSON —
+      // parse defensively so it surfaces as a readable message, not a
+      // "Unexpected token" JSON error.
+      const body = (await res.json().catch(() => null)) as {
+        id?: string;
+        error?: string;
+      } | null;
+      if (!res.ok || !body?.id) {
+        throw new Error(
+          body?.error ??
+            (res.status === 502 || res.status === 504
+              ? "La génération a pris trop de temps (fournisseur IA surchargé ou indisponible). Réessayez ou changez de fournisseur."
+              : "La génération a échoué.")
+        );
+      }
       router.push(`/cv/${body.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur inconnue.");

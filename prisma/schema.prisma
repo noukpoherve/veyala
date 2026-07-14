@@ -241,6 +241,8 @@ model GeneratedCV {
   jobText      String   @db.Text
   jobTextHash  String
   tailoredData Json
+  /** Per-CV colour overrides applied on top of the template palette (nullable). */
+  styleOverride Json?
   docxUrl      String?
   pdfUrl       String?
 
