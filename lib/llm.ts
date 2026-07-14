@@ -91,6 +91,14 @@ export async function resolveLLMConfig(): Promise<LLMConfig> {
 }
 
 const MAX_RETRIES = 3;
+/**
+ * A 429 whose suggested wait is at most this long is a momentary per-minute
+ * (TPM/RPM) throttle we can ride out with a short retry. Anything longer means
+ * the token budget is exhausted for a while: retrying in-request is pointless —
+ * it only burns quota faster and, in prod, overruns the 60 s function timeout
+ * (which then surfaces as a non-JSON "An error occurred" page on the client).
+ */
+const MAX_RETRYABLE_RATE_LIMIT_S = 8;
 
 /** Sends system + user prompts to the configured provider, returns raw text. */
 export async function chat(params: ChatParams, config?: LLMConfig): Promise<string> {
@@ -112,8 +120,12 @@ export async function chat(params: ChatParams, config?: LLMConfig): Promise<stri
     } catch (e) {
       lastError = e instanceof LLMError ? e : new LLMError(String(e), undefined, true);
       if (!lastError.retryable || attempt === MAX_RETRIES - 1) throw lastError;
-      // Honor the provider's suggested wait (TPM windows), capped at 30 s.
-      const delay = Math.min(lastError.retryAfterMs ?? 800 * 2 ** attempt, 30000);
+      // Honor the provider's suggested wait (TPM windows). Capped short so the
+      // whole pipeline (2 LLM calls + PDF render) stays under the 60 s timeout.
+      const delay = Math.min(
+        lastError.retryAfterMs ?? 800 * 2 ** attempt,
+        MAX_RETRYABLE_RATE_LIMIT_S * 1000
+      );
       await new Promise((r) => setTimeout(r, delay));
     }
   }
@@ -132,10 +144,17 @@ function errorFromStatus(
     const headerSeconds = Number(headers?.get("retry-after"));
     const messageSeconds = Number(/try again in ([\d.]+)s/i.exec(body)?.[1]);
     const seconds = headerSeconds || messageSeconds || 0;
+    // Short wait: ride it out with a retry. Long wait: the budget is exhausted —
+    // fail fast rather than block for minutes and blow the serverless timeout.
+    const retryable = seconds <= MAX_RETRYABLE_RATE_LIMIT_S;
+    const message = retryable
+      ? `Limite de requêtes momentanée chez ${provider}. Patientez quelques secondes et réessayez.`
+      : `Quota épuisé chez ${provider} (réessai possible dans ~${Math.ceil(seconds)} s). ` +
+        `Patientez ou configurez un autre fournisseur IA dans l'admin.`;
     return new LLMError(
-      `Quota atteint chez ${provider}. Patientez ou changez de fournisseur dans l'admin.`,
+      message,
       status,
-      true,
+      retryable,
       seconds ? Math.ceil(seconds * 1000) + 500 : undefined
     );
   }
