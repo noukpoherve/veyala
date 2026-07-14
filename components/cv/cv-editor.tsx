@@ -1,9 +1,18 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, CheckCircle2, FileText, Loader2, Mail, Palette, Save } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Download,
+  FileText,
+  Loader2,
+  Mail,
+  Palette,
+  Save,
+} from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
 import {
   applyStyleOverride,
@@ -37,6 +46,8 @@ export function CvEditor({
   initialLetter,
   initialTemplateId,
   initialStyleOverride,
+  initialPdfUrl,
+  initialDocxUrl,
   templates,
 }: {
   cvId: string;
@@ -45,6 +56,8 @@ export function CvEditor({
   initialLetter: string;
   initialTemplateId: string;
   initialStyleOverride?: StyleOverride;
+  initialPdfUrl?: string | null;
+  initialDocxUrl?: string | null;
   templates: EditorTemplate[];
 }) {
   const form = useForm<CVData>({ defaultValues: initialData });
@@ -57,6 +70,13 @@ export function CvEditor({
   const [studioOpen, setStudioOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  // Downloads point at the last saved exports; refreshed after each save.
+  const [downloads, setDownloads] = useState({
+    pdfUrl: initialPdfUrl ?? "",
+    docxUrl: initialDocxUrl ?? "",
+  });
+  // Edits since the last save make the current downloads stale.
+  const [dirty, setDirty] = useState(false);
 
   // Live preview: every keystroke updates the form values; the deferred value
   // keeps typing smooth while the iframe re-renders in the background.
@@ -76,6 +96,17 @@ export function CvEditor({
   const setPhoto = (show: boolean) => setStyleOverride((prev) => ({ ...prev, photo: show }));
   const setPhotoShape = (shape: "circle" | "square") =>
     setStyleOverride((prev) => ({ ...prev, photoShape: shape }));
+
+  // Any edit after mount makes the saved exports stale until the next save.
+  const mounted = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-runs whenever an edited value changes to mark exports stale; the values aren't read inside
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    setDirty(true);
+  }, [deferred, deferredLetter, templateId, styleOverride]);
 
   const parsedData = useMemo(() => JSON.parse(deferred) as CVData, [deferred]);
   // The CV is rendered on its own (not just when its tab is active) so the
@@ -100,6 +131,8 @@ export function CvEditor({
       coverLetter: letter,
     });
     if (result.ok) {
+      setDownloads({ pdfUrl: result.pdfUrl, docxUrl: result.docxUrl });
+      setDirty(false);
       setStatus("saved");
       setTimeout(() => setStatus("idle"), 2500);
     } else {
@@ -137,6 +170,37 @@ export function CvEditor({
             {status === "saving" ? <Loader2 className="animate-spin" /> : <Save />}
             Enregistrer
           </Button>
+          {downloads.pdfUrl || downloads.docxUrl ? (
+            <div
+              className="flex items-center gap-2"
+              title={dirty ? "Enregistrez pour télécharger votre dernière version." : undefined}
+            >
+              {downloads.pdfUrl ? (
+                <Button asChild variant="outline" size="sm" aria-disabled={dirty}>
+                  <a
+                    href={dirty ? undefined : downloads.pdfUrl}
+                    download
+                    className={cn(dirty && "pointer-events-none opacity-50")}
+                  >
+                    <Download className="size-4" aria-hidden />
+                    PDF
+                  </a>
+                </Button>
+              ) : null}
+              {downloads.docxUrl ? (
+                <Button asChild variant="outline" size="sm" aria-disabled={dirty}>
+                  <a
+                    href={dirty ? undefined : downloads.docxUrl}
+                    download
+                    className={cn(dirty && "pointer-events-none opacity-50")}
+                  >
+                    <Download className="size-4" aria-hidden />
+                    Word
+                  </a>
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </header>
 
