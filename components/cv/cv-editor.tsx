@@ -11,7 +11,7 @@ import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { saveCvEdits } from "@/app/(app)/cv/[id]/edit/actions";
 import { cn } from "@/lib/utils";
 import { CvFields } from "@/components/cv/cv-fields";
-import { TemplateSwatch } from "@/components/templates/template-swatch";
+import { TemplatePickerDialog } from "@/components/cv/template-picker-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -176,36 +176,11 @@ export function CvEditor({
                 </button>
               </div>
 
-              <fieldset className="flex items-center gap-2">
-                <legend className="sr-only">Template</legend>
-                {templates.map((t) => (
-                  <label
-                    key={t.id}
-                    title={t.name}
-                    className={cn(
-                      "w-14 cursor-pointer rounded-md border p-1 transition-colors",
-                      templateId === t.id
-                        ? "border-primary ring-2 ring-primary/30"
-                        : "hover:border-muted-foreground/40"
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="editor-template"
-                      value={t.id}
-                      checked={templateId === t.id}
-                      onChange={() => setTemplateId(t.id)}
-                      className="sr-only"
-                    />
-                    <TemplateSwatch
-                      layout={t.definition.layout}
-                      colors={t.definition.colors.sidebar}
-                      band={t.definition.colors.band}
-                    />
-                    <span className="sr-only">{t.name}</span>
-                  </label>
-                ))}
-              </fieldset>
+              <TemplatePickerDialog
+                templates={templates}
+                selectedId={templateId}
+                onSelect={setTemplateId}
+              />
             </div>
 
             <div className="overflow-hidden rounded-xl border shadow-sm">
