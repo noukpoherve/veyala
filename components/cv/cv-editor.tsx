@@ -3,7 +3,7 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, CheckCircle2, FileText, Loader2, Mail, Save } from "lucide-react";
+import { ArrowLeft, CheckCircle2, FileText, Loader2, Mail, Palette, Save } from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
 import {
   applyStyleOverride,
@@ -15,8 +15,7 @@ import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { saveCvEdits } from "@/app/(app)/cv/[id]/edit/actions";
 import { cn } from "@/lib/utils";
 import { CvFields } from "@/components/cv/cv-fields";
-import { TemplatePickerDialog } from "@/components/cv/template-picker-dialog";
-import { ColorPalettePanel } from "@/components/cv/color-palette-panel";
+import { CustomizationStudio } from "@/components/cv/customization-studio";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,6 +52,7 @@ export function CvEditor({
     initialStyleOverride
   );
   const [tab, setTab] = useState<PreviewTab>("cv");
+  const [studioOpen, setStudioOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -71,12 +71,17 @@ export function CvEditor({
 
   const patchColors = (patch: StyleOverride) => setStyleOverride((prev) => ({ ...prev, ...patch }));
 
-  const previewHtml = useMemo(() => {
-    const data = JSON.parse(deferred) as CVData;
-    return tab === "cv"
-      ? renderCVHtml(data, definition)
-      : renderCoverLetterHtml(data, { body: deferredLetter, jobTitle }, definition);
-  }, [deferred, deferredLetter, definition, tab, jobTitle]);
+  const parsedData = useMemo(() => JSON.parse(deferred) as CVData, [deferred]);
+  // The CV is rendered on its own (not just when its tab is active) so the
+  // customisation studio can always show it large and live.
+  const cvHtml = useMemo(() => renderCVHtml(parsedData, definition), [parsedData, definition]);
+  const previewHtml = useMemo(
+    () =>
+      tab === "cv"
+        ? cvHtml
+        : renderCoverLetterHtml(parsedData, { body: deferredLetter, jobTitle }, definition),
+    [tab, cvHtml, parsedData, deferredLetter, definition, jobTitle]
+  );
 
   async function onSave() {
     setStatus("saving");
@@ -191,19 +196,11 @@ export function CvEditor({
                 </button>
               </div>
 
-              <TemplatePickerDialog
-                templates={templates}
-                selectedId={templateId}
-                onSelect={setTemplateId}
-              />
+              <Button variant="outline" size="sm" onClick={() => setStudioOpen(true)}>
+                <Palette className="size-4" aria-hidden />
+                Personnaliser l&apos;apparence
+              </Button>
             </div>
-
-            <ColorPalettePanel
-              colors={definition.colors}
-              hasOverride={Boolean(styleOverride && Object.keys(styleOverride).length > 0)}
-              onChange={patchColors}
-              onReset={() => setStyleOverride(undefined)}
-            />
 
             <div className="overflow-hidden rounded-xl border shadow-sm">
               <iframe
@@ -216,6 +213,19 @@ export function CvEditor({
           </div>
         </section>
       </div>
+
+      <CustomizationStudio
+        open={studioOpen}
+        onClose={() => setStudioOpen(false)}
+        templates={templates}
+        selectedId={templateId}
+        onSelect={setTemplateId}
+        colors={definition.colors}
+        hasOverride={Boolean(styleOverride && Object.keys(styleOverride).length > 0)}
+        onChangeColors={patchColors}
+        onResetColors={() => setStyleOverride(undefined)}
+        cvHtml={cvHtml}
+      />
     </div>
   );
 }
