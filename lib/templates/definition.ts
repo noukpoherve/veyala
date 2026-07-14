@@ -40,6 +40,10 @@ export const templateDefinitionSchema = z.object({
   }),
   /** Show the photo (when the CV provides one). */
   photo: z.boolean().default(false),
+  /** Photo frame shape. */
+  photoShape: z.enum(["circle", "square"]).default("square"),
+  /** Optional logo (data URL) shown as a watermark in the top-right corner. */
+  logo: z.string().optional(),
   /** Skill rendering: "bricks" (chips), "list" (bullets) or "inline" (dot-separated). */
   skillsStyle: z.enum(["bricks", "list", "inline"]).default("inline"),
   /** Section titles: filled color band or plain text with an underline rule. */
@@ -60,4 +64,68 @@ export type TemplateDefinition = z.infer<typeof templateDefinitionSchema>;
 
 export function parseTemplateDefinition(data: unknown): TemplateDefinition {
   return templateDefinitionSchema.parse(data);
+}
+
+/**
+ * Per-CV design override: the design tweaks a user makes in the editor studio
+ * (colours, photo framing) on top of the chosen template. Stored on
+ * GeneratedCV.styleOverride and merged over the template at render time.
+ */
+const colorsOverrideSchema = z
+  .object({
+    sidebar: z.array(hexColor).min(1).max(6),
+    sidebarText: hexColor,
+    band: hexColor,
+    bandText: hexColor,
+    heading: hexColor,
+    body: hexColor,
+    link: hexColor,
+  })
+  .partial();
+
+export type ColorsOverride = z.infer<typeof colorsOverrideSchema>;
+
+export const styleOverrideSchema = z.object({
+  colors: colorsOverrideSchema.optional(),
+  photo: z.boolean().optional(),
+  photoShape: z.enum(["circle", "square"]).optional(),
+  /** Logo (data URL); empty string clears an inherited logo. */
+  logo: z.string().optional(),
+});
+
+export type StyleOverride = z.infer<typeof styleOverrideSchema>;
+
+/** True when an override carries no actual customisation. */
+export function isEmptyStyleOverride(override?: StyleOverride | null): boolean {
+  if (!override) return true;
+  const { colors, photo, photoShape, logo } = override;
+  return (
+    (!colors || Object.keys(colors).length === 0) &&
+    photo === undefined &&
+    photoShape === undefined &&
+    logo === undefined
+  );
+}
+
+/** Parses an unknown value (e.g. a DB Json column) into a StyleOverride. */
+export function parseStyleOverride(data: unknown): StyleOverride | undefined {
+  if (data == null) return undefined;
+  const parsed = styleOverrideSchema.safeParse(data);
+  return parsed.success && !isEmptyStyleOverride(parsed.data) ? parsed.data : undefined;
+}
+
+/** Applies a design override on top of a template definition (non-mutating). */
+export function applyStyleOverride(
+  def: TemplateDefinition,
+  override?: StyleOverride | null
+): TemplateDefinition {
+  if (isEmptyStyleOverride(override)) return def;
+  let next = def;
+  if (override!.colors && Object.keys(override!.colors).length > 0) {
+    next = { ...next, colors: { ...next.colors, ...override!.colors } };
+  }
+  if (typeof override!.photo === "boolean") next = { ...next, photo: override!.photo };
+  if (override!.photoShape) next = { ...next, photoShape: override!.photoShape };
+  if (override!.logo !== undefined) next = { ...next, logo: override!.logo || undefined };
+  return next;
 }

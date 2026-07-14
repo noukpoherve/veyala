@@ -1,17 +1,32 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, CheckCircle2, FileText, Loader2, Mail, Save } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Download,
+  FileText,
+  Loader2,
+  Mail,
+  Palette,
+  Save,
+} from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
-import type { TemplateDefinition } from "@/lib/templates/definition";
+import {
+  applyStyleOverride,
+  type ColorsOverride,
+  isEmptyStyleOverride,
+  type StyleOverride,
+  type TemplateDefinition,
+} from "@/lib/templates/definition";
 import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { saveCvEdits } from "@/app/(app)/cv/[id]/edit/actions";
 import { cn } from "@/lib/utils";
 import { CvFields } from "@/components/cv/cv-fields";
-import { TemplateSwatch } from "@/components/templates/template-swatch";
+import { CustomizationStudio } from "@/components/cv/customization-studio";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +45,9 @@ export function CvEditor({
   initialData,
   initialLetter,
   initialTemplateId,
+  initialStyleOverride,
+  initialPdfUrl,
+  initialDocxUrl,
   templates,
 }: {
   cvId: string;
@@ -37,14 +55,28 @@ export function CvEditor({
   initialData: CVData;
   initialLetter: string;
   initialTemplateId: string;
+  initialStyleOverride?: StyleOverride;
+  initialPdfUrl?: string | null;
+  initialDocxUrl?: string | null;
   templates: EditorTemplate[];
 }) {
   const form = useForm<CVData>({ defaultValues: initialData });
   const [letter, setLetter] = useState(initialLetter);
   const [templateId, setTemplateId] = useState(initialTemplateId);
+  const [styleOverride, setStyleOverride] = useState<StyleOverride | undefined>(
+    initialStyleOverride
+  );
   const [tab, setTab] = useState<PreviewTab>("cv");
+  const [studioOpen, setStudioOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  // Downloads point at the last saved exports; refreshed after each save.
+  const [downloads, setDownloads] = useState({
+    pdfUrl: initialPdfUrl ?? "",
+    docxUrl: initialDocxUrl ?? "",
+  });
+  // Edits since the last save make the current downloads stale.
+  const [dirty, setDirty] = useState(false);
 
   // Live preview: every keystroke updates the form values; the deferred value
   // keeps typing smooth while the iframe re-renders in the background.
@@ -52,17 +84,42 @@ export function CvEditor({
   const deferred = useDeferredValue(JSON.stringify(values));
   const deferredLetter = useDeferredValue(letter);
 
-  const definition = useMemo(
-    () => templates.find((t) => t.id === templateId)?.definition ?? templates[0]!.definition,
-    [templates, templateId]
-  );
+  // Effective definition: the chosen template's palette with the user's
+  // per-CV colour overrides merged on top, so the preview reflects both.
+  const definition = useMemo(() => {
+    const base = templates.find((t) => t.id === templateId)?.definition ?? templates[0]!.definition;
+    return applyStyleOverride(base, styleOverride);
+  }, [templates, templateId, styleOverride]);
 
-  const previewHtml = useMemo(() => {
-    const data = JSON.parse(deferred) as CVData;
-    return tab === "cv"
-      ? renderCVHtml(data, definition)
-      : renderCoverLetterHtml(data, { body: deferredLetter, jobTitle }, definition);
-  }, [deferred, deferredLetter, definition, tab, jobTitle]);
+  const patchColors = (patch: ColorsOverride) =>
+    setStyleOverride((prev) => ({ ...prev, colors: { ...prev?.colors, ...patch } }));
+  const setPhoto = (show: boolean) => setStyleOverride((prev) => ({ ...prev, photo: show }));
+  const setPhotoShape = (shape: "circle" | "square") =>
+    setStyleOverride((prev) => ({ ...prev, photoShape: shape }));
+  const setLogo = (dataUrl: string) => setStyleOverride((prev) => ({ ...prev, logo: dataUrl }));
+
+  // Any edit after mount makes the saved exports stale until the next save.
+  const mounted = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-runs whenever an edited value changes to mark exports stale; the values aren't read inside
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    setDirty(true);
+  }, [deferred, deferredLetter, templateId, styleOverride]);
+
+  const parsedData = useMemo(() => JSON.parse(deferred) as CVData, [deferred]);
+  // The CV is rendered on its own (not just when its tab is active) so the
+  // customisation studio can always show it large and live.
+  const cvHtml = useMemo(() => renderCVHtml(parsedData, definition), [parsedData, definition]);
+  const previewHtml = useMemo(
+    () =>
+      tab === "cv"
+        ? cvHtml
+        : renderCoverLetterHtml(parsedData, { body: deferredLetter, jobTitle }, definition),
+    [tab, cvHtml, parsedData, deferredLetter, definition, jobTitle]
+  );
 
   async function onSave() {
     setStatus("saving");
@@ -70,10 +127,13 @@ export function CvEditor({
     const result = await saveCvEdits({
       cvId,
       templateId,
+      styleOverride,
       data: form.getValues(),
       coverLetter: letter,
     });
     if (result.ok) {
+      setDownloads({ pdfUrl: result.pdfUrl, docxUrl: result.docxUrl });
+      setDirty(false);
       setStatus("saved");
       setTimeout(() => setStatus("idle"), 2500);
     } else {
@@ -111,6 +171,37 @@ export function CvEditor({
             {status === "saving" ? <Loader2 className="animate-spin" /> : <Save />}
             Enregistrer
           </Button>
+          {downloads.pdfUrl || downloads.docxUrl ? (
+            <div
+              className="flex items-center gap-2"
+              title={dirty ? "Enregistrez pour télécharger votre dernière version." : undefined}
+            >
+              {downloads.pdfUrl ? (
+                <Button asChild variant="outline" size="sm" aria-disabled={dirty}>
+                  <a
+                    href={dirty ? undefined : downloads.pdfUrl}
+                    download
+                    className={cn(dirty && "pointer-events-none opacity-50")}
+                  >
+                    <Download className="size-4" aria-hidden />
+                    PDF
+                  </a>
+                </Button>
+              ) : null}
+              {downloads.docxUrl ? (
+                <Button asChild variant="outline" size="sm" aria-disabled={dirty}>
+                  <a
+                    href={dirty ? undefined : downloads.docxUrl}
+                    download
+                    className={cn(dirty && "pointer-events-none opacity-50")}
+                  >
+                    <Download className="size-4" aria-hidden />
+                    Word
+                  </a>
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </header>
 
@@ -176,36 +267,10 @@ export function CvEditor({
                 </button>
               </div>
 
-              <fieldset className="flex items-center gap-2">
-                <legend className="sr-only">Template</legend>
-                {templates.map((t) => (
-                  <label
-                    key={t.id}
-                    title={t.name}
-                    className={cn(
-                      "w-14 cursor-pointer rounded-md border p-1 transition-colors",
-                      templateId === t.id
-                        ? "border-primary ring-2 ring-primary/30"
-                        : "hover:border-muted-foreground/40"
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="editor-template"
-                      value={t.id}
-                      checked={templateId === t.id}
-                      onChange={() => setTemplateId(t.id)}
-                      className="sr-only"
-                    />
-                    <TemplateSwatch
-                      layout={t.definition.layout}
-                      colors={t.definition.colors.sidebar}
-                      band={t.definition.colors.band}
-                    />
-                    <span className="sr-only">{t.name}</span>
-                  </label>
-                ))}
-              </fieldset>
+              <Button variant="outline" size="sm" onClick={() => setStudioOpen(true)}>
+                <Palette className="size-4" aria-hidden />
+                Personnaliser l&apos;apparence
+              </Button>
             </div>
 
             <div className="overflow-hidden rounded-xl border shadow-sm">
@@ -219,6 +284,26 @@ export function CvEditor({
           </div>
         </section>
       </div>
+
+      <CustomizationStudio
+        open={studioOpen}
+        onClose={() => setStudioOpen(false)}
+        templates={templates}
+        selectedId={templateId}
+        onSelect={setTemplateId}
+        colors={definition.colors}
+        photo={definition.photo}
+        photoShape={definition.photoShape}
+        hasPhoto={Boolean(parsedData.identity.photoUrl)}
+        logo={definition.logo}
+        hasOverride={!isEmptyStyleOverride(styleOverride)}
+        onChangeColors={patchColors}
+        onChangePhoto={setPhoto}
+        onChangePhotoShape={setPhotoShape}
+        onChangeLogo={setLogo}
+        onReset={() => setStyleOverride(undefined)}
+        cvHtml={cvHtml}
+      />
     </div>
   );
 }

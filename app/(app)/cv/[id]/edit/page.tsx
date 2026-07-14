@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
 import { getPublicTemplates } from "@/lib/cached";
 import { mergeTemplateLists } from "@/lib/templates/merge";
-import { parseTemplateDefinition } from "@/lib/templates/definition";
+import { parseStyleOverride, parseTemplateDefinition } from "@/lib/templates/definition";
 import type { EditorTemplate } from "@/components/cv/cv-editor";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -46,6 +46,9 @@ export default async function CvEditPage({ params }: { params: { id: string } })
       initialData={cvSchema.parse(cv.tailoredData)}
       initialLetter={cv.coverLetter}
       initialTemplateId={cv.templateId}
+      initialStyleOverride={parseStyleOverride(cv.styleOverride)}
+      initialPdfUrl={cv.pdfUrl}
+      initialDocxUrl={cv.docxUrl}
       templates={editorTemplates}
     />
   );

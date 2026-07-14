@@ -2,8 +2,11 @@
 
 import { useRef } from "react";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
-import { ImagePlus, Plus, Trash2 } from "lucide-react";
+import { ArrowDownWideNarrow, ImagePlus, Plus, Trash2 } from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
+import { sortByDatesDesc } from "@/lib/cv-sort";
+import { fileToDataUrl } from "@/lib/image-file";
+import { SortableList } from "@/components/cv/sortable-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,18 +64,6 @@ function LinesField({
       />
     </div>
   );
-}
-
-/** Downscales the photo client-side and returns a compact JPEG data URL. */
-async function fileToDataUrl(file: File): Promise<string> {
-  const bitmap = await createImageBitmap(file);
-  const max = 400;
-  const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", 0.85);
 }
 
 function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
@@ -140,6 +131,7 @@ function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
 export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
   const { control, register, getValues, setValue } = form;
   const links = useFieldArray({ control, name: "contact.links" });
+  const details = useFieldArray({ control, name: "contact.details" });
   const experiences = useFieldArray({ control, name: "experiences" });
   const education = useFieldArray({ control, name: "education" });
   const skills = useFieldArray({ control, name: "skills" });
@@ -198,6 +190,32 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             Ajouter un lien
           </Button>
         </div>
+        <div className="space-y-2">
+          <Label>Informations complémentaires (ex. Permis → B, Nationalité…)</Label>
+          {details.fields.map((field, i) => (
+            <div key={field.id} className="flex gap-2">
+              <Input
+                className="w-40"
+                placeholder="Permis"
+                {...register(`contact.details.${i}.label`)}
+              />
+              <Input placeholder="B" {...register(`contact.details.${i}.value`)} />
+              <RemoveButton
+                onClick={() => details.remove(i)}
+                label={`Supprimer l'information ${i + 1}`}
+              />
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => details.append({ label: "", value: "" })}
+          >
+            <Plus />
+            Ajouter une information
+          </Button>
+        </div>
         <div className="space-y-1.5">
           <Label htmlFor="summary">Profil / résumé</Label>
           <Textarea id="summary" rows={4} {...register("summary")} />
@@ -205,132 +223,169 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
       </SectionCard>
 
       <SectionCard title="Expériences">
-        {experiences.fields.map((field, i) => (
-          <div key={field.id} className="space-y-3 rounded-lg border p-4">
-            <div className="flex items-start justify-between gap-2">
-              <div className="grid flex-1 gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label>Intitulé du poste *</Label>
-                  <Input {...register(`experiences.${i}.title`)} />
+        <SortableList ids={experiences.fields.map((f) => f.id)} onMove={experiences.move}>
+          {(handle, i) => (
+            <div className="space-y-3 rounded-lg border bg-card p-4">
+              <div className="flex items-start gap-2">
+                <div className="pt-6">{handle}</div>
+                <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>Intitulé du poste *</Label>
+                    <Input {...register(`experiences.${i}.title`)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Entreprise</Label>
+                    <Input {...register(`experiences.${i}.company`)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Lieu</Label>
+                    <Input {...register(`experiences.${i}.place`)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Dates</Label>
+                    <Input {...register(`experiences.${i}.dates`)} placeholder="2023 — 2025" />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label>Entreprise</Label>
-                  <Input {...register(`experiences.${i}.company`)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Lieu</Label>
-                  <Input {...register(`experiences.${i}.place`)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Dates</Label>
-                  <Input {...register(`experiences.${i}.dates`)} placeholder="2023 — 2025" />
-                </div>
+                <RemoveButton
+                  onClick={() => experiences.remove(i)}
+                  label={`Supprimer l'expérience ${i + 1}`}
+                />
               </div>
-              <RemoveButton
-                onClick={() => experiences.remove(i)}
-                label={`Supprimer l'expérience ${i + 1}`}
+              <LinesField
+                label="Réalisations (une par ligne)"
+                value={getValues(`experiences.${i}.bullets`)}
+                onChange={(lines) =>
+                  setValue(`experiences.${i}.bullets`, lines, { shouldDirty: true })
+                }
+              />
+              <LinesField
+                label="Stack technique (une techno par ligne)"
+                rows={3}
+                value={getValues(`experiences.${i}.stack`)}
+                onChange={(lines) =>
+                  setValue(`experiences.${i}.stack`, lines, { shouldDirty: true })
+                }
               />
             </div>
-            <LinesField
-              label="Réalisations (une par ligne)"
-              value={getValues(`experiences.${i}.bullets`)}
-              onChange={(lines) =>
-                setValue(`experiences.${i}.bullets`, lines, { shouldDirty: true })
-              }
-            />
-            <LinesField
-              label="Stack technique (une techno par ligne)"
-              rows={3}
-              value={getValues(`experiences.${i}.stack`)}
-              onChange={(lines) => setValue(`experiences.${i}.stack`, lines, { shouldDirty: true })}
-            />
-          </div>
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            experiences.append({
-              title: "",
-              company: "",
-              place: "",
-              dates: "",
-              bullets: [],
-              stack: [],
-            })
-          }
-        >
-          <Plus />
-          Ajouter une expérience
-        </Button>
+          )}
+        </SortableList>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              experiences.append({
+                title: "",
+                company: "",
+                place: "",
+                dates: "",
+                bullets: [],
+                stack: [],
+              })
+            }
+          >
+            <Plus />
+            Ajouter une expérience
+          </Button>
+          {experiences.fields.length > 1 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => experiences.replace(sortByDatesDesc(getValues("experiences")))}
+            >
+              <ArrowDownWideNarrow />
+              Trier par date
+            </Button>
+          ) : null}
+        </div>
       </SectionCard>
 
       <SectionCard title="Formations">
-        {education.fields.map((field, i) => (
-          <div key={field.id} className="flex items-start gap-2 rounded-lg border p-4">
-            <div className="grid flex-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Diplôme *</Label>
-                <Input {...register(`education.${i}.degree`)} />
+        <SortableList ids={education.fields.map((f) => f.id)} onMove={education.move}>
+          {(handle, i) => (
+            <div className="flex items-start gap-2 rounded-lg border bg-card p-4">
+              <div className="pt-6">{handle}</div>
+              <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>Diplôme *</Label>
+                  <Input {...register(`education.${i}.degree`)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>École</Label>
+                  <Input {...register(`education.${i}.school`)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Lieu</Label>
+                  <Input {...register(`education.${i}.place`)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Dates</Label>
+                  <Input {...register(`education.${i}.dates`)} />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Détails</Label>
+                  <Input {...register(`education.${i}.details`)} />
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label>École</Label>
-                <Input {...register(`education.${i}.school`)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Lieu</Label>
-                <Input {...register(`education.${i}.place`)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Dates</Label>
-                <Input {...register(`education.${i}.dates`)} />
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label>Détails</Label>
-                <Input {...register(`education.${i}.details`)} />
-              </div>
+              <RemoveButton
+                onClick={() => education.remove(i)}
+                label={`Supprimer la formation ${i + 1}`}
+              />
             </div>
-            <RemoveButton
-              onClick={() => education.remove(i)}
-              label={`Supprimer la formation ${i + 1}`}
-            />
-          </div>
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            education.append({ degree: "", school: "", place: "", dates: "", details: "" })
-          }
-        >
-          <Plus />
-          Ajouter une formation
-        </Button>
+          )}
+        </SortableList>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              education.append({ degree: "", school: "", place: "", dates: "", details: "" })
+            }
+          >
+            <Plus />
+            Ajouter une formation
+          </Button>
+          {education.fields.length > 1 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => education.replace(sortByDatesDesc(getValues("education")))}
+            >
+              <ArrowDownWideNarrow />
+              Trier par date
+            </Button>
+          ) : null}
+        </div>
       </SectionCard>
 
       <SectionCard title="Compétences">
-        {skills.fields.map((field, i) => (
-          <div key={field.id} className="flex items-start gap-2 rounded-lg border p-4">
-            <div className="flex-1 space-y-3">
-              <div className="space-y-1.5">
-                <Label>Catégorie *</Label>
-                <Input {...register(`skills.${i}.category`)} placeholder="Back-end, DevOps…" />
+        <SortableList ids={skills.fields.map((f) => f.id)} onMove={skills.move}>
+          {(handle, i) => (
+            <div className="flex items-start gap-2 rounded-lg border bg-card p-4">
+              <div className="pt-6">{handle}</div>
+              <div className="flex-1 space-y-3">
+                <div className="space-y-1.5">
+                  <Label>Catégorie *</Label>
+                  <Input {...register(`skills.${i}.category`)} placeholder="Back-end, DevOps…" />
+                </div>
+                <LinesField
+                  label="Compétences (une par ligne)"
+                  rows={3}
+                  value={getValues(`skills.${i}.items`)}
+                  onChange={(lines) => setValue(`skills.${i}.items`, lines, { shouldDirty: true })}
+                />
               </div>
-              <LinesField
-                label="Compétences (une par ligne)"
-                rows={3}
-                value={getValues(`skills.${i}.items`)}
-                onChange={(lines) => setValue(`skills.${i}.items`, lines, { shouldDirty: true })}
+              <RemoveButton
+                onClick={() => skills.remove(i)}
+                label={`Supprimer la catégorie ${i + 1}`}
               />
             </div>
-            <RemoveButton
-              onClick={() => skills.remove(i)}
-              label={`Supprimer la catégorie ${i + 1}`}
-            />
-          </div>
-        ))}
+          )}
+        </SortableList>
         <Button
           type="button"
           variant="outline"
@@ -345,16 +400,23 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
       <SectionCard title="Langues & centres d'intérêt">
         <div className="space-y-2">
           <Label>Langues</Label>
-          {languages.fields.map((field, i) => (
-            <div key={field.id} className="flex gap-2">
-              <Input className="w-48" placeholder="Français" {...register(`languages.${i}.name`)} />
-              <Input placeholder="Courant, C1…" {...register(`languages.${i}.level`)} />
-              <RemoveButton
-                onClick={() => languages.remove(i)}
-                label={`Supprimer la langue ${i + 1}`}
-              />
-            </div>
-          ))}
+          <SortableList ids={languages.fields.map((f) => f.id)} onMove={languages.move}>
+            {(handle, i) => (
+              <div className="flex items-center gap-2">
+                {handle}
+                <Input
+                  className="w-48"
+                  placeholder="Français"
+                  {...register(`languages.${i}.name`)}
+                />
+                <Input placeholder="Courant, C1…" {...register(`languages.${i}.level`)} />
+                <RemoveButton
+                  onClick={() => languages.remove(i)}
+                  label={`Supprimer la langue ${i + 1}`}
+                />
+              </div>
+            )}
+          </SortableList>
           <Button
             type="button"
             variant="outline"

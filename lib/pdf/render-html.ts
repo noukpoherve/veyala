@@ -29,12 +29,15 @@ function isLightSidebar(def: TemplateDefinition): boolean {
 }
 
 function contactSection(cv: CVData, inSidebar: boolean): string {
-  const { email, phone, location, links } = cv.contact;
+  const { email, phone, location, links, details } = cv.contact;
   const items = [
     phone && `<li>${esc(phone)}</li>`,
     email && `<li><a href="mailto:${esc(email)}">${esc(email)}</a></li>`,
     location && `<li>${esc(location)}</li>`,
     ...links.map((l) => `<li><a href="${esc(httpUrl(l.url))}">${esc(l.label || l.url)}</a></li>`),
+    ...details.map(
+      (d) => `<li><strong>${esc(d.label)}</strong>${d.value ? ` : ${esc(d.value)}` : ""}</li>`
+    ),
   ].filter(Boolean);
   if (items.length === 0) return "";
   return `<section class="contact">
@@ -218,7 +221,7 @@ function baseCss(def: TemplateDefinition): string {
   .job li { margin-bottom: .8mm; }
   .job .stack { font-size: 8.4pt; margin-top: 1mm; color: ${c.heading}; }
   .job .stack em { color: ${c.body}; }
-  .photo { width: 30mm; height: 34mm; object-fit: cover; border: 1.5px solid #ffffffcc; }
+  .photo { width: 30mm; height: ${def.photoShape === "circle" ? "30mm" : "34mm"}; object-fit: cover; border: 1.5px solid #ffffffcc; border-radius: ${def.photoShape === "circle" ? "50%" : "1.5mm"}; }
   .bricks { list-style: none; display: flex; flex-wrap: wrap; gap: 1.4mm; }
   .bricks li { padding: .8mm 2mm; border-radius: 1.2mm; font-size: 8pt; }
   .skill-list { padding-left: 4.5mm; }
@@ -313,13 +316,24 @@ function singleColumnLayout(cv: CVData, def: TemplateDefinition): string {
 export function renderCVHtml(cv: CVData, def: TemplateDefinition): string {
   const content =
     def.layout === "sidebar-left" ? sidebarLayout(cv, def) : singleColumnLayout(cv, def);
+  const logo = def.logo
+    ? `<img class="cv-logo" src="${esc(def.logo)}" alt="" aria-hidden="true" />`
+    : "";
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8" />
 <title>CV — ${esc(cv.identity.fullName)}</title>
+<style>
+  body { position: relative; }
+  .cv-logo {
+    position: absolute; top: 7mm; right: 7mm;
+    width: 22mm; height: 22mm; object-fit: contain; opacity: .9; z-index: 5;
+  }
+</style>
 </head>
 <body>
+${logo}
 ${content}
 </body>
 </html>`;
