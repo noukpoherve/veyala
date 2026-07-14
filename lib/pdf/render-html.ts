@@ -316,13 +316,24 @@ function singleColumnLayout(cv: CVData, def: TemplateDefinition): string {
 export function renderCVHtml(cv: CVData, def: TemplateDefinition): string {
   const content =
     def.layout === "sidebar-left" ? sidebarLayout(cv, def) : singleColumnLayout(cv, def);
+  const logo = def.logo
+    ? `<img class="cv-logo" src="${esc(def.logo)}" alt="" aria-hidden="true" />`
+    : "";
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8" />
 <title>CV — ${esc(cv.identity.fullName)}</title>
+<style>
+  body { position: relative; }
+  .cv-logo {
+    position: absolute; top: 7mm; right: 7mm;
+    width: 22mm; height: 22mm; object-fit: contain; opacity: .9; z-index: 5;
+  }
+</style>
 </head>
 <body>
+${logo}
 ${content}
 </body>
 </html>`;

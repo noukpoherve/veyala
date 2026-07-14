@@ -32,10 +32,12 @@ export function CustomizationStudio({
   photo,
   photoShape,
   hasPhoto,
+  logo,
   hasOverride,
   onChangeColors,
   onChangePhoto,
   onChangePhotoShape,
+  onChangeLogo,
   onReset,
   cvHtml,
 }: {
@@ -48,10 +50,12 @@ export function CustomizationStudio({
   photo: boolean;
   photoShape: "circle" | "square";
   hasPhoto: boolean;
+  logo?: string;
   hasOverride: boolean;
   onChangeColors: (patch: ColorsOverride) => void;
   onChangePhoto: (show: boolean) => void;
   onChangePhotoShape: (shape: "circle" | "square") => void;
+  onChangeLogo: (dataUrl: string) => void;
   onReset: () => void;
   cvHtml: string;
 }) {
@@ -209,10 +213,12 @@ export function CustomizationStudio({
             photo={photo}
             photoShape={photoShape}
             hasPhoto={hasPhoto}
+            logo={logo}
             hasOverride={hasOverride}
             onChangeColors={onChangeColors}
             onChangePhoto={onChangePhoto}
             onChangePhotoShape={onChangePhotoShape}
+            onChangeLogo={onChangeLogo}
             onReset={onReset}
           />
         </aside>

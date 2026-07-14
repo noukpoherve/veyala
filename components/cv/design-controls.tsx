@@ -1,8 +1,10 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
-import { ChevronDown, RotateCcw } from "lucide-react";
+import { type ReactNode, useRef, useState } from "react";
+import { ChevronDown, ImagePlus, RotateCcw } from "lucide-react";
 import type { ColorsOverride, TemplateDefinition } from "@/lib/templates/definition";
+import { fileToDataUrl } from "@/lib/image-file";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
@@ -69,22 +71,27 @@ export function DesignControls({
   photo,
   photoShape,
   hasPhoto,
+  logo,
   hasOverride,
   onChangeColors,
   onChangePhoto,
   onChangePhotoShape,
+  onChangeLogo,
   onReset,
 }: {
   colors: PaletteColors;
   photo: boolean;
   photoShape: "circle" | "square";
   hasPhoto: boolean;
+  logo?: string;
   hasOverride: boolean;
   onChangeColors: (patch: ColorsOverride) => void;
   onChangePhoto: (show: boolean) => void;
   onChangePhotoShape: (shape: "circle" | "square") => void;
+  onChangeLogo: (dataUrl: string) => void;
   onReset: () => void;
 }) {
+  const logoInput = useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between px-0.5">
@@ -221,6 +228,57 @@ export function DesignControls({
           </div>
         </Section>
       ) : null}
+
+      <Section title="Logo (école, entreprise…)">
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Affiché en filigrane dans le coin supérieur droit du CV.
+          </p>
+          <input
+            ref={logoInput}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            className="sr-only"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) onChangeLogo(await fileToDataUrl(file, { max: 300, mime: "image/png" }));
+              e.target.value = "";
+            }}
+          />
+          {logo ? (
+            <div className="flex items-center gap-3">
+              <img
+                src={logo}
+                alt="Logo"
+                className="size-14 rounded-md border bg-white object-contain p-1"
+              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logoInput.current?.click()}
+                >
+                  Changer
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => onChangeLogo("")}>
+                  Retirer
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => logoInput.current?.click()}
+            >
+              <ImagePlus />
+              Ajouter un logo
+            </Button>
+          )}
+        </div>
+      </Section>
     </div>
   );
 }
