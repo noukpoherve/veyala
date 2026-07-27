@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getPublicTemplates } from "@/lib/cached";
@@ -8,6 +7,7 @@ import { getBalance } from "@/lib/credits";
 import { mergeTemplateLists } from "@/lib/templates/merge";
 import { parseTemplateDefinition } from "@/lib/templates/definition";
 import { GenerateForm, type TemplateOption } from "@/components/generate/generate-form";
+import { Alert } from "@/components/ui/alert";
 
 export const metadata: Metadata = { title: "Générer un CV" };
 
@@ -43,25 +43,23 @@ export default async function GeneratePage() {
       <header className="space-y-1">
         <h1 className="font-display text-2xl font-bold">Générer un CV adapté</h1>
         <p className="text-sm text-muted-foreground">
-          Collez une offre d&apos;emploi : l&apos;IA adapte votre CV de base sans rien inventer.
-          Coût : 1 crédit par génération.
+          1. Analysez gratuitement le matching. 2. Cochez les compétences manquantes que vous
+          assumez. 3. Générez (1 crédit) pour obtenir un CV optimisé ATS.
         </p>
       </header>
 
       {!profile ? (
-        <p
-          role="alert"
-          className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"
+        <Alert
+          variant="warning"
+          title="CV de base manquant"
+          action={
+            <Link href="/profile" className="font-medium">
+              Importer mon CV de base
+            </Link>
+          }
         >
-          <AlertTriangle className="size-4 shrink-0" aria-hidden />
-          <span>
-            Importez d&apos;abord votre CV de base dans{" "}
-            <Link href="/profile" className="font-medium underline">
-              Mon CV de base
-            </Link>{" "}
-            — c&apos;est la source de vérité de toutes les générations.
-          </span>
-        </p>
+          C&apos;est la source de vérité de toutes les générations — aucune invention par l&apos;IA.
+        </Alert>
       ) : null}
 
       <GenerateForm templates={templateOptions} balance={balance} disabled={!profile} />
