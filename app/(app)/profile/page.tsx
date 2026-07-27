@@ -3,12 +3,9 @@ import { FileUp, ShieldAlert } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
-import { deleteAccount } from "./actions";
+import { ArchiveAccountForm } from "@/components/profile/archive-account-form";
 import { CvUpload } from "@/components/profile/cv-upload";
 import { ProfileForm } from "@/components/profile/profile-form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Mon CV de base" };
@@ -70,27 +67,13 @@ export default async function ProfilePage() {
               Zone dangereuse
             </CardTitle>
             <CardDescription>
-              Supprime définitivement votre compte, votre CV de base, vos CV générés et vos
-              historiques de crédits et de paiements (RGPD). Cette action est irréversible.
+              Désactive votre compte (archivage). Vos données sont conservées. Pour retrouver
+              l&apos;accès, contactez un administrateur — la suppression définitive (RGPD) est
+              réservée à l&apos;équipe support.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={deleteAccount} className="flex flex-wrap items-end gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="confirm-delete">Tapez SUPPRIMER pour confirmer</Label>
-                <Input
-                  id="confirm-delete"
-                  name="confirm"
-                  required
-                  pattern="SUPPRIMER"
-                  placeholder="SUPPRIMER"
-                  className="w-48"
-                />
-              </div>
-              <Button type="submit" variant="destructive">
-                Supprimer mon compte
-              </Button>
-            </form>
+            <ArchiveAccountForm />
           </CardContent>
         </Card>
       </section>

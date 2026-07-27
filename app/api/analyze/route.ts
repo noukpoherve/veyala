@@ -6,6 +6,8 @@ import { matchClaimSchema } from "@/lib/match-score";
 import { rateLimit, RATE_LIMITS, clientIp } from "@/lib/rate-limit";
 import { cvSchema } from "@/lib/cv-schema";
 import { db } from "@/lib/db";
+import { validateJobText } from "@/lib/job-field-validation";
+import { logActivity } from "@/lib/activity";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -15,9 +17,21 @@ const bodySchema = z
     jobUrl: z.string().url().optional(),
     jobText: z.string().max(20000).optional(),
     claims: z.array(matchClaimSchema).max(40).optional(),
+    targetTitle: z.string().max(120).optional(),
+    language: z.string().max(40).optional(),
   })
-  .refine((b) => b.jobUrl || b.jobText?.trim(), {
-    message: "Fournissez l'URL de l'offre ou collez son texte.",
+  .superRefine((b, ctx) => {
+    if (!b.jobUrl && !b.jobText?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Fournissez l'URL de l'offre ou collez son texte.",
+        path: ["jobText"],
+      });
+    }
+    if (b.jobText?.trim()) {
+      const err = validateJobText(b.jobText);
+      if (err) ctx.addIssue({ code: "custom", message: err, path: ["jobText"] });
+    }
   });
 
 /**
@@ -47,9 +61,12 @@ export async function POST(req: Request) {
   }
 
   try {
+    const { claims, jobUrl, jobText } = parsed.data;
     const result = await analyzeJobMatch({
       userId: session.user.id,
-      ...parsed.data,
+      jobUrl,
+      jobText,
+      claims,
     });
 
     const profile = await db.baseProfile.findUnique({ where: { userId: session.user.id } });
@@ -62,6 +79,13 @@ export async function POST(req: Request) {
             result.gaps
           )
         : result.projected;
+
+    await logActivity({
+      action: "analyze.run",
+      actorId: session.user.id,
+      subjectUserId: session.user.id,
+      meta: { cached: result.cachedAnalysis, score: result.before.score },
+    });
 
     return NextResponse.json({
       ok: true,

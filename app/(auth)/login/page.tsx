@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { clientIp, rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { normalizeEmail } from "@/lib/utils";
+import { db } from "@/lib/db";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   ratelimited: "Trop de tentatives de connexion. Réessayez dans quelques minutes.",
   confirmation: "Le lien de confirmation est invalide ou expiré. Reconnectez-vous.",
   oauth: "La connexion via ce fournisseur a échoué. Réessayez.",
+  archived: "Votre compte est désactivé. Contactez un administrateur pour le réactiver.",
   default: "La connexion a échoué. Réessayez.",
 };
 
@@ -50,8 +52,22 @@ export default async function LoginPage({
       if (error.code === "email_not_confirmed") {
         redirect(`/verify-email?email=${encodeURIComponent(email)}`);
       }
+      // Banned / archived accounts (Supabase ban synced on archive).
+      if (error.code === "user_banned" || /banned/i.test(error.message)) {
+        redirect("/login?error=archived");
+      }
       redirect("/login?error=credentials");
     }
+
+    const profile = await db.user.findUnique({
+      where: { email },
+      select: { archivedAt: true },
+    });
+    if (profile?.archivedAt) {
+      await supabase.auth.signOut();
+      redirect("/login?error=archived");
+    }
+
     redirect(callbackUrl);
   }
 
@@ -80,7 +96,10 @@ export default async function LoginPage({
         ) : null}
 
         {searchParams.error ? (
-          <Alert variant="error" title="Connexion impossible">
+          <Alert
+            variant="error"
+            title={searchParams.error === "archived" ? "Compte désactivé" : "Connexion impossible"}
+          >
             {ERROR_MESSAGES[searchParams.error] ?? ERROR_MESSAGES.default}
           </Alert>
         ) : null}

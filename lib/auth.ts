@@ -100,6 +100,10 @@ export const auth = cache(async (): Promise<Session | null> => {
   if (!supabaseUser) return null;
 
   const user = await ensureUser(supabaseUser);
+  if (user.archivedAt) {
+    await supabase.auth.signOut();
+    return null;
+  }
   return {
     user: {
       id: user.id,

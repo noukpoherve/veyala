@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import { normalizeEmail } from "@/lib/utils";
 
 /**
  * PKCE callback for every Supabase auth email link (signup confirmation,
@@ -14,8 +16,21 @@ export async function GET(req: Request) {
 
   if (code) {
     const supabase = createSupabaseServerClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) return NextResponse.redirect(new URL("/login?error=confirmation", url.origin));
+
+    const email = normalizeEmail(data.user?.email);
+    if (email) {
+      const profile = await db.user.findUnique({
+        where: { email },
+        select: { archivedAt: true },
+      });
+      if (profile?.archivedAt) {
+        await supabase.auth.signOut();
+        return NextResponse.redirect(new URL("/login?error=archived", url.origin));
+      }
+    }
+
     return NextResponse.redirect(new URL(next, url.origin));
   }
 

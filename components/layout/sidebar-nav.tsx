@@ -32,6 +32,7 @@ const ADMIN_ITEMS = [
   { href: "/admin", label: "Statistiques", icon: LayoutDashboard },
   { href: "/admin/inbox", label: "Boîte de réception", icon: Inbox },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },
+  { href: "/admin/activity", label: "Activité", icon: ShieldCheck },
   { href: "/admin/templates", label: "Validation templates", icon: Palette },
   { href: "/admin/payments", label: "Paiements", icon: CreditCard },
   { href: "/admin/settings", label: "Réglages", icon: Settings },

@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { cvSchema } from "@/lib/cv-schema";
-import { deleteStoredUrl } from "@/lib/storage";
+import { archiveUser } from "@/lib/account-lifecycle";
+import { logActivity } from "@/lib/activity";
 
 export type SaveProfileResult = { ok: true } | { ok: false; error: string };
 
@@ -26,47 +26,30 @@ export async function saveProfile(data: unknown): Promise<SaveProfileResult> {
     update: { data: parsed.data },
   });
 
+  await logActivity({
+    action: "profile.update",
+    actorId: session.user.id,
+    subjectUserId: session.user.id,
+  });
+
   revalidatePath("/profile");
   return { ok: true };
 }
 
 /**
- * GDPR account deletion: purges storage blobs, then removes the user (cascade
- * drops DB rows). Community templates are kept but unlinked (ownerId → null).
+ * Soft-deactivates the account (archive). Data is kept; only an admin can restore.
+ * Requires typing DESACTIVER in the confirm field (dialog + form).
  */
-export async function deleteAccount(formData: FormData) {
+export async function archiveOwnAccount(formData: FormData) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (formData.get("confirm") !== "SUPPRIMER") return;
+  if (formData.get("confirm") !== "DESACTIVER") return;
 
-  const userId = session.user.id;
-  const [profile, cvs, templates] = await Promise.all([
-    db.baseProfile.findUnique({ where: { userId }, select: { sourceFileUrl: true } }),
-    db.generatedCV.findMany({
-      where: { userId },
-      select: {
-        docxUrl: true,
-        pdfUrl: true,
-        coverLetterDocxUrl: true,
-        coverLetterPdfUrl: true,
-      },
-    }),
-    db.template.findMany({
-      where: { ownerId: userId },
-      select: { previewImageUrl: true },
-    }),
-  ]);
-
-  const urls = [
-    profile?.sourceFileUrl,
-    ...templates.map((t) => t.previewImageUrl),
-    ...cvs.flatMap((cv) => [cv.docxUrl, cv.pdfUrl, cv.coverLetterDocxUrl, cv.coverLetterPdfUrl]),
-  ];
-  await Promise.all(urls.map((url) => deleteStoredUrl(url)));
-
-  const user = await db.user.delete({ where: { id: userId } });
-  if (user.authId) {
-    await createSupabaseAdminClient().auth.admin.deleteUser(user.authId);
-  }
-  await signOut({ redirectTo: "/" });
+  await archiveUser({
+    userId: session.user.id,
+    by: "SELF",
+    actorId: session.user.id,
+    reason: "self_request",
+  });
+  await signOut({ redirectTo: "/login?error=archived" });
 }

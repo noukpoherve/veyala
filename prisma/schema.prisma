@@ -23,6 +23,11 @@ enum Role {
   ADMIN
 }
 
+enum ArchiveSource {
+  SELF
+  ADMIN
+}
+
 model User {
   id            String    @id @default(cuid())
   /// Supabase Auth user id (auth.users.id); app tables keep their cuid FKs.
@@ -33,6 +38,10 @@ model User {
   emailVerified DateTime?
   role          Role      @default(USER)
   createdAt     DateTime  @default(now())
+  /// Soft-deactivation: account is inaccessible until an admin restores it.
+  archivedAt    DateTime?
+  archivedBy    ArchiveSource?
+  archiveReason String?
 
   credits            Credits?
   creditTransactions CreditTransaction[]
@@ -43,6 +52,10 @@ model User {
   generationJobs     GenerationJob[]
   supportThreads     SupportThread[]
   adminAuditLogs     AdminAuditLog[]
+  activityAsActor    ActivityLog[]       @relation("ActivityActor")
+  activityAsSubject  ActivityLog[]       @relation("ActivitySubject")
+
+  @@index([archivedAt])
 }
 
 // ---------- Support inbox (user ↔ admin messaging) ----------
@@ -292,6 +305,27 @@ model AdminAuditLog {
 
   @@index([createdAt])
   @@index([actorId, createdAt])
+  @@index([action, createdAt])
+}
+
+/**
+ * Append-only product/security activity trail (user + admin).
+ * Actor/subject FKs use SetNull so hard-delete does not erase the history.
+ */
+model ActivityLog {
+  id            String   @id @default(cuid())
+  actorId       String?
+  subjectUserId String?
+  action        String
+  meta          Json?
+  createdAt     DateTime @default(now())
+
+  actor   User? @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+  subject User? @relation("ActivitySubject", fields: [subjectUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([subjectUserId, createdAt])
   @@index([action, createdAt])
 }
 

@@ -1,27 +1,16 @@
 import { auth } from "@/lib/auth";
-import { enqueueGenerationJob, parseGenerationJobParams } from "@/lib/generation-job";
+import {
+  enqueueGenerationJob,
+  parseGenerationJobParams,
+  type GenerationJobParams,
+} from "@/lib/generation-job";
 import { GenerationError } from "@/lib/generate-cv";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { logActivity } from "@/lib/activity";
 import { z } from "zod";
-import { matchClaimSchema } from "@/lib/match-score";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
-
-const bodySchema = z
-  .object({
-    jobUrl: z.string().url("URL d'offre invalide.").optional(),
-    jobText: z.string().max(20000).optional(),
-    templateId: z.string().optional(),
-    targetTitle: z.string().max(120).optional(),
-    instructions: z.string().max(1000).optional(),
-    language: z.string().max(40).optional(),
-    claims: z.array(matchClaimSchema).max(40).optional(),
-    idempotencyKey: z.string().uuid().optional(),
-  })
-  .refine((b) => b.jobUrl || b.jobText?.trim(), {
-    message: "Fournissez l'URL de l'offre ou collez son texte.",
-  });
 
 /**
  * Enqueues an async generation job and returns `{ jobId }` immediately.
@@ -42,15 +31,24 @@ export async function POST(req: Request) {
     );
   }
 
-  const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
-  if (!parsed.success) {
-    const message = parsed.error.issues[0]?.message ?? "Requête invalide.";
-    return Response.json({ error: message }, { status: 400 });
+  let params: GenerationJobParams;
+  try {
+    params = parseGenerationJobParams(await req.json().catch(() => ({})));
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return Response.json({ error: e.issues[0]?.message ?? "Requête invalide." }, { status: 400 });
+    }
+    return Response.json({ error: "Requête invalide." }, { status: 400 });
   }
 
   try {
-    const params = parseGenerationJobParams(parsed.data);
     const job = await enqueueGenerationJob(userId, params);
+    await logActivity({
+      action: "generate.enqueue",
+      actorId: userId,
+      subjectUserId: userId,
+      meta: { jobId: job.id, hasUrl: !!params.jobUrl },
+    });
     return Response.json({ jobId: job.id, status: job.status });
   } catch (e) {
     if (e instanceof GenerationError) {
