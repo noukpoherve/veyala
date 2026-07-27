@@ -19,6 +19,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Let semantic-release authenticate the remote (GITHUB_TOKEN) so
+          # @semantic-release/git can push CHANGELOG.md + version bump.
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -28,4 +30,10 @@ jobs:
       - name: semantic-release (tag + GitHub Release + CHANGELOG)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional PAT if branch protection blocks the changelog push by GITHUB_TOKEN.
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: npx semantic-release
