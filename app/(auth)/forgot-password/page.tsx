@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 
 export const metadata: Metadata = { title: "Mot de passe oublié" };
 
@@ -22,7 +23,7 @@ export default function ForgotPasswordPage({
     "use server";
     const email = normalizeEmail(formData.get("email"));
     const { limit, windowMs } = RATE_LIMITS.otp;
-    if (!rateLimit(`forgot:${clientIp()}`, limit, windowMs)) {
+    if (!(await rateLimit(`forgot:${clientIp()}`, limit, windowMs))) {
       redirect("/forgot-password?status=ratelimited");
     }
     const supabase = createSupabaseServerClient();
@@ -52,14 +53,14 @@ export default function ForgotPasswordPage({
       </CardHeader>
       <CardContent className="space-y-4">
         {searchParams.status === "sent" ? (
-          <p role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">
-            Si un compte existe avec cette adresse, un email de réinitialisation vient de partir.
-          </p>
+          <Alert variant="success" title="Email envoyé">
+            Si un compte existe avec cette adresse, un lien de réinitialisation vient de partir.
+          </Alert>
         ) : null}
         {searchParams.status === "ratelimited" ? (
-          <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            Trop de demandes rapprochées. Réessayez dans quelques minutes.
-          </p>
+          <Alert variant="error" title="Trop de demandes">
+            Patientez quelques minutes avant de réessayer.
+          </Alert>
         ) : null}
 
         <form className="space-y-3" action={requestReset}>

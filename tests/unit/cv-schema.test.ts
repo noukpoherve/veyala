@@ -52,11 +52,11 @@ describe("cvSchema", () => {
     expect(cv.identity.photoUrl).not.toBe("");
   });
 
-  it("rejects malformed links", () => {
+  it("rejects remote http photo URLs (SSRF)", () => {
     expect(() =>
       cvSchema.parse({
-        ...minimalCv,
-        contact: { links: [{ label: "", url: "https://ada.dev" }] },
+        identity: { fullName: "Ada", photoUrl: "https://evil.example/x.png" },
+        contact: {},
       })
     ).toThrow();
   });

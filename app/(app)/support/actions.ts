@@ -44,7 +44,7 @@ export async function createSupportThread(formData: FormData) {
     body: formData.get("body"),
   });
   if (!parsed.success) redirect("/support?status=invalid");
-  if (!rateLimit(`support:${session.user.id}`, 5, 10 * 60 * 1000)) {
+  if (!(await rateLimit(`support:${session.user.id}`, 5, 10 * 60 * 1000))) {
     redirect("/support?status=ratelimited");
   }
 

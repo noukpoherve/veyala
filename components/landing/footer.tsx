@@ -64,7 +64,7 @@ export function LandingFooter() {
 
           {FOOTER_COLUMNS.map((column) => (
             <nav key={column.title} aria-label={column.title}>
-              <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-400">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-600">
                 {column.title}
               </h2>
               <ul className="mt-5 space-y-3.5">
@@ -83,7 +83,7 @@ export function LandingFooter() {
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 py-6 text-sm text-slate-400">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 py-6 text-sm text-slate-600">
           <p>© {new Date().getFullYear()} Veyala. Tous droits réservés.</p>
           <ul className="flex items-center gap-6">
             {SOCIAL_LINKS.map((social) => (
@@ -92,7 +92,7 @@ export function LandingFooter() {
                   href={social.href}
                   rel="noopener noreferrer"
                   target="_blank"
-                  className="transition-colors hover:text-slate-700"
+                  className="font-medium text-slate-600 transition-colors hover:text-blue-700"
                 >
                   {social.label}
                 </a>

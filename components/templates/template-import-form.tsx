@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Upload } from "lucide-react";
+import { resolveApiError, toUserMessage, USER_ERRORS } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert } from "@/components/ui/alert";
 
 type Feedback = { kind: "success" | "duplicate" | "error"; message: string } | null;
 
@@ -21,16 +23,22 @@ export function TemplateImportForm() {
     setFeedback(null);
     try {
       const res = await fetch("/api/templates", { method: "POST", body: new FormData(form) });
-      const body = (await res.json()) as { message?: string; duplicate?: boolean; error?: string };
-      if (!res.ok) throw new Error(body.error ?? "La soumission a échoué.");
+      const body = (await res.json().catch(() => null)) as {
+        message?: string;
+        duplicate?: boolean;
+        error?: string;
+      } | null;
+      if (!res.ok) {
+        throw new Error(resolveApiError(res.status, body, USER_ERRORS.template));
+      }
       setFeedback({
-        kind: body.duplicate ? "duplicate" : "success",
-        message: body.message ?? "Template soumis.",
+        kind: body?.duplicate ? "duplicate" : "success",
+        message: body?.message ?? "Template soumis.",
       });
       form.reset();
       router.refresh();
     } catch (e) {
-      setFeedback({ kind: "error", message: e instanceof Error ? e.message : "Erreur inconnue." });
+      setFeedback({ kind: "error", message: toUserMessage(e, USER_ERRORS.template) });
     } finally {
       setSubmitting(false);
     }
@@ -64,18 +72,24 @@ export function TemplateImportForm() {
         </p>
       </div>
       {feedback ? (
-        <p
-          role={feedback.kind === "error" ? "alert" : "status"}
-          className={
+        <Alert
+          variant={
             feedback.kind === "error"
-              ? "rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+              ? "error"
               : feedback.kind === "duplicate"
-                ? "rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
-                : "rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900"
+                ? "warning"
+                : "success"
+          }
+          title={
+            feedback.kind === "error"
+              ? "Soumission impossible"
+              : feedback.kind === "duplicate"
+                ? "Template déjà connu"
+                : "Template soumis"
           }
         >
           {feedback.message}
-        </p>
+        </Alert>
       ) : null}
       <Button type="submit" variant="gradient" disabled={submitting}>
         {submitting ? (

@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, features/**]
+    branches: [main, features/**, feat/**, fix/**, hotfix/**]
   pull_request:
 
 concurrency:
@@ -47,6 +47,10 @@ jobs:
   security:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      # gitleaks-action lists PR commits via the GitHub API on pull_request events.
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
         with:

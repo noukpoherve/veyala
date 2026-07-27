@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
-import { Plus, Star, Trash2 } from "lucide-react";
+import { Plus, Star, Trash2, Power, FlaskConical } from "lucide-react";
 import { db } from "@/lib/db";
-import { addPack, addProvider, deleteProvider, setDefaultProvider, updatePack } from "./actions";
+import {
+  addPack,
+  addProvider,
+  deleteProvider,
+  setDefaultProvider,
+  toggleProviderActive,
+  updatePack,
+  updateProvider,
+  testProvider,
+} from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +19,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const metadata: Metadata = { title: "Réglages · Admin" };
 
-export default async function AdminSettingsPage() {
+export default async function AdminSettingsPage({
+  searchParams,
+}: {
+  searchParams: { test?: string; ok?: string };
+}) {
   const [providers, packs] = await Promise.all([
     db.lLMProvider.findMany({ orderBy: { createdAt: "asc" } }),
     db.pack.findMany({ orderBy: { sortOrder: "asc" } }),
@@ -20,9 +33,31 @@ export default async function AdminSettingsPage() {
     ? `${process.env.LLM_BASE_URL ?? "?"} · ${process.env.LLM_MODEL ?? "?"}`
     : null;
 
+  async function runTest(formData: FormData) {
+    "use server";
+    const result = await testProvider(formData);
+    const { redirect } = await import("next/navigation");
+    redirect(
+      `/admin/settings?ok=${result.ok ? "1" : "0"}&test=${encodeURIComponent(result.message)}`
+    );
+  }
+
   return (
     <article className="space-y-8">
       <h1 className="font-display text-2xl font-bold">Réglages</h1>
+
+      {searchParams.test ? (
+        <p
+          role="status"
+          className={
+            searchParams.ok === "1"
+              ? "rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900"
+              : "rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+          }
+        >
+          {searchParams.test}
+        </p>
+      ) : null}
 
       <section aria-labelledby="llm-title" className="space-y-4">
         <Card>
@@ -31,51 +66,133 @@ export default async function AdminSettingsPage() {
               Fournisseurs IA
             </CardTitle>
             <CardDescription>
-              Le fournisseur par défaut est utilisé pour toutes les générations. Sans fournisseur en
-              base, l&apos;application retombe sur les variables d&apos;environnement
+              Ajoutez, modifiez ou testez autant de fournisseurs que nécessaire. Le fournisseur par
+              défaut sert à toutes les générations. Sans fournisseur en base, l&apos;application
+              retombe sur les variables d&apos;environnement
               {envProvider ? ` (actuellement : ${envProvider})` : " (non configurées)"}.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             {providers.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-4">
                 {providers.map((provider) => (
-                  <li
-                    key={provider.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3"
-                  >
-                    <div>
-                      <p className="flex items-center gap-2 text-sm font-medium">
-                        {provider.name}
+                  <li key={provider.id} className="space-y-3 rounded-md border p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                        <span>{provider.name}</span>
                         {provider.isDefault ? <Badge>Par défaut</Badge> : null}
                         {!provider.active ? <Badge variant="secondary">Inactif</Badge> : null}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {provider.protocol} · {provider.baseUrl} · {provider.model}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      {!provider.isDefault ? (
-                        <form action={setDefaultProvider}>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {!provider.isDefault ? (
+                          <form action={setDefaultProvider}>
+                            <input type="hidden" name="providerId" value={provider.id} />
+                            <Button type="submit" size="sm" variant="outline">
+                              <Star />
+                              Par défaut
+                            </Button>
+                          </form>
+                        ) : null}
+                        <form action={toggleProviderActive}>
                           <input type="hidden" name="providerId" value={provider.id} />
                           <Button type="submit" size="sm" variant="outline">
-                            <Star />
-                            Définir par défaut
+                            <Power />
+                            {provider.active ? "Désactiver" : "Activer"}
                           </Button>
                         </form>
-                      ) : null}
-                      <form action={deleteProvider}>
-                        <input type="hidden" name="providerId" value={provider.id} />
-                        <Button
-                          type="submit"
-                          size="sm"
-                          variant="ghost"
-                          aria-label={`Supprimer ${provider.name}`}
-                        >
-                          <Trash2 className="text-destructive" />
-                        </Button>
-                      </form>
+                        <form action={runTest}>
+                          <input type="hidden" name="providerId" value={provider.id} />
+                          <Button type="submit" size="sm" variant="outline">
+                            <FlaskConical />
+                            Tester
+                          </Button>
+                        </form>
+                        <form action={deleteProvider}>
+                          <input type="hidden" name="providerId" value={provider.id} />
+                          <Button
+                            type="submit"
+                            size="sm"
+                            variant="ghost"
+                            aria-label={`Supprimer ${provider.name}`}
+                          >
+                            <Trash2 className="text-destructive" />
+                          </Button>
+                        </form>
+                      </div>
                     </div>
+
+                    <form action={updateProvider} className="grid gap-3 sm:grid-cols-2">
+                      <input type="hidden" name="providerId" value={provider.id} />
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`name-${provider.id}`}>Nom</Label>
+                        <Input
+                          id={`name-${provider.id}`}
+                          name="name"
+                          required
+                          defaultValue={provider.name}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`protocol-${provider.id}`}>Protocole</Label>
+                        <select
+                          id={`protocol-${provider.id}`}
+                          name="protocol"
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                          defaultValue={provider.protocol}
+                        >
+                          <option value="openai">OpenAI-compatible</option>
+                          <option value="anthropic">Anthropic</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`baseUrl-${provider.id}`}>Base URL</Label>
+                        <Input
+                          id={`baseUrl-${provider.id}`}
+                          name="baseUrl"
+                          type="url"
+                          required
+                          defaultValue={provider.baseUrl}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`model-${provider.id}`}>Modèle</Label>
+                        <Input
+                          id={`model-${provider.id}`}
+                          name="model"
+                          required
+                          defaultValue={provider.model}
+                        />
+                      </div>
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <Label htmlFor={`apiKey-${provider.id}`}>
+                          Nouvelle clé API (laisser vide pour conserver)
+                        </Label>
+                        <Input
+                          id={`apiKey-${provider.id}`}
+                          name="apiKey"
+                          type="password"
+                          autoComplete="off"
+                          placeholder="••••••••"
+                        />
+                      </div>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="active" defaultChecked={provider.active} />
+                        Actif
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          name="isDefault"
+                          defaultChecked={provider.isDefault}
+                        />
+                        Par défaut
+                      </label>
+                      <div className="sm:col-span-2">
+                        <Button type="submit" size="sm">
+                          Enregistrer les modifications
+                        </Button>
+                      </div>
+                    </form>
                   </li>
                 ))}
               </ul>
@@ -87,6 +204,7 @@ export default async function AdminSettingsPage() {
               action={addProvider}
               className="grid gap-3 rounded-md border border-dashed p-4 sm:grid-cols-2"
             >
+              <h3 className="sm:col-span-2 text-sm font-medium">Ajouter un fournisseur</h3>
               <div className="space-y-1.5">
                 <Label htmlFor="p-name">Nom</Label>
                 <Input id="p-name" name="name" required placeholder="Groq" />

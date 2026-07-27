@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Support" };
@@ -57,17 +58,12 @@ export default async function SupportPage({ searchParams }: { searchParams: { st
       </header>
 
       {feedback ? (
-        <p
-          role={feedback.tone === "error" ? "alert" : "status"}
-          className={cn(
-            "rounded-xl p-3 text-sm",
-            feedback.tone === "ok"
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-destructive/10 text-destructive"
-          )}
+        <Alert
+          variant={feedback.tone === "ok" ? "success" : "error"}
+          title={feedback.tone === "ok" ? "Message envoyé" : "Envoi impossible"}
         >
           {feedback.text}
-        </p>
+        </Alert>
       ) : null}
 
       <Card>

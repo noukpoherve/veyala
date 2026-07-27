@@ -16,7 +16,15 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "lcov"],
       // Scoped to the pure modules under test; broaden as coverage grows.
-      include: ["lib/templates/merge.ts", "lib/rate-limit.ts", "lib/cv-schema.ts"],
+      include: [
+        "lib/templates/merge.ts",
+        "lib/rate-limit.ts",
+        "lib/cv-schema.ts",
+        "lib/match-score.ts",
+        "lib/job-requirements.ts",
+        "lib/credits.ts",
+        "lib/payments.ts",
+      ],
       thresholds: {
         statements: 80,
         branches: 80,

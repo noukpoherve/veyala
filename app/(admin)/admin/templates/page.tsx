@@ -29,8 +29,11 @@ export default async function AdminTemplatesPage() {
   return (
     <article className="space-y-8">
       <section aria-labelledby="pending-title" className="space-y-4">
-        <h1 id="pending-title" className="font-display text-2xl font-bold">
-          File de validation{" "}
+        <h1
+          id="pending-title"
+          className="flex flex-wrap items-center gap-2 font-display text-2xl font-bold"
+        >
+          <span>File de validation</span>
           <Badge variant={pending.length ? "default" : "secondary"}>{pending.length}</Badge>
         </h1>
 
