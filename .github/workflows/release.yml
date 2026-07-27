@@ -22,7 +22,7 @@ jobs:
           # Let semantic-release authenticate the remote (GITHUB_TOKEN) so
           # @semantic-release/git can push CHANGELOG.md + version bump.
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
