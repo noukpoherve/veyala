@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 
 export const metadata: Metadata = { title: "Créer un compte" };
 
@@ -49,7 +50,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: { e
     if (parsed.data.password !== parsed.data.confirm) redirect("/register?error=mismatch");
 
     const { limit, windowMs } = RATE_LIMITS.register;
-    if (!rateLimit(`register:${clientIp()}`, limit, windowMs)) {
+    if (!(await rateLimit(`register:${clientIp()}`, limit, windowMs))) {
       redirect("/register?error=ratelimited");
     }
 
@@ -90,9 +91,9 @@ export default async function RegisterPage({ searchParams }: { searchParams: { e
       </CardHeader>
       <CardContent className="space-y-4">
         {errorMessage ? (
-          <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          <Alert variant="error" title="Inscription impossible">
             {errorMessage}
-          </p>
+          </Alert>
         ) : null}
 
         <form className="space-y-3" action={register}>

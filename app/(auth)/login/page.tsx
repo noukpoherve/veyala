@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 
 export const metadata: Metadata = { title: "Connexion" };
 
@@ -39,7 +40,7 @@ export default async function LoginPage({
     const email = normalizeEmail(formData.get("email"));
     const password = String(formData.get("password") ?? "");
     const { limit, windowMs } = RATE_LIMITS.login;
-    if (!rateLimit(`login:${clientIp()}:${email}`, limit, windowMs)) {
+    if (!(await rateLimit(`login:${clientIp()}:${email}`, limit, windowMs))) {
       redirect("/login?error=ratelimited");
     }
 
@@ -67,21 +68,21 @@ export default async function LoginPage({
       </CardHeader>
       <CardContent className="space-y-4">
         {searchParams.verified ? (
-          <p role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">
-            Email vérifié — vous pouvez maintenant vous connecter.
-          </p>
+          <Alert variant="success" title="Email vérifié">
+            Vous pouvez maintenant vous connecter.
+          </Alert>
         ) : null}
 
         {searchParams.reset ? (
-          <p role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">
-            Mot de passe mis à jour — reconnectez-vous.
-          </p>
+          <Alert variant="success" title="Mot de passe mis à jour">
+            Reconnectez-vous avec votre nouveau mot de passe.
+          </Alert>
         ) : null}
 
         {searchParams.error ? (
-          <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          <Alert variant="error" title="Connexion impossible">
             {ERROR_MESSAGES[searchParams.error] ?? ERROR_MESSAGES.default}
-          </p>
+          </Alert>
         ) : null}
 
         <form className="space-y-3" action={loginWithPassword}>
