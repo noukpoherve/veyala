@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   const userId = session.user.id;
 
   const { limit, windowMs } = RATE_LIMITS.importCv;
-  if (!rateLimit(`import-cv:${userId}`, limit, windowMs)) {
+  if (!(await rateLimit(`import-cv:${userId}`, limit, windowMs))) {
     return NextResponse.json(
       { error: "Trop d'imports rapprochés. Réessayez dans quelques minutes." },
       { status: 429 }
@@ -58,8 +58,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, data });
   } catch (e) {
     console.error("[import-cv]", e);
-    const message = e instanceof Error ? e.message : "Erreur inconnue.";
-    const status = e instanceof LLMError ? 502 : 422;
-    return NextResponse.json({ error: message }, { status });
+    if (e instanceof LLMError) {
+      return NextResponse.json(
+        {
+          error:
+            e.message && e.message.length < 280
+              ? e.message
+              : "Le service IA n'a pas pu structurer votre CV. Réessayez dans un instant.",
+        },
+        { status: 502 }
+      );
+    }
+    return NextResponse.json(
+      {
+        error:
+          "Impossible de lire ce fichier. Utilisez un PDF ou DOCX texte (pas un scan image) de 8 Mo max.",
+      },
+      { status: 422 }
+    );
   }
 }

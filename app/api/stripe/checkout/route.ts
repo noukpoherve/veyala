@@ -65,7 +65,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: checkout.url });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Paiement indisponible.";
-    return NextResponse.json({ error: message }, { status: 503 });
+    console.error("[stripe/checkout]", e);
+    return NextResponse.json(
+      {
+        error:
+          "Le paiement n'a pas pu démarrer. Vérifiez la configuration Stripe ou réessayez plus tard.",
+      },
+      { status: 503 }
+    );
   }
 }

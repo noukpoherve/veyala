@@ -24,6 +24,21 @@ const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 
 const driver = () => process.env.STORAGE_DRIVER || "local";
 
+function assertDurableStorage(): void {
+  if (driver() !== "local") return;
+  const onServerless = Boolean(
+    process.env.VERCEL ||
+      process.env.VERCEL_ENV ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.LAMBDA_TASK_ROOT
+  );
+  if (onServerless || process.env.NODE_ENV === "production") {
+    throw new Error(
+      "STORAGE_DRIVER=local est interdit en production / serverless : utilisez s3 ou supabase."
+    );
+  }
+}
+
 function sanitizeExt(filename: string): string {
   const ext = path.extname(filename).toLowerCase();
   return /^\.[a-z0-9]{1,8}$/.test(ext) ? ext : "";
@@ -134,6 +149,67 @@ async function readSupabase(key: string): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer());
 }
 
+async function deleteLocal(key: string): Promise<void> {
+  const { unlink } = await import("node:fs/promises");
+  await unlink(localPath(key)).catch((e: NodeJS.ErrnoException) => {
+    if (e.code !== "ENOENT") throw e;
+  });
+}
+
+async function deleteS3(key: string): Promise<void> {
+  const { DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+  const client = await s3Client();
+  await client.send(new DeleteObjectCommand({ Bucket: s3Bucket(), Key: key }));
+}
+
+async function deleteSupabase(key: string): Promise<void> {
+  const { url, serviceKey, bucket } = supabaseConfig();
+  const res = await fetch(`${url}/storage/v1/object/${bucket}/${key}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${serviceKey}` },
+  });
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`Suppression Supabase échouée (${res.status}) : ${await res.text()}`);
+  }
+}
+
+/** Extracts the storage key from a stored URL (`/api/files/...` or S3_PUBLIC_URL). */
+export function keyFromStoredUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("/api/files/")) {
+    const key = decodeURIComponent(url.slice("/api/files/".length));
+    return key || null;
+  }
+  const publicBase = process.env.S3_PUBLIC_URL?.replace(/\/$/, "");
+  if (publicBase && url.startsWith(`${publicBase}/`)) {
+    return url.slice(publicBase.length + 1) || null;
+  }
+  return null;
+}
+
+/** Best-effort delete by key. Missing files are ignored. */
+export async function deleteFile(key: string): Promise<void> {
+  switch (driver()) {
+    case "s3":
+      return deleteS3(key);
+    case "supabase":
+      return deleteSupabase(key);
+    default:
+      return deleteLocal(key);
+  }
+}
+
+/** Best-effort delete from a stored URL. Unknown URL shapes are skipped. */
+export async function deleteStoredUrl(url: string | null | undefined): Promise<void> {
+  const key = keyFromStoredUrl(url);
+  if (!key) return;
+  try {
+    await deleteFile(key);
+  } catch (error) {
+    console.error("[storage] delete failed:", { key, error });
+  }
+}
+
 // ---------- public API ----------
 
 /** Persists a file and returns its key + URL. */
@@ -141,6 +217,7 @@ export async function saveFile(
   buffer: Buffer,
   opts: { dir: string; filename: string; contentType: string }
 ): Promise<StoredFile> {
+  assertDurableStorage();
   const key = `${opts.dir}/${randomUUID()}${sanitizeExt(opts.filename)}`;
   switch (driver()) {
     case "s3":
@@ -153,6 +230,26 @@ export async function saveFile(
 }
 
 /** Reads a stored file back, whatever the driver (used by the /api/files proxy). */
+/** Whether the configured driver can persist files beyond a single instance. */
+export function storageDriverStatus(): "ok" | "error" | "unconfigured" | "ephemeral" {
+  const d = driver();
+  if (d === "local") {
+    const onServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+    return onServerless || process.env.NODE_ENV === "production" ? "error" : "ephemeral";
+  }
+  if (d === "s3") {
+    return process.env.S3_ENDPOINT && process.env.S3_ACCESS_KEY_ID && process.env.S3_BUCKET
+      ? "ok"
+      : "unconfigured";
+  }
+  if (d === "supabase") {
+    return process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+      ? "ok"
+      : "unconfigured";
+  }
+  return "unconfigured";
+}
+
 export async function readStoredFile(key: string): Promise<Buffer> {
   switch (driver()) {
     case "s3":

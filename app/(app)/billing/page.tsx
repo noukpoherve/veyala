@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CheckCircle2, Coins, XCircle } from "lucide-react";
+import { Coins } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActivePacks } from "@/lib/cached";
@@ -7,6 +7,7 @@ import { getBalance } from "@/lib/credits";
 import { BuyPackButton } from "@/components/billing/buy-pack-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 
 export const metadata: Metadata = { title: "Crédits & factures" };
 
@@ -60,23 +61,14 @@ export default async function BillingPage({ searchParams }: { searchParams: { st
       </header>
 
       {searchParams.status === "success" ? (
-        <p
-          role="status"
-          className="flex items-center gap-2 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900"
-        >
-          <CheckCircle2 className="size-4" aria-hidden />
-          Paiement confirmé ! Vos crédits sont ajoutés dès la réception du webhook Stripe (quelques
-          secondes).
-        </p>
+        <Alert variant="success" title="Paiement confirmé">
+          Vos crédits sont ajoutés dès la réception du webhook Stripe (quelques secondes).
+        </Alert>
       ) : null}
       {searchParams.status === "cancelled" ? (
-        <p
-          role="status"
-          className="flex items-center gap-2 rounded-md border bg-muted p-3 text-sm text-muted-foreground"
-        >
-          <XCircle className="size-4" aria-hidden />
-          Paiement annulé — aucun montant débité.
-        </p>
+        <Alert variant="info" title="Paiement annulé">
+          Aucun montant n&apos;a été débité. Vous pouvez réessayer quand vous voulez.
+        </Alert>
       ) : null}
 
       <section aria-labelledby="packs-title" className="space-y-4">

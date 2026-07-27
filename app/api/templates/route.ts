@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   }
   const userId = session.user.id;
 
-  if (!rateLimit(`templates:${userId}`, 5, 10 * 60 * 1000)) {
+  if (!(await rateLimit(`templates:${userId}`, 5, 10 * 60 * 1000))) {
     return NextResponse.json(
       { error: "Trop de soumissions rapprochées. Réessayez dans quelques minutes." },
       { status: 429 }
