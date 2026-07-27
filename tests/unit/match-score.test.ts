@@ -7,6 +7,9 @@ import {
   promoteRequirementsInCv,
   applyClaimsToCv,
   projectScoreWithClaims,
+  sanitizeSkillsAgainstBase,
+  withSoftSkillsGroup,
+  parseMatchBreakdown,
 } from "@/lib/match-score";
 import { extractRequirementsHeuristic } from "@/lib/job-requirements";
 import type { CVData } from "@/lib/cv-schema";
@@ -178,5 +181,89 @@ Missions:
     expect(req.tools.map((t) => t.toLowerCase())).toEqual(
       expect.arrayContaining(["react", "typescript", "docker"])
     );
+  });
+
+  it("captures soft-skill sections and catalog mentions", () => {
+    const text = `
+Soft skills:
+- Autonomie
+- Esprit d'équipe
+À propos
+Quelqu'un de très autonome pour le poste.
+`;
+    const req = extractRequirementsHeuristic(text);
+    expect(req.softSkills.join(" ").toLowerCase()).toMatch(/autonomie|esprit/);
+  });
+
+  it("skips oversized lines and falls back to first title-like line", () => {
+    const long = "x".repeat(100);
+    const text = `Ingénieur backend Node\n${long}\n- ok\n`;
+    const req = extractRequirementsHeuristic(text);
+    expect(req.title.toLowerCase()).toContain("ingénieur");
+  });
+});
+
+describe("sanitizeSkillsAgainstBase / withSoftSkillsGroup", () => {
+  it("drops invented hard skills but keeps claimed soft skills", () => {
+    const crafted: CVData = {
+      ...baseCv,
+      softSkills: ["Autonomie"],
+      skills: [
+        { category: "Frontend", items: ["React", "ZigLang"] },
+        { category: "Soft skills", items: ["old"] },
+      ],
+    };
+    const sanitized = sanitizeSkillsAgainstBase(crafted, baseCv);
+    expect(sanitized.skills.flatMap((g) => g.items)).toContain("React");
+    expect(sanitized.skills.flatMap((g) => g.items)).not.toContain("ZigLang");
+    expect(sanitized.softSkills).toContain("Autonomie");
+
+    const emptyHard: CVData = {
+      ...baseCv,
+      skills: [{ category: "X", items: ["UnknownTool"] }],
+      softSkills: [],
+    };
+    expect(sanitizeSkillsAgainstBase(emptyHard, baseCv).skills).toEqual(baseCv.skills);
+
+    const grouped = withSoftSkillsGroup({ ...baseCv, softSkills: ["Autonomie"] });
+    expect(grouped.skills.some((g) => g.category === "Soft skills")).toBe(true);
+    expect(
+      withSoftSkillsGroup({ ...baseCv, softSkills: [] }).skills.some(
+        (g) => g.category === "Soft skills"
+      )
+    ).toBe(false);
+  });
+});
+
+describe("parseMatchBreakdown", () => {
+  it("returns null for invalid payloads", () => {
+    expect(parseMatchBreakdown(null)).toBeNull();
+    expect(parseMatchBreakdown({ before: {}, after: {} })).toBeNull();
+  });
+});
+
+describe("promoteRequirementsInCv summary", () => {
+  it("appends and truncates a long summary when promoting covered terms", () => {
+    const cv: CVData = {
+      ...baseCv,
+      summary: "A".repeat(470),
+      skills: [{ category: "Autres", items: ["CSS"] }],
+      experiences: [
+        {
+          ...baseCv.experiences[0]!,
+          stack: ["GraphQL", "AWS"],
+          bullets: ["GraphQL AWS"],
+        },
+      ],
+    };
+    const promoted = promoteRequirementsInCv(cv, {
+      title: "Backend",
+      mustHave: ["GraphQL"],
+      niceHave: [],
+      tools: ["AWS"],
+      softSkills: [],
+    });
+    expect(promoted.summary.length).toBeLessThanOrEqual(480);
+    expect(promoted.summary).toMatch(/…$/);
   });
 });
