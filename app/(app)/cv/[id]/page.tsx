@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Download, FileText, Mail, PenLine, RefreshCw } from "lucide-react";
+import { notFound } from "next/navigation";
+import { ArrowLeft, Download, FileText, Mail, PenLine } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
@@ -12,20 +12,16 @@ import {
 } from "@/lib/templates/definition";
 import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
-import { generateCV, GenerationError } from "@/lib/generate-cv";
+import { parseMatchBreakdown } from "@/lib/match-score";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MatchReport } from "@/components/generate/match-report";
+import { RegenerateForm } from "./regenerate-form";
 
 export const metadata: Metadata = { title: "Aperçu du CV" };
 
-export default async function CvDetailPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams: { error?: string };
-}) {
+export default async function CvDetailPage({ params }: { params: { id: string } }) {
   const session = await auth();
   const cv = await db.generatedCV.findUnique({
     where: { id: params.id },
@@ -42,28 +38,7 @@ export default async function CvDetailPage({
   const letterHtml = cv.coverLetter
     ? renderCoverLetterHtml(data, { body: cv.coverLetter, jobTitle: cv.jobTitle }, definition)
     : null;
-
-  async function regenerate() {
-    "use server";
-    const session = await auth();
-    if (!session?.user) redirect("/login");
-    const source = await db.generatedCV.findUnique({ where: { id: params.id } });
-    if (!source || source.userId !== session.user.id) notFound();
-    let newId: string;
-    try {
-      const next = await generateCV({
-        userId: session.user.id,
-        jobText: source.jobText,
-        templateId: source.templateId,
-        targetTitle: source.jobTitle,
-      });
-      newId = next.id;
-    } catch (e) {
-      const message = e instanceof GenerationError ? e.message : "La régénération a échoué.";
-      redirect(`/cv/${params.id}?error=${encodeURIComponent(message)}`);
-    }
-    redirect(`/cv/${newId}`);
-  }
+  const matchBreakdown = parseMatchBreakdown(cv.matchBreakdown);
 
   return (
     <article className="mx-auto max-w-4xl space-y-6">
@@ -77,12 +52,6 @@ export default async function CvDetailPage({
         </Link>
       </nav>
 
-      {searchParams.error ? (
-        <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {searchParams.error}
-        </p>
-      ) : null}
-
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <h1 className="font-display text-2xl font-bold">{cv.jobTitle}</h1>
@@ -92,9 +61,19 @@ export default async function CvDetailPage({
               cv.createdAt
             )}
           </p>
-          <Badge variant="secondary">
-            Source : {cv.jobSource === "texte collé" ? "texte collé" : cv.jobSource}
-          </Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary">
+              Source : {cv.jobSource === "texte collé" ? "texte collé" : cv.jobSource}
+            </Badge>
+            {cv.matchScoreBefore != null && cv.matchScoreAfter != null ? (
+              <Badge>
+                Matching {cv.matchScoreBefore}% → {cv.matchScoreAfter}%
+                {cv.matchScoreAfter - cv.matchScoreBefore >= 0
+                  ? ` (+${cv.matchScoreAfter - cv.matchScoreBefore})`
+                  : ` (${cv.matchScoreAfter - cv.matchScoreBefore})`}
+              </Badge>
+            ) : null}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="gradient">
@@ -103,14 +82,11 @@ export default async function CvDetailPage({
               Modifier dans l&apos;éditeur
             </Link>
           </Button>
-          <form action={regenerate}>
-            <Button type="submit" variant="outline">
-              <RefreshCw />
-              Régénérer (1 crédit)
-            </Button>
-          </form>
+          <RegenerateForm cvId={cv.id} />
         </div>
       </header>
+
+      {matchBreakdown ? <MatchReport breakdown={matchBreakdown} /> : null}
 
       <section aria-labelledby="cv-title" className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
