@@ -6,6 +6,7 @@ import { auth, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { cvSchema } from "@/lib/cv-schema";
+import { deleteStoredUrl } from "@/lib/storage";
 
 export type SaveProfileResult = { ok: true } | { ok: false; error: string };
 
@@ -30,18 +31,41 @@ export async function saveProfile(data: unknown): Promise<SaveProfileResult> {
 }
 
 /**
- * GDPR account deletion: removes the user and, by cascade, sessions, credits,
- * transactions, payments, base profile and generated CVs. Community templates
- * are kept but unlinked (ownerId set to null).
+ * GDPR account deletion: purges storage blobs, then removes the user (cascade
+ * drops DB rows). Community templates are kept but unlinked (ownerId → null).
  */
 export async function deleteAccount(formData: FormData) {
   const session = await auth();
   if (!session?.user) redirect("/login");
   if (formData.get("confirm") !== "SUPPRIMER") return;
 
-  const user = await db.user.delete({ where: { id: session.user.id } });
+  const userId = session.user.id;
+  const [profile, cvs, templates] = await Promise.all([
+    db.baseProfile.findUnique({ where: { userId }, select: { sourceFileUrl: true } }),
+    db.generatedCV.findMany({
+      where: { userId },
+      select: {
+        docxUrl: true,
+        pdfUrl: true,
+        coverLetterDocxUrl: true,
+        coverLetterPdfUrl: true,
+      },
+    }),
+    db.template.findMany({
+      where: { ownerId: userId },
+      select: { previewImageUrl: true },
+    }),
+  ]);
+
+  const urls = [
+    profile?.sourceFileUrl,
+    ...templates.map((t) => t.previewImageUrl),
+    ...cvs.flatMap((cv) => [cv.docxUrl, cv.pdfUrl, cv.coverLetterDocxUrl, cv.coverLetterPdfUrl]),
+  ];
+  await Promise.all(urls.map((url) => deleteStoredUrl(url)));
+
+  const user = await db.user.delete({ where: { id: userId } });
   if (user.authId) {
-    // Remove the Supabase Auth identity too (full GDPR erasure).
     await createSupabaseAdminClient().auth.admin.deleteUser(user.authId);
   }
   await signOut({ redirectTo: "/" });

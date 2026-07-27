@@ -4,10 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 /**
  * One-shot, idempotent migration of pre-Supabase accounts into GoTrue.
  * For each Prisma User without an authId:
- *  - creates the auth.users entry (bcrypt password_hash imported as-is,
- *    email marked confirmed if it was, ADMIN role pinned in app_metadata)
+ *  - creates/links the auth.users entry (email marked confirmed if it was,
+ *    ADMIN role pinned in app_metadata). Password must be reset via
+ *    "forgot password" if the Auth.js hash was never imported.
  *  - stores the new auth id back on the User row.
- * Re-running skips already-migrated users and links existing auth accounts.
  *
  * Usage: npx tsx scripts/migrate-users-to-supabase.ts
  * Requires NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DATABASE_URL.
@@ -28,7 +28,6 @@ const admin = createClient(
 );
 
 async function findAuthUserByEmail(email: string) {
-  // listUsers has no email filter in older GoTrue versions: paginate defensively.
   for (let page = 1; page <= 50; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
     if (error) throw error;
@@ -61,7 +60,6 @@ async function main() {
       const { data, error } = await admin.auth.admin.createUser({
         email,
         email_confirm: !!user.emailVerified,
-        password_hash: user.passwordHash ?? undefined,
         app_metadata: user.role === "ADMIN" ? { role: "ADMIN" } : undefined,
         user_metadata: user.name ? { full_name: user.name } : undefined,
       });
@@ -69,9 +67,7 @@ async function main() {
 
       await db.user.update({ where: { id: user.id }, data: { authId: data.user.id } });
       migrated++;
-      console.log(
-        `+ migrated ${email}${user.passwordHash ? "" : " (no password: reset required)"}`
-      );
+      console.log(`+ migrated ${email} (password reset required)`);
     } catch (error) {
       failures.push(email);
       console.error(`! failed   ${email}:`, error);

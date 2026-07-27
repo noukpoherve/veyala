@@ -12,37 +12,39 @@ avant ce qui existe déjà dans le CV importé.
 - **Next.js 14** (App Router, Server Components) · **TypeScript strict** · **React 18**
 - **Tailwind CSS** + **shadcn/ui** + **lucide-react**
 - **PostgreSQL** via **Prisma** (transactions pour tous les mouvements de crédits)
-- **Auth.js v5** : magic link (email) + Google OAuth (+ connexion dev sans SMTP hors production)
+- **Supabase Auth** : email/mot de passe, confirmation, reset, OAuth (Google/GitHub)
 - **Stripe** : Checkout + webhook signé et idempotent
-- **docx** pour le Word, **Playwright (Chromium headless)** pour le PDF pixel-perfect
+- **docx** pour le Word, **Playwright** + **@sparticuz/chromium** pour le PDF (local et Vercel)
 - **Couche LLM agnostique** : tout fournisseur OpenAI-compatible ou Anthropic, configurable
   par variables d'env et surchargeable par l'admin (clés chiffrées AES-GCM en base)
 - **zod** (validation), **react-hook-form** (formulaires)
+- **Upstash Redis** (optionnel) pour le rate-limit distribué en multi-instance
 
 ## Démarrage rapide
 
 ```bash
-# 1. Dépendances + navigateur PDF
+# 1. Infra locale (Auth + Postgres via Supabase CLI)
+npm run supabase:start
 npm install
-npx playwright install chromium
+npm run setup:pdf              # Playwright Chromium (dev)
 
 # 2. Configuration
-cp .env.local.example .env.local     # remplir au minimum DATABASE_URL, NEXTAUTH_SECRET,
-                                     # ADMIN_EMAILS, ENCRYPTION_KEY, LLM_*
-# Prisma lit .env : y mettre DATABASE_URL également.
+cp .env.local.example .env.local
+# Remplir au minimum :
+#   DATABASE_URL / DIRECT_URL (supabase status),
+#   NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY,
+#   ADMIN_EMAILS, ENCRYPTION_KEY, LLM_*
+# Prisma lit aussi .env : y mettre DATABASE_URL / DIRECT_URL.
 
-# 3. Base de données + données de démo (packs, 3 templates officiels, admins)
+# 3. Base de données + données de démo (packs, templates officiels, admins)
 npx prisma migrate dev
 npx prisma db seed
 
 # 4. Lancer
-npm run dev                          # http://localhost:3000
+npm run dev                    # http://localhost:3000
 ```
 
-Secrets à générer : `openssl rand -base64 32` pour `NEXTAUTH_SECRET` et `ENCRYPTION_KEY`.
-
-En développement sans SMTP ni Google OAuth, un formulaire **« Connexion dev »** sur `/login`
-permet de se connecter avec un simple email (désactivé en production).
+Secret à générer : `openssl rand -base64 32` pour `ENCRYPTION_KEY`.
 
 ## Fournisseurs LLM gratuits / peu chers
 
@@ -54,7 +56,7 @@ Le fournisseur se change **sans toucher au code** : variables d'env ou Admin →
 | **Google Gemini** | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-2.0-flash` | Tier gratuit généreux, vision |
 | **Mistral** | `https://api.mistral.ai/v1` | `mistral-small-latest` | Tier gratuit, vision (pixtral) |
 | **Cerebras** | `https://api.cerebras.ai/v1` | `llama-3.3-70b` | Gratuit, ultra rapide |
-| **OpenRouter** | `https://openrouter.ai/api/v1` | `meta-llama/llama-3.3-70b-instruct:free` | Agrégateur, modèles :free |
+| **OpenRouter** | `https://openrouter.ai/api/v1` | `meta-llama/meta-llama-3.3-70b-instruct:free` | Agrégateur, modèles :free |
 | **DeepSeek** | `https://api.deepseek.com/v1` | `deepseek-chat` | Très peu cher |
 | **OpenAI** | `https://api.openai.com/v1` | `gpt-4o-mini` | Peu cher, vision |
 | **Anthropic** | `https://api.anthropic.com` (+ `LLM_PROTOCOL=anthropic`) | `claude-haiku-4-5` | Protocole dédié, vision |
@@ -77,67 +79,66 @@ crédite le compte de façon **idempotente** (les retries Stripe ne créditent j
 ```
 app/
   (marketing)/        Landing, pricing, FAQ, pages légales (SSR public)
-  (auth)/login        Connexion (magic link, Google, dev)
+  (auth)/             Connexion, inscription, reset (Supabase Auth)
   (app)/              Espace connecté : dashboard, generate, cv/[id], profile,
-                      templates, billing
-  (admin)/admin/      Back-office : stats, users, validation templates, paiements, réglages
-  api/                generate, import-cv, templates, stripe/{checkout,webhook},
-                      files (stockage local), llm/test, auth
+                      templates, billing, support
+  (admin)/admin/      Back-office : stats, users, templates, paiements, réglages LLM
+  api/                analyze, generate, import-cv, templates, stripe, files, health
 lib/
   llm.ts              Couche IA agnostique (openai/anthropic, retries, vision)
   tailor.ts           Adaptation CV ↔ offre (prompt ATS, zéro invention)
-  cv-schema.ts        Schéma zod du CV structuré (source de vérité)
-  generate-cv.ts      Pipeline complet : débit → IA → rendu → stockage (remboursé si échec)
-  credits.ts          Débit/crédit atomique (transactions Serializable, jamais négatif)
+  match-score.ts      Score déterministe avant/après + claims soft skills
+  analyze-job.ts      Analyse gratuite (0 crédit) + gaps
+  generate-cv.ts      Pipeline : débit → IA → rendu → scores (remboursé si échec)
+  credits.ts          Débit/crédit atomique (Serializable, never négatif, refund retry)
   payments.ts         Fulfillment Stripe idempotent
-  docx/               Moteur .docx piloté par définition de template
-  pdf/                Rendu HTML partagé (aperçu + PDF Playwright)
-  templates/          Définitions zod, templates officiels, fingerprint sha256 anti-doublon
-  storage.ts          Stockage fichiers : local (dev) / Supabase / S3
-prisma/               Schéma + migrations + seed (packs, templates, admins)
+  rate-limit.ts       Sliding window (mémoire locale ou Upstash Redis)
+  storage.ts          local (dev) / S3-R2 / Supabase — local interdit en prod
+  pdf/                Playwright + @sparticuz/chromium (Vercel-ready)
+prisma/               Schéma + migrations + seed
 ```
 
-### Détection de doublon de template
+### Matching
 
-`fingerprint = sha256(définition canonique)` : JSON trié, couleurs normalisées. Unique en
-base — importer deux fois le même design renvoie le template existant au lieu de le dupliquer.
-Les nouveaux templates passent en statut `PENDING` (validation admin) mais restent utilisables
-immédiatement par leur auteur.
+1. **Analyse** (`POST /api/analyze`, 0 crédit) : extrait les exigences (cache `JobAnalysis`),
+   calcule le score avant, propose les gaps à revendiquer.
+2. **Génération** (`POST /api/generate`, 1 crédit) : adapte le CV, stocke
+   `matchScoreBefore` / `matchScoreAfter` / breakdown, clé d'idempotence client.
 
 ### Crédits
 
 - 2 crédits offerts à l'inscription (`SIGNUP_BONUS`)
-- 1 génération = 1 crédit, débité **avant** l'appel IA, **remboursé** automatiquement si la
-  génération échoue — solde jamais négatif (transaction Serializable)
-- Packs éditables par l'admin (seed : 5 CV — 1,99 €, 20 CV — 5,99 €, 50 CV — 12,99 €)
+- 1 génération = 1 crédit, débité **avant** l'appel IA, **remboursé** avec retries si échec
+- Packs éditables par l'admin (seed : 5 / 20 / 50 CV)
 
 ## Scripts
 
 | Commande | Rôle |
 |---|---|
 | `npm run dev` / `build` / `start` | Next.js |
-| `npm run typecheck` | TypeScript strict |
+| `npm run supabase:start\|stop\|status` | Stack Auth + Postgres locale |
+| `npm run typecheck` / `test` / `lint` | Qualité |
 | `npm run db:migrate` / `db:studio` / `db:seed` | Prisma |
-| `npx tsx scripts/render-demo.ts [dossier]` | Génère un CV de démo (HTML+PDF+DOCX) avec chaque template officiel |
+| `npm run setup:pdf` | Installe Chromium Playwright |
 
-## Déploiement (Vercel + Neon)
+## Déploiement (Vercel + Supabase)
 
-1. Créer une base **Neon** (ou Supabase) → `DATABASE_URL`.
-2. Importer le repo dans **Vercel** ; renseigner toutes les variables de `.env.local.example`
-   (avec `NEXTAUTH_URL=https://votre-domaine`).
-3. PDF serverless : Chromium complet n'est pas disponible sur Vercel — remplacer le launch de
-   `lib/pdf/index.ts` par `puppeteer-core` + `@sparticuz/chromium`, ou déporter la génération
-   PDF sur un petit service Node (Railway/Fly) avec Playwright. En VPS/Docker, Playwright
-   fonctionne tel quel.
-4. `npx prisma migrate deploy && npx prisma db seed` sur la base de production.
-5. Configurer le webhook Stripe de production → `https://votre-domaine/api/stripe/webhook`.
-6. Stockage fichiers : `STORAGE_DRIVER=supabase` + bucket, le driver local étant réservé au dev.
+1. Projet Supabase (Auth + DB) → renseigner `NEXT_PUBLIC_SUPABASE_*`,
+   `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL` (transaction pooler) et `DIRECT_URL`
+   (session pooler) — voir `.env.local.example`.
+2. Importer le repo dans **Vercel** ; variables de `.env.local.example`.
+3. PDF : déjà branché sur `playwright-core` + `@sparticuz/chromium` dans `lib/pdf/index.ts`
+   (pas besoin de puppeteer). Prévoir ≥ 2048 MB de mémoire fonction.
+4. Build : `prisma migrate deploy && next build` (`vercel-build` script).
+5. Webhook Stripe prod → `/api/stripe/webhook`.
+6. Stockage : `STORAGE_DRIVER=s3` (R2) ou `supabase` — **`local` est refusé en prod/Vercel**.
+7. Rate-limit multi-instance : `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`.
 
 ## Sécurité
 
 - Validation **zod** de toutes les entrées API ; uploads limités en taille et en types.
-- Rate-limiting sur `/api/generate`, `/api/import-cv` et `/api/templates`.
+- Rate-limiting (mémoire ou Upstash) sur generate, analyze, import, auth, support.
+- Fetch d'offres : garde **SSRF** (`lib/job-url.ts`).
 - Webhooks Stripe : signature vérifiée + idempotence transactionnelle.
-- Clés LLM stockées chiffrées (AES-256-GCM, `ENCRYPTION_KEY`) ; aucun secret côté client.
-- RGPD : politique de confidentialité, suppression de compte + données en un clic
-  (Mon CV de base → Zone dangereuse).
+- Clés LLM chiffrées (AES-256-GCM) ; aucun secret côté client.
+- RGPD : suppression de compte = blobs storage + lignes Prisma + identité Supabase Auth.

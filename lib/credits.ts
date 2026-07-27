@@ -1,6 +1,12 @@
-import { cache } from "react";
+import { cache as reactCache } from "react";
 import { type CreditReason, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+
+/** react.cache is unavailable in some Vitest/node contexts — identity fallback. */
+const cache =
+  typeof reactCache === "function"
+    ? reactCache
+    : <T extends (...args: never[]) => unknown>(fn: T) => fn;
 
 export class InsufficientCreditsError extends Error {
   constructor() {
@@ -61,6 +67,39 @@ export async function creditCredits(
   return db.$transaction((tx) => applyDelta(tx, userId, Math.abs(amount), reason, refId), {
     isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
   });
+}
+
+/**
+ * Credits with retries + logging (used for generation refunds).
+ * Never swallows failures silently.
+ */
+export async function creditCreditsWithRetry(
+  userId: string,
+  amount: number,
+  reason: CreditReason,
+  refId: string,
+  opts?: { retries?: number; label?: string }
+): Promise<boolean> {
+  const retries = opts?.retries ?? 3;
+  const label = opts?.label ?? "credit";
+  let lastError: unknown;
+  for (let i = 0; i < retries; i++) {
+    try {
+      await creditCredits(userId, amount, reason, refId);
+      return true;
+    } catch (e) {
+      lastError = e;
+      await new Promise((r) => setTimeout(r, 150 * 2 ** i));
+    }
+  }
+  console.error(`[credits] ${label} failed after retries`, {
+    userId,
+    amount,
+    reason,
+    refId,
+    lastError,
+  });
+  return false;
 }
 
 /** Balance lookup memoized per request: shell + page can both call it, one query runs. */

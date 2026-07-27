@@ -6,6 +6,7 @@ import { ArrowDownWideNarrow, ImagePlus, Plus, Trash2 } from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
 import { sortByDatesDesc } from "@/lib/cv-sort";
 import { fileToDataUrl } from "@/lib/image-file";
+import { SOFT_SKILLS_CATALOG } from "@/lib/soft-skills";
 import { SortableList } from "@/components/cv/sortable-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,7 +130,8 @@ function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
 
 /** All structured-CV form fields, shared by /profile and the CV editor. */
 export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
-  const { control, register, getValues, setValue } = form;
+  const { control, register, getValues, setValue, watch } = form;
+  const softSkills = watch("softSkills") ?? [];
   const links = useFieldArray({ control, name: "contact.links" });
   const details = useFieldArray({ control, name: "contact.details" });
   const experiences = useFieldArray({ control, name: "experiences" });
@@ -395,6 +397,44 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
           <Plus />
           Ajouter une catégorie
         </Button>
+      </SectionCard>
+
+      <SectionCard title="Soft skills">
+        <fieldset>
+          <legend className="mb-2 text-sm font-medium">
+            Qualités qui vous définissent (sélection)
+          </legend>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Ces savoir-être enrichissent le matching ATS sans être confondus avec les outils
+            techniques.
+          </p>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {SOFT_SKILLS_CATALOG.map((skill) => {
+              const selected = softSkills.includes(skill.label);
+              return (
+                <li key={skill.id}>
+                  <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted/40 has-[:checked]:border-primary/40 has-[:checked]:bg-primary/5">
+                    <input
+                      type="checkbox"
+                      className="size-4 rounded border"
+                      checked={selected}
+                      onChange={(e) => {
+                        const next = e.target.checked
+                          ? [...softSkills, skill.label]
+                          : softSkills.filter((s) => s !== skill.label);
+                        setValue("softSkills", next, {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                        });
+                      }}
+                    />
+                    {skill.label}
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </fieldset>
       </SectionCard>
 
       <SectionCard title="Langues & centres d'intérêt">

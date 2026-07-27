@@ -17,5 +17,5 @@ Organisée selon [Diátaxis](https://diataxis.fr) :
 | Tests | Vitest (`npm test`, `npm run coverage`, seuil 80 % sur les modules couverts) |
 | CI | `.github/workflows/ci.yml` — lint, typecheck, tests+couverture, build, sécurité |
 | Sécurité | gitleaks + npm audit + Semgrep (CI), CodeQL (`codeql.yml`), Dependabot |
-| Releases | semantic-release sur `main` : version SemVer, tag, GitHub Release, `CHANGELOG.md` |
+| Releases | semantic-release sur `main` : SemVer, tag, [GitHub Releases](https://github.com/noukpoherve/veyala/releases), `CHANGELOG.md` (commit Conventional Commits) |
 | Santé | `GET /api/health` (DB + drapeaux de configuration) |

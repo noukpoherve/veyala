@@ -8,6 +8,7 @@ import { normalizeEmail, siteUrl } from "@/lib/utils";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 
 export const metadata: Metadata = { title: "Vérifiez votre email" };
 
@@ -36,7 +37,7 @@ export default function VerifyEmailPage({
   async function resendConfirmation() {
     "use server";
     const { limit, windowMs } = RATE_LIMITS.otp;
-    if (!rateLimit(`resend:${clientIp()}:${email}`, limit, windowMs)) {
+    if (!(await rateLimit(`resend:${clientIp()}:${email}`, limit, windowMs))) {
       redirect(`/verify-email?email=${encodeURIComponent(email)}&status=ratelimited`);
     }
     const supabase = createSupabaseServerClient();
@@ -69,16 +70,12 @@ export default function VerifyEmailPage({
       </CardHeader>
       <CardContent className="space-y-4">
         {message ? (
-          <p
-            role="alert"
-            className={
-              message.tone === "error"
-                ? "rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-                : "rounded-md bg-blue-50 p-3 text-sm text-blue-700"
-            }
+          <Alert
+            variant={message.tone === "error" ? "error" : "info"}
+            title={message.tone === "error" ? "Action limitée" : "Information"}
           >
             {message.text}
-          </p>
+          </Alert>
         ) : null}
 
         <form action={resendConfirmation}>

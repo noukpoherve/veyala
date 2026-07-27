@@ -1,16 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { MatchClaim, MatchItem } from "@/lib/match-score";
+import { resolveApiError, toUserMessage, USER_ERRORS } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { TemplateSwatch } from "@/components/templates/template-swatch";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface TemplateOption {
   id: string;
@@ -20,6 +25,54 @@ export interface TemplateOption {
   band: string;
   isOwn: boolean;
 }
+
+const MatchAnalyzePanel = dynamic(
+  () => import("@/components/generate/match-analyze-panel").then((m) => m.MatchAnalyzePanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="space-y-3 rounded-xl border p-4"
+        role="status"
+        aria-label="Chargement analyse"
+      >
+        <Skeleton className="h-6 w-48" />
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+        </div>
+        <Skeleton className="h-40" />
+      </div>
+    ),
+  }
+);
+
+const PIPELINE_STEPS = [
+  { id: "reading_offer", label: "Lecture de l'offre" },
+  { id: "analyzing_requirements", label: "Analyse des exigences" },
+  { id: "scoring_before", label: "Matching initial" },
+  { id: "adapting_cv", label: "Adaptation ATS du CV" },
+  { id: "writing_letter", label: "Lettre de motivation" },
+  { id: "rendering_exports", label: "Exports PDF / Word" },
+  { id: "scoring_after", label: "Matching optimisé" },
+] as const;
+
+type StepId = (typeof PIPELINE_STEPS)[number]["id"];
+
+function claimKey(c: MatchClaim): string {
+  return `${c.kind}:${c.term.toLowerCase()}`;
+}
+
+type AnalyzeResponse = {
+  ok?: boolean;
+  error?: string;
+  jobText?: string;
+  before?: { score: number; covered: number; total: number };
+  projected?: { score: number };
+  maxProjected?: { score: number };
+  gaps?: MatchItem[];
+};
 
 export function GenerateForm({
   templates,
@@ -33,212 +86,510 @@ export function GenerateForm({
   const router = useRouter();
   const [mode, setMode] = useState<"text" | "url">("text");
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [phase, setPhase] = useState<"compose" | "review" | "generating">("compose");
+  const [analyzing, startAnalyze] = useTransition();
+  const [error, setError] = useState<{ title: string; message: string } | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const [jobPayload, setJobPayload] = useState<{ jobText?: string; jobUrl?: string }>({});
+  const [options, setOptions] = useState({
+    targetTitle: "",
+    instructions: "",
+    language: "",
+  });
+  const [beforeScore, setBeforeScore] = useState(0);
+  const [projectedScore, setProjectedScore] = useState(0);
+  const [maxProjected, setMaxProjected] = useState(0);
+  const [gaps, setGaps] = useState<MatchItem[]>([]);
+  const [claims, setClaims] = useState<MatchClaim[]>([]);
+  const idempotencyKeyRef = useRef<string | null>(null);
+  const [activeStep, setActiveStep] = useState<StepId | "done" | null>(null);
+  const [scoreBeforeLive, setScoreBeforeLive] = useState<number | null>(null);
+  const [scoreAfterLive, setScoreAfterLive] = useState<number | null>(null);
 
   const noCredits = balance <= 0;
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    setSubmitting(true);
-    const data = new FormData(event.currentTarget);
-    const payload = {
+  useEffect(() => {
+    if (!error || !errorRef.current) return;
+    errorRef.current.focus();
+    errorRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [error]);
+
+  const showError = useCallback((title: string, message: string) => {
+    setWarning(null);
+    setError({ title, message });
+  }, []);
+
+  const failHard = useCallback(
+    (reason: "generate" | "analyze") => {
+      router.push(`/erreur?reason=${reason}&back=/generate`);
+    },
+    [router]
+  );
+
+  const reproject = useCallback(
+    async (nextClaims: MatchClaim[]) => {
+      setWarning(null);
+      try {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...jobPayload, claims: nextClaims }),
+        });
+        const body = (await res.json().catch(() => null)) as AnalyzeResponse | null;
+        if (!res.ok) {
+          setWarning(resolveApiError(res.status, body, USER_ERRORS.reproject));
+          return;
+        }
+        if (body?.projected?.score != null) setProjectedScore(body.projected.score);
+      } catch (e) {
+        setWarning(toUserMessage(e, USER_ERRORS.reproject));
+      }
+    },
+    [jobPayload]
+  );
+
+  const onToggleClaim = useCallback(
+    (claim: MatchClaim) => {
+      setClaims((prev) => {
+        const key = claimKey(claim);
+        const next = prev.some((c) => claimKey(c) === key)
+          ? prev.filter((c) => claimKey(c) !== key)
+          : [...prev, claim];
+        void reproject(next);
+        return next;
+      });
+    },
+    [reproject]
+  );
+
+  const onSelectAll = useCallback(() => {
+    const next = gaps.map((g) => ({ term: g.term, kind: g.kind }));
+    setClaims(next);
+    void reproject(next);
+  }, [gaps, reproject]);
+
+  const onClear = useCallback(() => {
+    setClaims([]);
+    setProjectedScore(beforeScore);
+  }, [beforeScore]);
+
+  function readForm(form: HTMLFormElement) {
+    const data = new FormData(form);
+    return {
       jobUrl: mode === "url" ? String(data.get("jobUrl") ?? "").trim() || undefined : undefined,
       jobText: mode === "text" ? String(data.get("jobText") ?? "").trim() || undefined : undefined,
-      templateId: templateId || undefined,
-      targetTitle: String(data.get("targetTitle") ?? "").trim() || undefined,
-      instructions: String(data.get("instructions") ?? "").trim() || undefined,
-      language: String(data.get("language") ?? "").trim() || undefined,
+      targetTitle: String(data.get("targetTitle") ?? "").trim(),
+      instructions: String(data.get("instructions") ?? "").trim(),
+      language: String(data.get("language") ?? "").trim(),
     };
+  }
+
+  function onAnalyze(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setWarning(null);
+    const form = event.currentTarget;
+    const fields = readForm(form);
+    setOptions({
+      targetTitle: fields.targetTitle,
+      instructions: fields.instructions,
+      language: fields.language,
+    });
+    setJobPayload({ jobText: fields.jobText, jobUrl: fields.jobUrl });
+
+    startAnalyze(async () => {
+      try {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jobText: fields.jobText,
+            jobUrl: fields.jobUrl,
+          }),
+        });
+        const body = (await res.json().catch(() => null)) as AnalyzeResponse | null;
+        if (!res.ok || !body?.before) {
+          throw new Error(resolveApiError(res.status, body, USER_ERRORS.analyze));
+        }
+        setBeforeScore(body.before.score);
+        setProjectedScore(body.projected?.score ?? body.before.score);
+        setMaxProjected(body.maxProjected?.score ?? body.projected?.score ?? body.before.score);
+        setGaps(body.gaps ?? []);
+        setClaims([]);
+        if (body.jobText) setJobPayload({ jobText: body.jobText });
+        setPhase("review");
+      } catch (e) {
+        const message = toUserMessage(e, USER_ERRORS.analyze);
+        if (message === USER_ERRORS.network || /indisponible|502|503|500/i.test(message)) {
+          failHard("analyze");
+          return;
+        }
+        showError("Analyse impossible", message);
+      }
+    });
+  }
+
+  async function onGenerate() {
+    setError(null);
+    setWarning(null);
+    setPhase("generating");
+    setActiveStep("reading_offer");
+    setScoreBeforeLive(beforeScore);
+    setScoreAfterLive(null);
+
+    // Stable for this attempt so retries don't double-debit after success.
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = crypto.randomUUID();
+    }
+
     try {
-      const res = await fetch("/api/generate", {
+      const enqueueRes = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...jobPayload,
+          templateId: templateId || undefined,
+          targetTitle: options.targetTitle || undefined,
+          instructions: options.instructions || undefined,
+          language: options.language || undefined,
+          claims,
+          idempotencyKey: idempotencyKeyRef.current,
+        }),
       });
-      // A serverless timeout/crash returns an HTML error page, not JSON —
-      // parse defensively so it surfaces as a readable message, not a
-      // "Unexpected token" JSON error.
-      const body = (await res.json().catch(() => null)) as {
-        id?: string;
+      const enqueueBody = (await enqueueRes.json().catch(() => null)) as {
+        jobId?: string;
         error?: string;
       } | null;
-      if (!res.ok || !body?.id) {
-        throw new Error(
-          body?.error ??
-            (res.status === 502 || res.status === 504
-              ? "La génération a pris trop de temps (fournisseur IA surchargé ou indisponible). Réessayez ou changez de fournisseur."
-              : "La génération a échoué.")
-        );
+      if (!enqueueRes.ok || !enqueueBody?.jobId) {
+        throw new Error(resolveApiError(enqueueRes.status, enqueueBody, USER_ERRORS.generate));
       }
-      router.push(`/cv/${body.id}`);
+
+      const jobId = enqueueBody.jobId;
+
+      // Fire the worker; progress is read from the job row via polling.
+      const runPromise = fetch(`/api/generate/${jobId}/run`, { method: "POST" }).catch(() => null);
+
+      type JobStatus = {
+        status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+        step: string | null;
+        scoreBefore: number | null;
+        scoreAfter: number | null;
+        error: string | null;
+        generatedCvId: string | null;
+      };
+
+      const deadline = Date.now() + 90_000;
+      let doneId: string | null = null;
+
+      while (Date.now() < deadline) {
+        const statusRes = await fetch(`/api/generate/${jobId}`, { cache: "no-store" });
+        const job = (await statusRes.json().catch(() => null)) as JobStatus | null;
+        if (!statusRes.ok || !job) {
+          await new Promise((r) => setTimeout(r, 600));
+          continue;
+        }
+
+        if (job.step && PIPELINE_STEPS.some((s) => s.id === job.step)) {
+          setActiveStep(job.step as StepId);
+        }
+        if (typeof job.scoreBefore === "number") setScoreBeforeLive(job.scoreBefore);
+        if (typeof job.scoreAfter === "number") setScoreAfterLive(job.scoreAfter);
+
+        if (job.status === "SUCCEEDED" && job.generatedCvId) {
+          doneId = job.generatedCvId;
+          setActiveStep("done");
+          break;
+        }
+        if (job.status === "FAILED") {
+          throw new Error(job.error?.trim() || USER_ERRORS.generate);
+        }
+
+        await new Promise((r) => setTimeout(r, 450));
+      }
+
+      // Drain worker (best-effort) so the browser doesn't leave it hanging silently.
+      await runPromise;
+
+      if (!doneId) throw new Error(USER_ERRORS.generate);
+      router.push(`/cv/${doneId}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur inconnue.");
-      setSubmitting(false);
+      idempotencyKeyRef.current = null;
+      const message = toUserMessage(e, USER_ERRORS.generate);
+      if (
+        message === USER_ERRORS.network ||
+        message === USER_ERRORS.generate ||
+        /indisponible|remboursé|502|503|500/i.test(message)
+      ) {
+        router.push("/erreur?reason=generate&back=/generate");
+        return;
+      }
+      showError("Génération interrompue", message);
+      setPhase("review");
+      setActiveStep(null);
     }
   }
 
+  const currentIdx =
+    activeStep && activeStep !== "done" ? PIPELINE_STEPS.findIndex((s) => s.id === activeStep) : -1;
+
   return (
-    <form onSubmit={onSubmit} className="space-y-6" aria-busy={submitting}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">1. L&apos;offre d&apos;emploi</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div
-            role="tablist"
-            aria-label="Source de l'offre"
-            className="inline-flex rounded-md border p-0.5"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === "text"}
-              className={cn(
-                "rounded px-3 py-1.5 text-sm font-medium",
-                mode === "text" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-              )}
-              onClick={() => setMode("text")}
-            >
-              Texte collé (recommandé)
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === "url"}
-              className={cn(
-                "rounded px-3 py-1.5 text-sm font-medium",
-                mode === "url" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-              )}
-              onClick={() => setMode("url")}
-            >
-              URL de l&apos;offre
-            </button>
-          </div>
-
-          {mode === "text" ? (
-            <div className="space-y-1.5">
-              <Label htmlFor="jobText">Texte de l&apos;offre</Label>
-              <Textarea
-                id="jobText"
-                name="jobText"
-                rows={8}
-                required
-                placeholder="Collez ici l'intégralité de l'offre d'emploi…"
-              />
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              <Label htmlFor="jobUrl">URL de l&apos;offre</Label>
-              <Input id="jobUrl" name="jobUrl" type="url" required placeholder="https://…" />
-              <p className="text-xs text-muted-foreground">
-                Certains sites (Indeed, LinkedIn…) bloquent la lecture automatique : dans ce cas,
-                collez le texte.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">2. Le template</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <fieldset className="grid gap-3 sm:grid-cols-3">
-            <legend className="sr-only">Choix du template</legend>
-            {templates.map((t) => (
-              <label
-                key={t.id}
-                className={cn(
-                  "cursor-pointer rounded-lg border p-3 transition-colors",
-                  templateId === t.id
-                    ? "border-primary ring-2 ring-primary/30"
-                    : "hover:border-muted-foreground/40"
-                )}
+    <div className="space-y-6">
+      {phase === "compose" || phase === "review" ? (
+        <form onSubmit={onAnalyze} className="space-y-6" aria-busy={analyzing}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">1. L&apos;offre d&apos;emploi</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div
+                role="tablist"
+                aria-label="Source de l'offre"
+                className="inline-flex rounded-md border p-0.5"
               >
-                <input
-                  type="radio"
-                  name="template"
-                  value={t.id}
-                  checked={templateId === t.id}
-                  onChange={() => setTemplateId(t.id)}
-                  className="sr-only"
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === "text"}
+                  className={cn(
+                    "rounded px-3 py-1.5 text-sm font-medium",
+                    mode === "text" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                  )}
+                  onClick={() => setMode("text")}
+                >
+                  Texte collé (recommandé)
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === "url"}
+                  className={cn(
+                    "rounded px-3 py-1.5 text-sm font-medium",
+                    mode === "url" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                  )}
+                  onClick={() => setMode("url")}
+                >
+                  URL de l&apos;offre
+                </button>
+              </div>
+
+              {mode === "text" ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="jobText">Texte de l&apos;offre</Label>
+                  <Textarea
+                    id="jobText"
+                    name="jobText"
+                    rows={8}
+                    required={phase === "compose"}
+                    defaultValue={jobPayload.jobText}
+                    placeholder="Collez ici l'intégralité de l'offre d'emploi…"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label htmlFor="jobUrl">URL de l&apos;offre</Label>
+                  <Input
+                    id="jobUrl"
+                    name="jobUrl"
+                    type="url"
+                    required={phase === "compose"}
+                    defaultValue={jobPayload.jobUrl}
+                    placeholder="https://…"
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">2. Le template</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <fieldset className="grid gap-3 sm:grid-cols-3">
+                <legend className="sr-only">Choix du template</legend>
+                {templates.map((t) => (
+                  <label
+                    key={t.id}
+                    className={cn(
+                      "cursor-pointer rounded-lg border p-3 transition-colors",
+                      templateId === t.id
+                        ? "border-primary ring-2 ring-primary/30"
+                        : "hover:border-muted-foreground/40"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="template"
+                      value={t.id}
+                      checked={templateId === t.id}
+                      onChange={() => setTemplateId(t.id)}
+                      className="sr-only"
+                    />
+                    <TemplateSwatch layout={t.layout} colors={t.colors} band={t.band} />
+                    <span className="mt-2 block text-sm font-medium">{t.name}</span>
+                  </label>
+                ))}
+              </fieldset>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">3. Options</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="targetTitle">Intitulé de poste visé (optionnel)</Label>
+                <Input
+                  id="targetTitle"
+                  name="targetTitle"
+                  defaultValue={options.targetTitle}
+                  placeholder="Développeur DevOps"
                 />
-                <TemplateSwatch layout={t.layout} colors={t.colors} band={t.band} />
-                <span className="mt-2 block text-sm font-medium">{t.name}</span>
-                {t.isOwn ? (
-                  <span className="text-xs text-muted-foreground">Mon template</span>
-                ) : null}
-              </label>
-            ))}
-          </fieldset>
-        </CardContent>
-      </Card>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="language">Langue du CV (optionnel)</Label>
+                <Input
+                  id="language"
+                  name="language"
+                  defaultValue={options.language}
+                  placeholder="français (défaut)"
+                />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="instructions">Consignes libres (optionnel)</Label>
+                <Textarea
+                  id="instructions"
+                  name="instructions"
+                  rows={2}
+                  defaultValue={options.instructions}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">3. Options</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="targetTitle">Intitulé de poste visé (optionnel)</Label>
-            <Input id="targetTitle" name="targetTitle" placeholder="Développeur DevOps" />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="language">Langue du CV (optionnel)</Label>
-            <Input id="language" name="language" placeholder="français (défaut)" />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="instructions">Consignes libres (optionnel)</Label>
-            <Textarea
-              id="instructions"
-              name="instructions"
-              rows={2}
-              placeholder="Ex. : insister sur le DevOps, mettre en avant l'expérience chez Acme…"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {error ? (
-        <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {error}
-        </p>
+          {phase === "compose" ? (
+            <div className="space-y-3">
+              {error ? (
+                <Alert ref={errorRef} variant="warning" title={error.title}>
+                  {error.message}
+                </Alert>
+              ) : null}
+              <Button type="submit" variant="gradient" size="lg" disabled={disabled || analyzing}>
+                {analyzing ? <Loader2 className="animate-spin" /> : <Search />}
+                {analyzing ? "Analyse en cours…" : "Analyser le matching (gratuit)"}
+              </Button>
+            </div>
+          ) : null}
+        </form>
       ) : null}
 
-      {noCredits ? (
-        <p
-          role="alert"
-          className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
-        >
-          Solde de crédits épuisé —{" "}
-          <Link href="/billing" className="font-medium underline">
-            rechargez pour continuer
-          </Link>
-          .
-        </p>
+      {phase === "review" ? (
+        <div className="space-y-4">
+          {error ? (
+            <Alert ref={errorRef} variant="warning" title={error.title}>
+              {error.message}
+            </Alert>
+          ) : null}
+          {warning ? (
+            <Alert variant="warning" title="Score projeté non mis à jour">
+              {warning}
+            </Alert>
+          ) : null}
+          <MatchAnalyzePanel
+            beforeScore={beforeScore}
+            projectedScore={projectedScore}
+            maxProjectedScore={maxProjected}
+            gaps={gaps}
+            selected={claims}
+            onToggle={onToggleClaim}
+            onSelectAll={onSelectAll}
+            onClear={onClear}
+          />
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPhase("compose")}
+              disabled={analyzing}
+            >
+              Modifier l&apos;offre
+            </Button>
+            <Button
+              type="button"
+              variant="gradient"
+              size="lg"
+              disabled={disabled || noCredits}
+              onClick={onGenerate}
+            >
+              <Sparkles />
+              Générer mon CV (1 crédit)
+            </Button>
+          </div>
+          {noCredits ? (
+            <Alert
+              variant="warning"
+              title="Solde de crédits épuisé"
+              action={
+                <Link href="/billing" className="font-medium">
+                  Recharger des crédits
+                </Link>
+              }
+            >
+              Il faut 1 crédit pour générer un CV adapté à cette offre.
+            </Alert>
+          ) : null}
+        </div>
       ) : null}
 
-      <Button
-        type="submit"
-        variant="gradient"
-        size="lg"
-        disabled={disabled || noCredits || submitting}
-      >
-        {submitting ? (
-          <>
-            <Loader2 className="animate-spin" />
-            Génération en cours (30 s environ)…
-          </>
-        ) : (
-          <>
-            <Sparkles />
-            Générer mon CV (1 crédit)
-          </>
-        )}
-      </Button>
-    </form>
+      {phase === "generating" ? (
+        <Card aria-live="polite">
+          <CardHeader>
+            <CardTitle className="text-base">Génération en cours</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Les étapes restent synchronisées même si la connexion est interrompue un instant.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ol className="space-y-2">
+              {PIPELINE_STEPS.map((step, index) => {
+                const done = activeStep === "done" || (currentIdx >= 0 && index < currentIdx);
+                const current = activeStep === step.id;
+                return (
+                  <li
+                    key={step.id}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-2 py-1.5 text-sm",
+                      current && "bg-primary/5 font-medium",
+                      !done && !current && "text-muted-foreground/60"
+                    )}
+                  >
+                    <span className="flex size-6 items-center justify-center rounded-full border text-xs">
+                      {current ? <Loader2 className="size-3.5 animate-spin" /> : index + 1}
+                    </span>
+                    {step.label}
+                  </li>
+                );
+              })}
+            </ol>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-md border p-3">
+                <p className="text-xs text-muted-foreground">Matching avant</p>
+                <p className="font-display text-2xl font-bold tabular-nums">
+                  {scoreBeforeLive ?? beforeScore}%
+                </p>
+              </div>
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
+                <p className="text-xs text-muted-foreground">Matching après</p>
+                <p className="font-display text-2xl font-bold tabular-nums text-primary">
+                  {scoreAfterLive !== null ? `${scoreAfterLive}%` : "…"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+    </div>
   );
 }

@@ -47,7 +47,12 @@ export const cvSchema = z.object({
   identity: z.object({
     fullName: z.string().min(1),
     headline: z.string().default(""),
-    photoUrl: z.string().default(""),
+    photoUrl: z
+      .string()
+      .default("")
+      .refine((v) => !v || v.startsWith("data:image/") || v.startsWith("/api/files/"), {
+        message: "Photo invalide (upload local uniquement).",
+      }),
   }),
   contact: z.object({
     email: z.string().default(""),
@@ -60,6 +65,8 @@ export const cvSchema = z.object({
   experiences: z.array(experienceSchema).default([]),
   education: z.array(educationSchema).default([]),
   skills: z.array(skillGroupSchema).default([]),
+  /** Soft skills chosen from the predefined catalog (profile). */
+  softSkills: z.array(z.string()).default([]),
   languages: z.array(languageSchema).default([]),
   interests: z.array(z.string()).default([]),
 });
@@ -97,6 +104,7 @@ export const CV_JSON_SHAPE = `{
   }],
   "education": [{ "degree": string, "school": string, "place": string, "dates": string, "details": string }],
   "skills": [{ "category": string, "items": [string] }],
+  "softSkills": [string],
   "languages": [{ "name": string, "level": string }],
   "interests": [string]
 }`;

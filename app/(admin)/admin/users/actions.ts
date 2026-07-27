@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
+import { logAdminAction } from "@/lib/admin-audit";
 import { db } from "@/lib/db";
 import { creditCredits, debitCredits } from "@/lib/credits";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
@@ -16,7 +17,7 @@ const adjustSchema = z.object({
 
 /** Manually adjusts a user's credit balance (positive or negative). */
 export async function adjustCredits(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const parsed = adjustSchema.safeParse({
     userId: formData.get("userId"),
     delta: formData.get("delta"),
@@ -31,6 +32,12 @@ export async function adjustCredits(formData: FormData) {
       // Balance would go negative: ignore the adjustment.
     });
   }
+  await logAdminAction({
+    actorId: session.user.id,
+    action: "credits.adjust",
+    targetId: userId,
+    meta: { delta },
+  });
   revalidatePath("/admin/users");
 }
 
@@ -39,17 +46,34 @@ const roleSchema = z.object({
   role: z.enum(["USER", "ADMIN"]),
 });
 
-/** Switches a user's role. */
+/** Switches a user's role and mirrors it to Supabase app_metadata. */
 export async function setUserRole(formData: FormData) {
   const session = await requireAdmin();
   const parsed = roleSchema.safeParse({
     userId: formData.get("userId"),
     role: formData.get("role"),
   });
-  // An admin cannot demote themselves (avoids locking everyone out).
   if (!parsed.success || parsed.data.userId === session.user.id) return;
 
-  await db.user.update({ where: { id: parsed.data.userId }, data: { role: parsed.data.role } });
+  const user = await db.user.update({
+    where: { id: parsed.data.userId },
+    data: { role: parsed.data.role },
+  });
+  if (user.authId) {
+    try {
+      await createSupabaseAdminClient().auth.admin.updateUserById(user.authId, {
+        app_metadata: { role: parsed.data.role },
+      });
+    } catch (error) {
+      console.error("[admin] failed to sync role to Supabase app_metadata:", error);
+    }
+  }
+  await logAdminAction({
+    actorId: session.user.id,
+    action: "user.set_role",
+    targetId: user.id,
+    meta: { role: parsed.data.role },
+  });
   revalidatePath("/admin/users");
 }
 
@@ -59,7 +83,7 @@ export async function setUserRole(formData: FormData) {
  * pinned in app_metadata (service-role only) and picked up at profile creation.
  */
 export async function inviteAdmin(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const email = normalizeEmail(formData.get("email"));
   if (!z.string().email().safeParse(email).success) {
     redirect("/admin/users?invite=invalid");
@@ -77,6 +101,12 @@ export async function inviteAdmin(formData: FormData) {
     redirect("/admin/users?invite=failed");
   }
   await admin.auth.admin.updateUserById(data.user.id, { app_metadata: { role: "ADMIN" } });
+  await logAdminAction({
+    actorId: session.user.id,
+    action: "user.invite_admin",
+    targetId: data.user.id,
+    meta: { email },
+  });
 
   revalidatePath("/admin/users");
   redirect("/admin/users?invite=sent");

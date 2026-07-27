@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 
 export const metadata: Metadata = { title: "Nouveau mot de passe" };
 
@@ -90,9 +91,9 @@ export default async function ResetPasswordPage({
       </CardHeader>
       <CardContent className="space-y-4">
         {errorMessage ? (
-          <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          <Alert variant="error" title="Mise à jour impossible">
             {errorMessage}
-          </p>
+          </Alert>
         ) : null}
 
         <form className="space-y-3" action={updatePassword}>

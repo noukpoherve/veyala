@@ -133,14 +133,11 @@ pour chaque User Prisma sans authId :
 - Les comptes Google se relient seuls (même email confirmé).
 - Exécuter d'abord sur la base locale, vérifier, puis en prod.
 
-### Phase 4 — Nettoyage (uniquement quand tout est vert)
-- Supprimer : `next-auth`, `@auth/prisma-adapter`, `auth.config.ts`,
-  `types/next-auth.d.ts`, `app/api/auth/[...nextauth]`, `lib/verification.ts`,
-  templates OTP de `lib/mailer.ts`, providers dans `lib/auth.ts`,
-  `NEXTAUTH_URL`/`NEXTAUTH_SECRET` des env.
-- Prisma : supprimer plus tard `Account`, `Session`, `VerificationToken`,
-  `EmailVerification`, `passwordHash` (migration séparée, après confirmation
-  que la migration des mots de passe a fonctionné).
+### Phase 4 — Nettoyage ✅ (2026-07-26)
+- Auth.js packages / routes déjà retirés.
+- Prisma : tables `Account`, `Session`, `VerificationToken`, `EmailVerification` et
+  colonne `passwordHash` purgées (migration `purge_authjs_and_idempotency`).
+- Docs README / env alignées sur Supabase Auth + Playwright/`@sparticuz/chromium`.
 
 ### Phase 5 — Recette (obligatoire avant merge)
 Local puis préprod : inscription + email de confirmation ; login mot de passe

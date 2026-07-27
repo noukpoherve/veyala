@@ -25,9 +25,11 @@ import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { saveCvEdits } from "@/app/(app)/cv/[id]/edit/actions";
 import { cn } from "@/lib/utils";
+import { USER_ERRORS } from "@/lib/user-facing-error";
 import { CvFields } from "@/components/cv/cv-fields";
 import { CustomizationStudio } from "@/components/cv/customization-studio";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -137,13 +139,18 @@ export function CvEditor({
       setStatus("saved");
       setTimeout(() => setStatus("idle"), 2500);
     } else {
-      setErrorMessage(result.error);
+      setErrorMessage(result.error || USER_ERRORS.saveCv);
       setStatus("error");
     }
   }
 
   return (
     <div className="space-y-4">
+      {status === "error" ? (
+        <Alert variant="error" title="Enregistrement impossible">
+          {errorMessage}
+        </Alert>
+      ) : null}
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link
@@ -160,11 +167,6 @@ export function CvEditor({
             <span role="status" className="flex items-center gap-1.5 text-sm text-emerald-600">
               <CheckCircle2 className="size-4" aria-hidden />
               Enregistré — fichiers Word et PDF régénérés
-            </span>
-          ) : null}
-          {status === "error" ? (
-            <span role="alert" className="text-sm text-destructive">
-              {errorMessage}
             </span>
           ) : null}
           <Button variant="gradient" onClick={() => void onSave()} disabled={status === "saving"}>
