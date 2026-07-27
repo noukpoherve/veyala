@@ -356,10 +356,12 @@ async function loadPhoto(url: string): Promise<Buffer | null> {
     if (url.startsWith("data:image/")) {
       return Buffer.from(url.slice(url.indexOf(",") + 1), "base64");
     }
-    if (/^https?:\/\//i.test(url)) {
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      return Buffer.from(await res.arrayBuffer());
+    // Only the authenticated app proxy — never fetch arbitrary http(s) (SSRF).
+    if (url.startsWith("/api/files/")) {
+      const { readStoredFile } = await import("@/lib/storage");
+      const key = decodeURIComponent(url.slice("/api/files/".length));
+      if (!key || key.includes("..")) return null;
+      return readStoredFile(key);
     }
     return null;
   } catch {
