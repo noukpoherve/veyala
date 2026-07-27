@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Search, UserPlus } from "lucide-react";
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { adjustCredits, inviteAdmin, setUserRole } from "./actions";
+import { AdminUserLifecycleActions } from "@/components/admin/user-lifecycle-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert } from "@/components/ui/alert";
 
 export const metadata: Metadata = { title: "Utilisateurs · Admin" };
 
@@ -27,7 +30,7 @@ const INVITE_MESSAGES: Record<string, { text: string; tone: "success" | "error" 
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: { q?: string; invite?: string };
+  searchParams: { q?: string; invite?: string; deleted?: string };
 }) {
   const session = await auth();
   const q = searchParams.q?.trim() ?? "";
@@ -50,7 +53,14 @@ export default async function AdminUsersPage({
   return (
     <article className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-2xl font-bold">Utilisateurs</h1>
+        <div className="space-y-1">
+          <h1 className="font-display text-2xl font-bold">Utilisateurs</h1>
+          <p className="text-sm text-muted-foreground">
+            <Link href="/admin/activity" className="underline hover:text-foreground">
+              Voir le journal d&apos;activité
+            </Link>
+          </p>
+        </div>
         {/* biome-ignore lint/a11y/useSemanticElements: the <search> element lacks Safari support */}
         <form method="get" role="search" className="flex gap-2">
           <label htmlFor="q" className="sr-only">
@@ -69,6 +79,12 @@ export default async function AdminUsersPage({
           </Button>
         </form>
       </header>
+
+      {searchParams.deleted ? (
+        <Alert variant="success" title="Compte effacé">
+          L&apos;utilisateur et ses données associées ont été supprimés.
+        </Alert>
+      ) : null}
 
       <section
         aria-label="Inviter un administrateur"
@@ -117,6 +133,9 @@ export default async function AdminUsersPage({
                 Utilisateur
               </th>
               <th scope="col" className="p-3 font-medium">
+                Statut
+              </th>
+              <th scope="col" className="p-3 font-medium">
                 Rôle
               </th>
               <th scope="col" className="p-3 font-medium">
@@ -141,6 +160,13 @@ export default async function AdminUsersPage({
                   {user.name ? <p className="text-xs text-muted-foreground">{user.name}</p> : null}
                 </td>
                 <td className="p-3">
+                  {user.archivedAt ? (
+                    <Badge variant="destructive">Archivé</Badge>
+                  ) : (
+                    <Badge variant="secondary">Actif</Badge>
+                  )}
+                </td>
+                <td className="p-3">
                   <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>
                     {user.role}
                   </Badge>
@@ -149,38 +175,46 @@ export default async function AdminUsersPage({
                 <td className="p-3">{user._count.generatedCVs}</td>
                 <td className="p-3 text-muted-foreground">{dateFr(user.createdAt)}</td>
                 <td className="p-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <form action={adjustCredits} className="flex items-center gap-1.5">
-                      <input type="hidden" name="userId" value={user.id} />
-                      <label htmlFor={`delta-${user.id}`} className="sr-only">
-                        Ajustement de crédits pour {user.email}
-                      </label>
-                      <Input
-                        id={`delta-${user.id}`}
-                        name="delta"
-                        type="number"
-                        min={-1000}
-                        max={1000}
-                        defaultValue={0}
-                        className="h-8 w-20"
-                      />
-                      <Button type="submit" size="sm" variant="outline">
-                        Ajuster
-                      </Button>
-                    </form>
-                    {user.id !== session!.user.id ? (
-                      <form action={setUserRole}>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <form action={adjustCredits} className="flex items-center gap-1.5">
                         <input type="hidden" name="userId" value={user.id} />
-                        <input
-                          type="hidden"
-                          name="role"
-                          value={user.role === "ADMIN" ? "USER" : "ADMIN"}
+                        <label htmlFor={`delta-${user.id}`} className="sr-only">
+                          Ajustement de crédits pour {user.email}
+                        </label>
+                        <Input
+                          id={`delta-${user.id}`}
+                          name="delta"
+                          type="number"
+                          min={-1000}
+                          max={1000}
+                          defaultValue={0}
+                          className="h-8 w-20"
                         />
-                        <Button type="submit" size="sm" variant="ghost">
-                          {user.role === "ADMIN" ? "Rétrograder" : "Promouvoir admin"}
+                        <Button type="submit" size="sm" variant="outline">
+                          Ajuster
                         </Button>
                       </form>
-                    ) : null}
+                      {user.id !== session!.user.id ? (
+                        <form action={setUserRole}>
+                          <input type="hidden" name="userId" value={user.id} />
+                          <input
+                            type="hidden"
+                            name="role"
+                            value={user.role === "ADMIN" ? "USER" : "ADMIN"}
+                          />
+                          <Button type="submit" size="sm" variant="ghost">
+                            {user.role === "ADMIN" ? "Rétrograder" : "Promouvoir admin"}
+                          </Button>
+                        </form>
+                      ) : null}
+                    </div>
+                    <AdminUserLifecycleActions
+                      userId={user.id}
+                      email={user.email}
+                      archived={!!user.archivedAt}
+                      isSelf={user.id === session!.user.id}
+                    />
                   </div>
                 </td>
               </tr>

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
 import { logAdminAction } from "@/lib/admin-audit";
+import { archiveUser, hardDeleteUser, restoreUser } from "@/lib/account-lifecycle";
 import { db } from "@/lib/db";
 import { creditCredits, debitCredits } from "@/lib/credits";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
@@ -110,4 +111,38 @@ export async function inviteAdmin(formData: FormData) {
 
   revalidatePath("/admin/users");
   redirect("/admin/users?invite=sent");
+}
+
+const userIdSchema = z.object({ userId: z.string().min(1) });
+
+export async function archiveUserAction(formData: FormData) {
+  const session = await requireAdmin();
+  const parsed = userIdSchema.safeParse({ userId: formData.get("userId") });
+  if (!parsed.success || parsed.data.userId === session.user.id) return;
+  await archiveUser({
+    userId: parsed.data.userId,
+    by: "ADMIN",
+    actorId: session.user.id,
+    reason: String(formData.get("reason") ?? "").trim() || "admin_archive",
+  });
+  revalidatePath("/admin/users");
+}
+
+export async function restoreUserAction(formData: FormData) {
+  const session = await requireAdmin();
+  const parsed = userIdSchema.safeParse({ userId: formData.get("userId") });
+  if (!parsed.success) return;
+  await restoreUser({ userId: parsed.data.userId, actorId: session.user.id });
+  revalidatePath("/admin/users");
+}
+
+/** Irreversible GDPR wipe — requires typing SUPPRIMER. */
+export async function hardDeleteUserAction(formData: FormData) {
+  const session = await requireAdmin();
+  const parsed = userIdSchema.safeParse({ userId: formData.get("userId") });
+  if (!parsed.success || parsed.data.userId === session.user.id) return;
+  if (formData.get("confirm") !== "SUPPRIMER") return;
+  await hardDeleteUser({ userId: parsed.data.userId, actorId: session.user.id });
+  revalidatePath("/admin/users");
+  redirect("/admin/users?deleted=1");
 }

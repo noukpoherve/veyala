@@ -1,6 +1,7 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { logActivity } from "@/lib/activity";
 
 /** Best-effort append-only admin audit (never throws into the UX path). */
 export async function logAdminAction(input: {
@@ -21,4 +22,11 @@ export async function logAdminAction(input: {
   } catch (error) {
     console.error("[admin-audit] write failed", { action: input.action, error });
   }
+  // Mirror into the unified activity trail (subject = target user when present).
+  await logActivity({
+    action: input.action,
+    actorId: input.actorId,
+    subjectUserId: input.targetId,
+    meta: input.meta,
+  });
 }
