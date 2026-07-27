@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { getActivePacks } from "@/lib/cached";
+import { siteUrl } from "@/lib/utils";
 import { Reveal } from "@/components/landing/reveal";
 import { Counter } from "@/components/landing/counter";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -44,12 +45,20 @@ export const metadata: Metadata = {
   title: "Veyala — Votre CV, adapté à chaque offre, en 30 secondes",
   description:
     "Collez une offre d'emploi ou une fiche de formation : Veyala génère un CV et une lettre de motivation parfaitement adaptés. Export Word & PDF. Compatible ATS.",
+  alternates: { canonical: "/" },
   openGraph: {
     title: "Veyala — Votre candidature, augmentée par l'IA",
     description:
       "CV et lettres de motivation adaptés par IA, pour l'emploi et les études. Export Word & PDF, compatible ATS.",
     type: "website",
     locale: "fr_FR",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Veyala — CV adaptés par IA",
+    description:
+      "Générez un CV ATS + lettre de motivation à partir de votre profil et d'une offre.",
   },
 };
 
@@ -338,9 +347,29 @@ function HeroVisual() {
 export default async function LandingPage() {
   const dbPacks = await getActivePacks().catch(() => []);
   const packs = (dbPacks.length ? dbPacks : FALLBACK_PACKS).slice(0, 3);
+  const base = siteUrl();
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Veyala",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    url: base,
+    description:
+      "Générez un CV et une lettre de motivation adaptés à chaque offre, optimisés ATS, export Word & PDF.",
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
+    },
+  };
 
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* 1. Hero — animated aurora gradient background with pulsing orbs */}
       <section className="bg-aurora relative overflow-hidden">
         <div
@@ -471,24 +500,24 @@ export default async function LandingPage() {
 
           <ol className="mt-16 grid gap-6 md:grid-cols-3">
             {STEPS.map((step, index) => (
-              <Reveal key={step.number} delay={index * 150}>
-                <li className="relative h-full rounded-2xl border border-blue-100/70 bg-gradient-to-b from-blue-50/70 to-white p-7 transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-900/5">
-                  <div className="flex items-start justify-between">
-                    <span
-                      className={`flex size-12 items-center justify-center rounded-xl bg-gradient-to-br ${step.iconBg} shadow-md shadow-blue-600/20`}
-                    >
-                      <step.icon className="size-5 text-white" aria-hidden />
-                    </span>
-                    <span
-                      aria-hidden
-                      className="font-display text-5xl font-extrabold text-slate-200"
-                    >
-                      {step.number}
-                    </span>
-                  </div>
-                  <h3 className="mt-6 text-lg font-bold text-slate-900">{step.title}</h3>
-                  <p className="mt-2.5 text-[15px] leading-relaxed text-slate-500">{step.text}</p>
-                </li>
+              <Reveal
+                key={step.number}
+                as="li"
+                delay={index * 150}
+                className="relative h-full rounded-2xl border border-blue-100/70 bg-gradient-to-b from-blue-50/70 to-white p-7 transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-900/5"
+              >
+                <div className="flex items-start justify-between">
+                  <span
+                    className={`flex size-12 items-center justify-center rounded-xl bg-gradient-to-br ${step.iconBg} shadow-md shadow-blue-600/20`}
+                  >
+                    <step.icon className="size-5 text-white" aria-hidden />
+                  </span>
+                  <span aria-hidden className="font-display text-5xl font-extrabold text-slate-200">
+                    {step.number}
+                  </span>
+                </div>
+                <h3 className="mt-6 text-lg font-bold text-slate-900">{step.title}</h3>
+                <p className="mt-2.5 text-[15px] leading-relaxed text-slate-500">{step.text}</p>
               </Reveal>
             ))}
           </ol>
@@ -537,16 +566,19 @@ export default async function LandingPage() {
 
           <ul className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((feature, index) => (
-              <Reveal key={feature.title} delay={(index % 3) * 120}>
-                <li className="h-full rounded-2xl border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
-                  <span
-                    className={`flex size-11 items-center justify-center rounded-xl ${feature.chip}`}
-                  >
-                    <feature.icon className="size-5" aria-hidden />
-                  </span>
-                  <h3 className="mt-5 text-base font-bold text-slate-900">{feature.title}</h3>
-                  <p className="mt-2 text-[15px] leading-relaxed text-slate-500">{feature.text}</p>
-                </li>
+              <Reveal
+                key={feature.title}
+                as="li"
+                delay={(index % 3) * 120}
+                className="h-full rounded-2xl border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5"
+              >
+                <span
+                  className={`flex size-11 items-center justify-center rounded-xl ${feature.chip}`}
+                >
+                  <feature.icon className="size-5" aria-hidden />
+                </span>
+                <h3 className="mt-5 text-base font-bold text-slate-900">{feature.title}</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-slate-500">{feature.text}</p>
               </Reveal>
             ))}
           </ul>
@@ -697,34 +729,32 @@ export default async function LandingPage() {
 
           <ul className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {TESTIMONIALS.map((testimonial, index) => (
-              <Reveal key={testimonial.name} delay={index * 100}>
-                <li className="h-full">
-                  <figure className="flex h-full flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
-                    <div role="img" className="flex gap-0.5" aria-label="5 étoiles sur 5">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className="size-3.5 fill-amber-400 text-amber-400"
-                          aria-hidden
-                        />
-                      ))}
-                    </div>
-                    <blockquote className="mt-4 flex-1 text-[15px] leading-relaxed text-slate-600">
-                      “{testimonial.quote}”
-                    </blockquote>
-                    <figcaption className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-4">
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
-                        {testimonial.initials}
+              <Reveal key={testimonial.name} as="li" delay={index * 100} className="h-full">
+                <figure className="flex h-full flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
+                  <div role="img" className="flex gap-0.5" aria-label="5 étoiles sur 5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className="size-3.5 fill-amber-400 text-amber-400"
+                        aria-hidden
+                      />
+                    ))}
+                  </div>
+                  <blockquote className="mt-4 flex-1 text-[15px] leading-relaxed text-slate-600">
+                    “{testimonial.quote}”
+                  </blockquote>
+                  <figcaption className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-4">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+                      {testimonial.initials}
+                    </span>
+                    <span>
+                      <span className="block text-sm font-bold text-slate-900">
+                        {testimonial.name}
                       </span>
-                      <span>
-                        <span className="block text-sm font-bold text-slate-900">
-                          {testimonial.name}
-                        </span>
-                        <span className="block text-xs text-slate-400">{testimonial.role}</span>
-                      </span>
-                    </figcaption>
-                  </figure>
-                </li>
+                      <span className="block text-xs text-slate-500">{testimonial.role}</span>
+                    </span>
+                  </figcaption>
+                </figure>
               </Reveal>
             ))}
           </ul>
