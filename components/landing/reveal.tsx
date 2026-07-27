@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ElementType, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /** Fade + slide-up reveal when the element enters the viewport. */
@@ -8,12 +8,15 @@ export function Reveal({
   children,
   delay = 0,
   className,
+  as: Tag = "div",
 }: {
   children: ReactNode;
   delay?: number;
   className?: string;
+  /** Render as li (or other) so lists stay valid for screen readers. */
+  as?: ElementType;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -32,12 +35,12 @@ export function Reveal({
   }, []);
 
   return (
-    <div
+    <Tag
       ref={ref}
       className={cn("reveal", className)}
       style={{ "--reveal-delay": `${delay}ms` } as CSSProperties}
     >
       {children}
-    </div>
+    </Tag>
   );
 }
