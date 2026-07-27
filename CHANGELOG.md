@@ -1,3 +1,11 @@
+# [1.5.0](https://github.com/noukpoherve/veyala/compare/v1.4.0...v1.5.0) (2026-07-27)
+
+
+### Features
+
+* **account:** soft-archive users, activity trail and admin hard-delete ([dd36ff7](https://github.com/noukpoherve/veyala/commit/dd36ff74ade5214c97531924f60b255af4cb1598))
+* **generate:** validate title, language and instructions; fix panel chunk ([9f1addd](https://github.com/noukpoherve/veyala/commit/9f1adddc6699e22c72a5f5996b32391500a59d61))
+
 # [1.4.0](https://github.com/noukpoherve/veyala/compare/v1.3.0...v1.4.0) (2026-07-27)
 
 
