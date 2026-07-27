@@ -1,3 +1,25 @@
+# [1.4.0](https://github.com/noukpoherve/veyala/compare/v1.3.0...v1.4.0) (2026-07-27)
+
+
+### Bug Fixes
+
+* **a11y:** raise footer contrast and fix landing list structure ([8322dbc](https://github.com/noukpoherve/veyala/commit/8322dbcb24d18075ab553530875a75b0eb16e874))
+* **ci:** grant pull-requests read for gitleaks on PRs ([6315150](https://github.com/noukpoherve/veyala/commit/63151506fff63eb98db7af1785c6afbd9a413270))
+* **security:** apply STRIDE hardenings for SSRF, audit and health ([22c3d36](https://github.com/noukpoherve/veyala/commit/22c3d362177d3503e0dbf41af29a9366a1f20ec4))
+* **ux:** await async rate limits and standardize Alert messaging ([3a3e40a](https://github.com/noukpoherve/veyala/commit/3a3e40abc62425db105128e383041cbba4c749cb))
+
+
+### Features
+
+* **admin:** improve LLM provider settings and template admin UX ([b66637e](https://github.com/noukpoherve/veyala/commit/b66637ea858383e004d37206678510c46ef5aee7))
+* **dashboard:** activity bilan with preserved CV generation history ([09a1ef6](https://github.com/noukpoherve/veyala/commit/09a1ef679ef3389a667094d27e171b6dcd3de1f6))
+* **errors:** branded error pages and actionable user-facing messages ([472d3db](https://github.com/noukpoherve/veyala/commit/472d3db974efc76f14cf610a4c9702dec4b86338))
+* **generate:** run CV generation asynchronously with job polling ([f784deb](https://github.com/noukpoherve/veyala/commit/f784deb3df9a2083ced9291a446fc9d3ede67765))
+* **hardening:** Upstash rate limits, storage guards and payment tests ([264fdb2](https://github.com/noukpoherve/veyala/commit/264fdb26008d470b1e2d7f696aec3e3fab194db1))
+* **match:** add ATS match scoring and job analysis ([5eb432f](https://github.com/noukpoherve/veyala/commit/5eb432fd2f41dff8a9135ac83791cd8a7cb58166))
+* **profile:** add soft-skills picker to the shared CV fields ([8dad4ef](https://github.com/noukpoherve/veyala/commit/8dad4efa7b1352c687ba22e56138d44ae654105e))
+* **seo:** native Next.js metadata, sitemap, robots and JSON-LD ([a9db4b1](https://github.com/noukpoherve/veyala/commit/a9db4b1252e7ef59d2783b26c7826371660ad9b6))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
