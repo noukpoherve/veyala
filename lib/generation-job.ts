@@ -8,23 +8,10 @@ import {
   type GenerateProgress,
   type GenerateStep,
 } from "@/lib/generate-cv";
-import { matchClaimSchema } from "@/lib/match-score";
-import { z } from "zod";
+import { jobOfferOptionsSchema } from "@/lib/job-offer-schema";
+import type { z } from "zod";
 
-const jobParamsSchema = z
-  .object({
-    jobUrl: z.string().url().optional(),
-    jobText: z.string().max(20000).optional(),
-    templateId: z.string().optional(),
-    targetTitle: z.string().max(120).optional(),
-    instructions: z.string().max(1000).optional(),
-    language: z.string().max(40).optional(),
-    claims: z.array(matchClaimSchema).max(40).optional(),
-    idempotencyKey: z.string().uuid().optional(),
-  })
-  .refine((b) => b.jobUrl || b.jobText?.trim(), {
-    message: "Fournissez l'URL de l'offre ou collez son texte.",
-  });
+const jobParamsSchema = jobOfferOptionsSchema;
 
 export type GenerationJobParams = z.infer<typeof jobParamsSchema>;
 

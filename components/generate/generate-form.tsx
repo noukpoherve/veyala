@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,7 +14,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { TemplateSwatch } from "@/components/templates/template-swatch";
-import { Skeleton } from "@/components/ui/skeleton";
+import { MatchAnalyzePanel } from "@/components/generate/match-analyze-panel";
+import {
+  CV_LANGUAGE_OPTIONS,
+  validateCvLanguage,
+  validateInstructions,
+  validateJobText,
+  validateJobTitle,
+} from "@/lib/job-field-validation";
 
 export interface TemplateOption {
   id: string;
@@ -25,28 +31,6 @@ export interface TemplateOption {
   band: string;
   isOwn: boolean;
 }
-
-const MatchAnalyzePanel = dynamic(
-  () => import("@/components/generate/match-analyze-panel").then((m) => m.MatchAnalyzePanel),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        className="space-y-3 rounded-xl border p-4"
-        role="status"
-        aria-label="Chargement analyse"
-      >
-        <Skeleton className="h-6 w-48" />
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Skeleton className="h-20" />
-          <Skeleton className="h-20" />
-          <Skeleton className="h-20" />
-        </div>
-        <Skeleton className="h-40" />
-      </div>
-    ),
-  }
-);
 
 const PIPELINE_STEPS = [
   { id: "reading_offer", label: "Lecture de l'offre" },
@@ -185,12 +169,26 @@ export function GenerateForm({
     };
   }
 
+  function validateOptions(fields: ReturnType<typeof readForm>): string | null {
+    return (
+      validateJobTitle(fields.targetTitle) ||
+      validateCvLanguage(fields.language) ||
+      validateInstructions(fields.instructions) ||
+      (fields.jobText ? validateJobText(fields.jobText) : null)
+    );
+  }
+
   function onAnalyze(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setWarning(null);
     const form = event.currentTarget;
     const fields = readForm(form);
+    const validationError = validateOptions(fields);
+    if (validationError) {
+      showError("Champs invalides", validationError);
+      return;
+    }
     setOptions({
       targetTitle: fields.targetTitle,
       instructions: fields.instructions,
@@ -206,6 +204,8 @@ export function GenerateForm({
           body: JSON.stringify({
             jobText: fields.jobText,
             jobUrl: fields.jobUrl,
+            targetTitle: fields.targetTitle || undefined,
+            language: fields.language || undefined,
           }),
         });
         const body = (await res.json().catch(() => null)) as AnalyzeResponse | null;
@@ -446,16 +446,26 @@ export function GenerateForm({
                   name="targetTitle"
                   defaultValue={options.targetTitle}
                   placeholder="Développeur DevOps"
+                  maxLength={120}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Un vrai intitulé de poste — pas de texte aléatoire.
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="language">Langue du CV (optionnel)</Label>
-                <Input
+                <select
                   id="language"
                   name="language"
                   defaultValue={options.language}
-                  placeholder="français (défaut)"
-                />
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {CV_LANGUAGE_OPTIONS.map((opt) => (
+                    <option key={opt.value || "default"} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="instructions">Consignes libres (optionnel)</Label>
@@ -464,7 +474,12 @@ export function GenerateForm({
                   name="instructions"
                   rows={2}
                   defaultValue={options.instructions}
+                  maxLength={1000}
+                  placeholder="Ex. Insister sur React, CV sur une page…"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Instructions en français (ou anglais) lisibles — le charabia est refusé.
+                </p>
               </div>
             </CardContent>
           </Card>
