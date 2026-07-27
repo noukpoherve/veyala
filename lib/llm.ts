@@ -31,6 +31,12 @@ export interface ChatParams {
   images?: ChatImage[];
   maxTokens?: number;
   temperature?: number;
+  /**
+   * Ask the provider to constrain the reply to a single JSON object
+   * (OpenAI-compatible `response_format`). Suppresses the preamble that
+   * "thinking" models (e.g. Gemini 3.x) otherwise emit around the JSON.
+   */
+  json?: boolean;
 }
 
 export class LLMError extends Error {
@@ -173,15 +179,16 @@ function errorFromStatus(
       status
     );
   }
+  console.error(`[llm] ${provider} HTTP ${status}:`, body.slice(0, 500));
   return new LLMError(
-    `Erreur API ${provider} (${status}) : ${body.slice(0, 300)}`,
+    `Le fournisseur IA (${provider}) a renvoyé une erreur. Réessayez dans un instant ou changez de modèle dans l'admin.`,
     status,
     status >= 500
   );
 }
 
 async function chatOpenAI(
-  { system, user, images, maxTokens = 4000, temperature = 0.4 }: ChatParams,
+  { system, user, images, maxTokens = 4000, temperature = 0.4, json }: ChatParams,
   cfg: LLMConfig
 ): Promise<string> {
   const userContent = images?.length
@@ -204,6 +211,7 @@ async function chatOpenAI(
       model: cfg.model,
       max_tokens: maxTokens,
       temperature,
+      ...(json ? { response_format: { type: "json_object" } } : {}),
       messages: [
         { role: "system", content: system },
         { role: "user", content: userContent },
@@ -271,7 +279,7 @@ export function parseJSONLoose<T = unknown>(raw: string): T {
   }
 }
 
-/** chat() + lenient JSON parsing in one call. */
+/** chat() + lenient JSON parsing in one call. Forces the provider's JSON mode. */
 export async function chatJSON<T = unknown>(params: ChatParams, config?: LLMConfig): Promise<T> {
-  return parseJSONLoose<T>(await chat(params, config));
+  return parseJSONLoose<T>(await chat({ ...params, json: true }, config));
 }
