@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
-import { ArrowDownWideNarrow, ImagePlus, Plus, Trash2 } from "lucide-react";
+import { ArrowDownWideNarrow, ChevronDown, ImagePlus, Plus, Trash2 } from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
 import { sortByDatesDesc } from "@/lib/cv-sort";
 import { fileToDataUrl } from "@/lib/image-file";
@@ -12,15 +12,37 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+function SectionCard({
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <Card>
-      <CardHeader>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 p-6 text-left"
+      >
         <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">{children}</CardContent>
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-180"
+          )}
+          aria-hidden
+        />
+      </button>
+      {open ? <CardContent className="space-y-4">{children}</CardContent> : null}
     </Card>
   );
 }
@@ -39,12 +61,14 @@ function LinesField({
   value,
   onChange,
   placeholder,
+  hint,
   rows = 4,
 }: {
   label: string;
   value: string[];
   onChange: (lines: string[]) => void;
   placeholder?: string;
+  hint?: string;
   rows?: number;
 }) {
   return (
@@ -63,6 +87,46 @@ function LinesField({
           )
         }
       />
+      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+    </div>
+  );
+}
+
+function ExperienceLinks({ form, index }: { form: UseFormReturn<CVData>; index: number }) {
+  const links = useFieldArray({
+    control: form.control,
+    name: `experiences.${index}.links`,
+  });
+
+  return (
+    <div className="space-y-2">
+      <Label>Liens de référence (package, démo, extension…)</Label>
+      {links.fields.map((field, i) => (
+        <div key={field.id} className="flex gap-2">
+          <Input
+            className="w-40"
+            placeholder="Label"
+            {...form.register(`experiences.${index}.links.${i}.label`)}
+          />
+          <Input
+            placeholder="https://…"
+            {...form.register(`experiences.${index}.links.${i}.url`)}
+          />
+          <RemoveButton
+            onClick={() => links.remove(i)}
+            label={`Supprimer le lien de référence ${i + 1}`}
+          />
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => links.append({ label: "", url: "" })}
+      >
+        <Plus />
+        Ajouter un lien
+      </Button>
     </div>
   );
 }
@@ -141,7 +205,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
 
   return (
     <>
-      <SectionCard title="Identité & contact">
+      <SectionCard title="Identité & contact" defaultOpen>
         <PhotoField form={form} />
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -239,6 +303,13 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                     <Label>Entreprise</Label>
                     <Input {...register(`experiences.${i}.company`)} />
                   </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>URL de l&apos;entreprise</Label>
+                    <Input
+                      {...register(`experiences.${i}.companyUrl`)}
+                      placeholder="https://entreprise.com"
+                    />
+                  </div>
                   <div className="space-y-1.5">
                     <Label>Lieu</Label>
                     <Input {...register(`experiences.${i}.place`)} />
@@ -259,7 +330,10 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                 onChange={(lines) =>
                   setValue(`experiences.${i}.bullets`, lines, { shouldDirty: true })
                 }
+                placeholder={`Développé l'extension [MyExt](https://marketplace.visualstudio.com/…)`}
+                hint="Pour un mot cliquable dans une puce : [texte](https://url)"
               />
+              <ExperienceLinks form={form} index={i} />
               <LinesField
                 label="Stack technique (une techno par ligne)"
                 rows={3}
@@ -280,10 +354,12 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
               experiences.append({
                 title: "",
                 company: "",
+                companyUrl: "",
                 place: "",
                 dates: "",
                 bullets: [],
                 stack: [],
+                links: [],
               })
             }
           >

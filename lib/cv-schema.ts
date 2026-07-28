@@ -19,10 +19,14 @@ export const detailSchema = z.object({
 export const experienceSchema = z.object({
   title: z.string().min(1),
   company: z.string().default(""),
+  /** Makes the company name clickable in preview / PDF / DOCX. */
+  companyUrl: z.string().default(""),
   place: z.string().default(""),
   dates: z.string().default(""),
   bullets: z.array(z.string()).default([]),
   stack: z.array(z.string()).default([]),
+  /** Reference links (package, demo, extension…) shown under the experience. */
+  links: z.array(linkSchema).default([]),
 });
 
 export const educationSchema = z.object({
@@ -99,8 +103,9 @@ export const CV_JSON_SHAPE = `{
   },
   "summary": string,
   "experiences": [{
-    "title": string, "company": string, "place": string, "dates": string,
-    "bullets": [string], "stack": [string]
+    "title": string, "company": string, "companyUrl": string, "place": string, "dates": string,
+    "bullets": [string], "stack": [string],
+    "links": [{ "label": string, "url": string }]
   }],
   "education": [{ "degree": string, "school": string, "place": string, "dates": string, "details": string }],
   "skills": [{ "category": string, "items": [string] }],

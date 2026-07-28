@@ -1,4 +1,5 @@
 import type { CVData, CVSkillGroup } from "@/lib/cv-schema";
+import { inlineLinksToHtml, normalizeHttpUrl } from "@/lib/inline-links";
 import type { SectionId, TemplateDefinition } from "@/lib/templates/definition";
 
 /**
@@ -10,7 +11,7 @@ import type { SectionId, TemplateDefinition } from "@/lib/templates/definition";
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-const httpUrl = (url: string): string => (/^https?:\/\//i.test(url) ? url : `https://${url}`);
+const httpUrl = normalizeHttpUrl;
 
 function gradientCss(stops: string[]): string {
   if (stops.length === 1) return stops[0]!;
@@ -83,16 +84,29 @@ function experienceSection(cv: CVData, def: TemplateDefinition): string {
   if (cv.experiences.length === 0) return "";
   const items = cv.experiences
     .map((e) => {
-      const companyLine = [e.company, e.place].filter(Boolean).map(esc).join(" — ");
+      const companyHtml = e.company
+        ? e.companyUrl
+          ? `<a href="${esc(httpUrl(e.companyUrl))}">${esc(e.company)}</a>`
+          : esc(e.company)
+        : "";
+      const companyLine = [companyHtml, e.place ? esc(e.place) : ""].filter(Boolean).join(" — ");
       const inlineMeta =
         def.datesStyle === "pill"
           ? ""
           : `<p class="meta"><strong>${esc(e.dates)}</strong>${e.place && !companyLine ? `<em> · ${esc(e.place)}</em>` : ""}</p>`;
+      const refs =
+        e.links.length > 0
+          ? `<p class="refs">${e.links
+              .filter((l) => l.url)
+              .map((l) => `<a href="${esc(httpUrl(l.url))}">${esc(l.label || l.url)}</a>`)
+              .join(" · ")}</p>`
+          : "";
       return `<article class="job">
       ${jobHead(esc(e.title), e.dates, def)}
       ${companyLine ? `<p class="company">${companyLine}</p>` : ""}
       ${inlineMeta}
-      ${e.bullets.length ? `<ul>${e.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}
+      ${e.bullets.length ? `<ul>${e.bullets.map((b) => `<li>${inlineLinksToHtml(b, esc)}</li>`).join("")}</ul>` : ""}
+      ${refs}
       ${e.stack.length ? `<p class="stack"><strong>Stack :</strong> <em>${e.stack.map(esc).join(", ")}</em></p>` : ""}
     </article>`;
     })
@@ -215,6 +229,7 @@ function baseCss(def: TemplateDefinition): string {
   .job { margin-bottom: 3mm; page-break-inside: avoid; }
   .job h3 { font-size: 10pt; color: ${c.heading}; }
   .job .company { color: ${c.band}; font-weight: 600; font-size: 9pt; }
+  .job .refs { font-size: 8.4pt; margin-top: 1mm; }
   .job .meta { font-size: 8.6pt; margin: .6mm 0 1.2mm; }
   ${datesCss}
   .job ul { padding-left: 4.5mm; }

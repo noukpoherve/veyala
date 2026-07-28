@@ -44,7 +44,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-muted/40">
+    <div className="flex h-dvh max-h-dvh overflow-hidden bg-muted/40">
       <CollapsibleSidebar>
         <Link href="/" className="border-b border-border p-4" aria-label="Veyala — accueil">
           <VeyalaLogo />
@@ -93,7 +93,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           />
         </div>
       </CollapsibleSidebar>
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex shrink-0 items-center justify-between border-b border-border bg-card p-4 md:hidden">
           <Link href="/dashboard" aria-label="Veyala — tableau de bord">
             <VeyalaLogo />
@@ -103,7 +103,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             {balance}
           </Badge>
         </header>
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6 md:p-8">
+          {children}
+        </main>
       </div>
     </div>
   );

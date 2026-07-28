@@ -21,6 +21,7 @@ import {
   WidthType,
 } from "docx";
 import type { CVData } from "@/lib/cv-schema";
+import { normalizeHttpUrl, parseInlineLinks } from "@/lib/inline-links";
 import type { SectionId, TemplateDefinition } from "@/lib/templates/definition";
 
 /**
@@ -122,13 +123,35 @@ function metaLine(dates: string, place: string, ctx: Ctx): Paragraph {
 }
 
 function bulletLine(text: string, ctx: Ctx): Paragraph {
+  const bodyColor = hex(ctx.def.colors.body);
+  const linkColor = hex(ctx.def.colors.link);
+  const children: (TextRun | ExternalHyperlink)[] = [
+    new TextRun({ text: "•  ", color: hex(ctx.def.colors.band), size: 14, font: ctx.font }),
+  ];
+  for (const seg of parseInlineLinks(text)) {
+    if (seg.type === "text") {
+      children.push(new TextRun({ text: seg.value, color: bodyColor, size: 14, font: ctx.font }));
+    } else {
+      children.push(
+        new ExternalHyperlink({
+          link: normalizeHttpUrl(seg.url),
+          children: [
+            new TextRun({
+              text: seg.label,
+              color: linkColor,
+              underline: {},
+              size: 14,
+              font: ctx.font,
+            }),
+          ],
+        })
+      );
+    }
+  }
   return new Paragraph({
     spacing: { after: 16, line: 222, lineRule: "auto" },
     indent: { left: 160, hanging: 130 },
-    children: [
-      new TextRun({ text: "•  ", color: hex(ctx.def.colors.band), size: 14, font: ctx.font }),
-      new TextRun({ text, color: hex(ctx.def.colors.body), size: 14, font: ctx.font }),
-    ],
+    children,
   });
 }
 
@@ -255,9 +278,86 @@ function experienceParagraphs(ctx: Ctx): Paragraph[] {
   if (ctx.cv.experiences.length === 0) return [];
   const out: Paragraph[] = [bandTitle("Expériences professionnelles", ctx)];
   for (const exp of ctx.cv.experiences) {
-    out.push(itemTitle(exp.company ? `${exp.title} — ${exp.company}` : exp.title, ctx));
+    if (exp.company && exp.companyUrl) {
+      out.push(
+        new Paragraph({
+          spacing: { before: 90, after: 10 },
+          children: [
+            new TextRun({
+              text: exp.title,
+              bold: true,
+              color: hex(ctx.def.colors.heading),
+              size: 18,
+              font: ctx.font,
+            }),
+            new TextRun({
+              text: " — ",
+              bold: true,
+              color: hex(ctx.def.colors.heading),
+              size: 18,
+              font: ctx.font,
+            }),
+            new ExternalHyperlink({
+              link: normalizeHttpUrl(exp.companyUrl),
+              children: [
+                new TextRun({
+                  text: exp.company,
+                  bold: true,
+                  color: hex(ctx.def.colors.link),
+                  underline: {},
+                  size: 18,
+                  font: ctx.font,
+                }),
+              ],
+            }),
+          ],
+        })
+      );
+    } else {
+      out.push(itemTitle(exp.company ? `${exp.title} — ${exp.company}` : exp.title, ctx));
+    }
     out.push(metaLine(exp.dates, exp.place, ctx));
     for (const b of exp.bullets) out.push(bulletLine(b, ctx));
+    if (exp.links.length) {
+      const linkChildren: (TextRun | ExternalHyperlink)[] = [];
+      exp.links
+        .filter((l) => l.url)
+        .forEach((l, i) => {
+          if (i > 0) {
+            linkChildren.push(
+              new TextRun({
+                text: "  ·  ",
+                color: hex(ctx.def.colors.body),
+                size: 13,
+                font: ctx.font,
+              })
+            );
+          }
+          linkChildren.push(
+            new ExternalHyperlink({
+              link: normalizeHttpUrl(l.url),
+              children: [
+                new TextRun({
+                  text: l.label || l.url,
+                  color: hex(ctx.def.colors.link),
+                  underline: {},
+                  size: 13,
+                  font: ctx.font,
+                }),
+              ],
+            })
+          );
+        });
+      if (linkChildren.length) {
+        out.push(
+          new Paragraph({
+            spacing: { after: 16, line: 222, lineRule: "auto" },
+            indent: { left: 160 },
+            children: linkChildren,
+          })
+        );
+      }
+    }
     if (exp.stack.length) {
       out.push(
         new Paragraph({
