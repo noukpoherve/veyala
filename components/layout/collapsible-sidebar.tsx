@@ -17,6 +17,19 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
     if (localStorage.getItem(STORAGE_KEY) === "closed") setOpen(false);
   }, []);
 
+  // Lock document scroll: the shell is viewport-bounded; only <main> should scroll.
+  useEffect(() => {
+    const html = document.documentElement;
+    const { overflow: prevHtmlOverflow } = html.style;
+    const { overflow: prevBodyOverflow } = document.body.style;
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+    };
+  }, []);
+
   const toggle = () =>
     setOpen((current) => {
       localStorage.setItem(STORAGE_KEY, current ? "closed" : "open");
@@ -27,13 +40,13 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
     <>
       <aside
         className={cn(
-          "hidden h-full flex-col overflow-hidden border-r border-border bg-card transition-[width] duration-300 ease-in-out md:flex",
+          "hidden h-full min-h-0 flex-col overflow-hidden border-r border-border bg-card transition-[width] duration-300 ease-in-out md:flex",
           open ? "w-64" : "w-0 border-r-0"
         )}
         aria-hidden={!open}
       >
         {/* Fixed inner width so the content doesn't squish during the animation */}
-        <div className="flex h-full w-64 shrink-0 flex-col">{children}</div>
+        <div className="flex h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden">{children}</div>
       </aside>
 
       <button

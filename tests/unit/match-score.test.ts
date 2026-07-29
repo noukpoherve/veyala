@@ -22,10 +22,12 @@ const baseCv: CVData = {
     {
       title: "Développeuse frontend",
       company: "Acme",
+      companyUrl: "",
       place: "Paris",
       dates: "2020-2024",
       bullets: ["Mise en place de CI/CD", "Apps React performantes"],
       stack: ["React", "TypeScript", "Node.js"],
+      links: [],
     },
   ],
   education: [],

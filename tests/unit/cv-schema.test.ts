@@ -32,7 +32,27 @@ describe("cvSchema", () => {
     expect(parsed.experiences[0]?.title).toBe("Développeuse");
     expect(parsed.experiences[0]?.bullets).toEqual(["A fait X"]);
     expect(parsed.experiences[0]?.company).toBe("");
+    expect(parsed.experiences[0]?.companyUrl).toBe("");
     expect(parsed.experiences[0]?.stack).toEqual([]);
+    expect(parsed.experiences[0]?.links).toEqual([]);
+  });
+
+  it("preserves experience companyUrl and reference links", () => {
+    const parsed = cvSchema.parse({
+      ...minimalCv,
+      experiences: [
+        {
+          title: "Dev",
+          company: "Acme",
+          companyUrl: "https://acme.example",
+          links: [{ label: "Extension", url: "https://marketplace.example/x" }],
+        },
+      ],
+    });
+    expect(parsed.experiences[0]?.companyUrl).toBe("https://acme.example");
+    expect(parsed.experiences[0]?.links).toEqual([
+      { label: "Extension", url: "https://marketplace.example/x" },
+    ]);
   });
 
   it("parseCV mirrors cvSchema.parse", () => {
