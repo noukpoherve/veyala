@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/noukpoherve/veyala/compare/v1.5.0...v1.6.0) (2026-07-29)
+
+
+### Features
+
+* **editor:** experience links and accordion sections ([98fd08a](https://github.com/noukpoherve/veyala/commit/98fd08a32930685ffd1e260036739a4cf078face))
+
 # [1.5.0](https://github.com/noukpoherve/veyala/compare/v1.4.0...v1.5.0) (2026-07-27)
 
 
