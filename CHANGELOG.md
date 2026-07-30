@@ -1,3 +1,18 @@
+# [1.7.0](https://github.com/noukpoherve/veyala/compare/v1.6.0...v1.7.0) (2026-07-30)
+
+
+### Bug Fixes
+
+* **blog:** tolerate missing database during next build ([9f72417](https://github.com/noukpoherve/veyala/commit/9f72417c00ed11e5b12a281b63b8286b6c0e5b67))
+* **landing:** show mark logo in demo player header ([88398c0](https://github.com/noukpoherve/veyala/commit/88398c0108660c2943a0b0bc83190e6c7ee24301))
+
+
+### Features
+
+* **blog:** admin CMS with SEO gates and product demo walkthrough ([05180f9](https://github.com/noukpoherve/veyala/commit/05180f9899aab415e2cfaaf2ec12aeec24cef848))
+* **brand:** use official Veyala logo for product mark and favicon ([b64cb10](https://github.com/noukpoherve/veyala/commit/b64cb100491f54de4fea4932cd9d84dd3cf00371))
+* **landing:** transparent mark favicon and in-page demo section ([8ec5746](https://github.com/noukpoherve/veyala/commit/8ec574665363f30ffda3563e82aa628d45507cfc))
+
 # [1.6.0](https://github.com/noukpoherve/veyala/compare/v1.5.0...v1.6.0) (2026-07-29)
 
 
