@@ -2,6 +2,9 @@ import type { MetadataRoute } from "next";
 import { getPublishedPosts } from "@/lib/blog/queries";
 import { siteUrl } from "@/lib/utils";
 
+/** Refresh blog URLs after deploy without requiring DB at build time. */
+export const revalidate = 60;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
   const pages: {

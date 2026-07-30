@@ -16,6 +16,8 @@ import { blogBreadcrumbJsonLd, blogFaqJsonLd, blogPostingJsonLd } from "@/lib/bl
 import { siteUrl } from "@/lib/utils";
 
 export const revalidate = 60;
+/** Allow on-demand rendering when build had no DB to pre-render slugs. */
+export const dynamicParams = true;
 
 type PageProps = {
   params: { slug: string };
