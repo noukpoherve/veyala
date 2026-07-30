@@ -27,7 +27,7 @@ export function blogPostingJsonLd(post: BlogPost) {
       url: base,
       logo: {
         "@type": "ImageObject",
-        url: `${base}/blog/opengraph-image`,
+        url: `${base}/brand/veyala-mark.png`,
       },
     },
     mainEntityOfPage: {

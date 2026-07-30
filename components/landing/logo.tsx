@@ -1,65 +1,59 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-/** Veyala "VY" monogram tile, recreated from the brand logo. */
+const MARK_SRC = "/brand/veyala-mark.png";
+const LOGO_SRC = "/brand/veyala-logo-full.png";
+
+/** Official Veyala monogram mark (rounded tile). */
 export function VeyalaMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 46 40" fill="none" aria-hidden className={cn("size-8 shrink-0", className)}>
-      <defs>
-        <linearGradient
-          id="veyala-tile"
-          x1="4"
-          y1="36"
-          x2="42"
-          y2="4"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#2E68D9" />
-          <stop offset="0.55" stopColor="#3D7BE8" />
-          <stop offset="1" stopColor="#54A0F6" />
-        </linearGradient>
-      </defs>
-      <rect x="1" y="2" width="44" height="36" rx="11" fill="url(#veyala-tile)" />
-      {/* v */}
-      <path
-        d="M10.5 11 L17.5 26 L24.5 11"
-        stroke="#fff"
-        strokeWidth="6.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* y — right arm + descender sweeping down-left */}
-      <path
-        d="M24.5 10 L31.5 23.5 M38.5 10 L31.5 23.5 C29.8 27.6 27.2 30.4 23.5 31.8"
-        stroke="#fff"
-        strokeWidth="6.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Image
+      src={MARK_SRC}
+      alt=""
+      width={32}
+      height={32}
+      className={cn("size-8 shrink-0", className)}
+      aria-hidden
+    />
   );
 }
 
+/** Official Veyala logo: mark + wordmark. */
 export function VeyalaLogo({
   dark = false,
   markClassName,
   wordmarkClassName,
+  className,
 }: {
   dark?: boolean;
   markClassName?: string;
   wordmarkClassName?: string;
+  className?: string;
 }) {
-  return (
-    <span className="inline-flex items-center gap-2">
-      <VeyalaMark className={markClassName} />
-      <span
-        className={cn(
-          "font-display text-xl font-bold tracking-tight",
-          dark ? "text-white" : "text-blue-600",
-          wordmarkClassName
-        )}
-      >
-        Veyala
+  if (dark) {
+    return (
+      <span className={cn("inline-flex items-center gap-2", className)}>
+        <VeyalaMark className={markClassName} />
+        <span
+          className={cn(
+            "font-display text-xl font-bold tracking-tight text-white",
+            wordmarkClassName
+          )}
+        >
+          Veyala
+        </span>
       </span>
-    </span>
+    );
+  }
+
+  return (
+    <Image
+      src={LOGO_SRC}
+      alt="Veyala"
+      width={140}
+      height={36}
+      className={cn("h-8 w-auto", className, wordmarkClassName, markClassName)}
+      priority
+    />
   );
 }

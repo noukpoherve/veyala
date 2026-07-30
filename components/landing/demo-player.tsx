@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VeyalaMark } from "@/components/landing/logo";
 
 type SceneId =
   | "hook"
@@ -391,10 +392,9 @@ function AppFrame({
   return (
     <div className="flex h-full bg-slate-100/80">
       <aside className="hidden w-[200px] shrink-0 flex-col border-r border-slate-200 bg-white sm:flex">
-        <div className="border-b border-slate-200 px-3 py-3">
-          <p className="font-display text-sm font-bold tracking-tight text-slate-900">
-            <span className="text-blue-600">V</span>eyala
-          </p>
+        <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-3">
+          <VeyalaMark className="size-6" />
+          <p className="font-display text-sm font-bold tracking-tight text-blue-600">Veyala</p>
         </div>
         <nav className="flex-1 space-y-0.5 p-2">
           {items.map((item) => {
