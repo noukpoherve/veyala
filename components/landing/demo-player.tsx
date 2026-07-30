@@ -167,21 +167,6 @@ export function DemoSection() {
       className="scroll-mt-20 border-b border-slate-100 bg-slate-50/80"
     >
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-24">
-        <header className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-700">
-            Démo produit · {DEMO_DURATION_LABEL}
-          </p>
-          <h2
-            id="demo-title"
-            className="mt-4 font-display text-3xl font-extrabold tracking-tight text-slate-900 md:text-5xl"
-          >
-            De Google au CV prêt, en une seule passe
-          </h2>
-          <p className="mt-4 text-lg text-slate-500">
-            Le vrai parcours Veyala : compte, import du CV de base, matching gratuit, génération et
-            exports Word &amp; PDF.
-          </p>
-        </header>
         <div className="mt-12">
           <DemoPlayer embedded />
         </div>
@@ -320,8 +305,9 @@ function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embed
         : { role: "dialog" as const, "aria-modal": true as const, "aria-labelledby": titleId })}
     >
       <header className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-5">
-        <div className="min-w-0">
-          <p id={titleId} className="truncate text-sm font-semibold text-slate-900">
+        <div className="flex min-w-0 items-center gap-3">
+          <VeyalaMark className="size-8 shrink-0" />
+          <p id={titleId} className="sr-only">
             Démo produit Veyala
           </p>
           <p className="truncate text-xs text-slate-500">
