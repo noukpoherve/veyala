@@ -12,7 +12,6 @@ import {
   Globe,
   Layers,
   PenLine,
-  Play,
   ScanSearch,
   ShieldCheck,
   Sparkles,
@@ -25,6 +24,7 @@ import { getActivePacks } from "@/lib/cached";
 import { siteUrl } from "@/lib/utils";
 import { Reveal } from "@/components/landing/reveal";
 import { Counter } from "@/components/landing/counter";
+import { DemoCta, DemoSection } from "@/components/landing/demo-player";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Below-the-fold interactive sections: lazy chunks keep the hero's JS payload small.
@@ -426,15 +426,7 @@ export default async function LandingPage() {
                 <Sparkles className="size-4" aria-hidden />
                 Générer mon CV gratuitement
               </Link>
-              <a
-                href="#comment-ca-marche"
-                className="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-7 py-3.5 text-base font-semibold text-slate-800 shadow-sm transition-bounce hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <span className="flex size-6 items-center justify-center rounded-full bg-slate-100">
-                  <Play className="size-3 fill-slate-700 text-slate-700" aria-hidden />
-                </span>
-                Voir une démo
-              </a>
+              <DemoCta />
             </div>
           </Reveal>
 
@@ -476,6 +468,9 @@ export default async function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* 2b. Product demo — Scape-style in-page walkthrough */}
+      <DemoSection />
 
       {/* 3. How it works */}
       <section
