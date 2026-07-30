@@ -132,35 +132,71 @@ const SCENES: Scene[] = [
 
 const SEARCH_QUERY = "optimiser CV ATS pour une offre d'emploi";
 const TOTAL_MS = SCENES.reduce((sum, scene) => sum + scene.durationMs, 0);
+const DEMO_DURATION_LABEL = (() => {
+  const totalSec = Math.round(TOTAL_MS / 1000);
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
+  return minutes > 0 ? `${minutes} min ${String(seconds).padStart(2, "0")}s` : `${seconds}s`;
+})();
 
+/** Hero CTA — scrolls to the on-page demo section (Scape-style). */
 export function DemoCta({ className }: { className?: string }) {
-  const [open, setOpen] = useState(false);
-
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={cn(
-          "inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-7 py-3.5 text-base font-semibold text-slate-800 shadow-sm transition-bounce hover:-translate-y-0.5 hover:shadow-md",
-          className
-        )}
-      >
-        <span className="flex size-6 items-center justify-center rounded-full bg-slate-100">
-          <Play className="size-3 fill-slate-700 text-slate-700" aria-hidden />
-        </span>
-        Voir une démo
-      </button>
-      {open ? <DemoPlayer onClose={() => setOpen(false)} /> : null}
-    </>
+    <a
+      href="#demo"
+      className={cn(
+        "inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-7 py-3.5 text-base font-semibold text-slate-800 shadow-sm transition-bounce hover:-translate-y-0.5 hover:shadow-md",
+        className
+      )}
+    >
+      <span className="flex size-6 items-center justify-center rounded-full bg-slate-100">
+        <Play className="size-3 fill-slate-700 text-slate-700" aria-hidden />
+      </span>
+      Voir une démo
+      <span className="text-sm font-medium text-slate-400">{DEMO_DURATION_LABEL}</span>
+    </a>
   );
 }
 
-function DemoPlayer({ onClose }: { onClose: () => void }) {
+/** Landing section hosting the product walkthrough video-like player. */
+export function DemoSection() {
+  return (
+    <section
+      id="demo"
+      aria-labelledby="demo-title"
+      className="scroll-mt-20 border-b border-slate-100 bg-slate-50/80"
+    >
+      <div className="mx-auto max-w-6xl px-6 py-20 md:py-24">
+        <header className="mx-auto max-w-2xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-700">
+            Démo produit · {DEMO_DURATION_LABEL}
+          </p>
+          <h2
+            id="demo-title"
+            className="mt-4 font-display text-3xl font-extrabold tracking-tight text-slate-900 md:text-5xl"
+          >
+            De Google au CV prêt, en une seule passe
+          </h2>
+          <p className="mt-4 text-lg text-slate-500">
+            Le vrai parcours Veyala : compte, import du CV de base, matching gratuit, génération et
+            exports Word &amp; PDF.
+          </p>
+        </header>
+        <div className="mt-12">
+          <DemoPlayer embedded />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embedded?: boolean }) {
   const titleId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
   const [sceneIndex, setSceneIndex] = useState(0);
-  const [playing, setPlaying] = useState(true);
+  const [playing, setPlaying] = useState(!embedded);
   const [progress, setProgress] = useState(0);
+  const [hasStarted, setHasStarted] = useState(!embedded);
   const startedAt = useRef(Date.now());
   const elapsedBeforePause = useRef(0);
   const frameRef = useRef<number | null>(null);
@@ -190,10 +226,12 @@ function DemoPlayer({ onClose }: { onClose: () => void }) {
     startedAt.current = Date.now();
     setSceneIndex(0);
     setProgress(0);
+    setHasStarted(true);
     setPlaying(true);
   }, []);
 
   const togglePlay = useCallback(() => {
+    setHasStarted(true);
     setPlaying((value) => {
       if (value) {
         elapsedBeforePause.current = progress * TOTAL_MS;
@@ -204,8 +242,27 @@ function DemoPlayer({ onClose }: { onClose: () => void }) {
   }, [progress]);
 
   useEffect(() => {
+    if (!embedded || hasStarted) return;
+    const node = rootRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setHasStarted(true);
+          setPlaying(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.45 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [embedded, hasStarted]);
+
+  useEffect(() => {
+    if (embedded) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onClose?.();
       if (event.key === " ") {
         event.preventDefault();
         togglePlay();
@@ -218,7 +275,7 @@ function DemoPlayer({ onClose }: { onClose: () => void }) {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
     };
-  }, [onClose, togglePlay]);
+  }, [embedded, onClose, togglePlay]);
 
   useEffect(() => {
     if (!playing) {
@@ -251,29 +308,27 @@ function DemoPlayer({ onClose }: { onClose: () => void }) {
     return Math.min(1, Math.max(0, local / scene.durationMs));
   })();
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6">
-      <button
-        type="button"
-        className="absolute inset-0 bg-[#020617]/80 backdrop-blur-md"
-        aria-label="Fermer la démo"
-        onClick={onClose}
-      />
-      <div
-        className="relative flex max-h-[min(920px,100%)] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl shadow-black/40 ring-1 ring-slate-900/10"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
-        <header className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-5">
-          <div className="min-w-0">
-            <p id={titleId} className="truncate text-sm font-semibold text-slate-900">
-              Démo produit Veyala
-            </p>
-            <p className="truncate text-xs text-slate-500">
-              {scene.label} · {Math.round(progress * 100)}%
-            </p>
-          </div>
+  const player = (
+    <div
+      ref={rootRef}
+      className={cn(
+        "relative flex w-full flex-col overflow-hidden bg-white shadow-2xl shadow-slate-900/10 ring-1 ring-slate-900/10",
+        embedded ? "rounded-3xl" : "max-h-[min(920px,100%)] max-w-5xl rounded-[28px]"
+      )}
+      {...(embedded
+        ? { role: "region" as const, "aria-labelledby": titleId }
+        : { role: "dialog" as const, "aria-modal": true as const, "aria-labelledby": titleId })}
+    >
+      <header className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-5">
+        <div className="min-w-0">
+          <p id={titleId} className="truncate text-sm font-semibold text-slate-900">
+            Démo produit Veyala
+          </p>
+          <p className="truncate text-xs text-slate-500">
+            {scene.label} · {Math.round(progress * 100)}%
+          </p>
+        </div>
+        {!embedded && onClose ? (
           <button
             type="button"
             onClick={onClose}
@@ -282,73 +337,102 @@ function DemoPlayer({ onClose }: { onClose: () => void }) {
           >
             <X className="size-5" aria-hidden />
           </button>
-        </header>
+        ) : null}
+      </header>
 
-        <div className="relative aspect-[16/10] w-full bg-slate-100 sm:aspect-[16/9]">
-          <SceneStage sceneId={scene.id} sceneProgress={sceneProgress} />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/85 via-slate-900/45 to-transparent px-4 pb-4 pt-16 sm:px-6 sm:pb-5">
-            <p className="max-w-3xl text-sm font-medium leading-relaxed text-white sm:text-base">
-              {scene.caption}
-            </p>
-          </div>
-        </div>
-
-        <div className="border-t border-slate-200 bg-white px-4 py-3 sm:px-5">
-          <div className="mb-3 h-1 overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-blue-600 transition-[width] duration-100 ease-linear"
-              style={{ width: `${progress * 100}%` }}
-            />
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  if (finished) {
-                    restart();
-                    return;
-                  }
-                  togglePlay();
-                }}
-                className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
-              >
-                {finished ? (
-                  <>
-                    <RotateCcw className="size-4" aria-hidden />
-                    Relancer
-                  </>
-                ) : playing ? (
-                  <>
-                    <Pause className="size-4" aria-hidden />
-                    Pause
-                  </>
-                ) : (
-                  <>
-                    <Play className="size-4 fill-white" aria-hidden />
-                    Lecture
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={restart}
-                className="rounded-full px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-              >
-                Recommencer
-              </button>
-            </div>
-            <Link
-              href="/register"
-              onClick={onClose}
-              className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/25 transition-colors hover:bg-blue-700"
-            >
-              Créer mon compte
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
-          </div>
+      <div className="relative aspect-[16/10] w-full bg-slate-100 sm:aspect-[16/9]">
+        <SceneStage sceneId={scene.id} sceneProgress={sceneProgress} />
+        {!hasStarted && embedded ? (
+          <button
+            type="button"
+            onClick={() => {
+              setHasStarted(true);
+              setPlaying(true);
+            }}
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-900/35 text-white backdrop-blur-[2px]"
+          >
+            <span className="flex size-16 items-center justify-center rounded-full bg-white text-slate-900 shadow-xl">
+              <Play className="size-7 fill-slate-900" aria-hidden />
+            </span>
+            <span className="text-sm font-semibold">Lancer la démo · {DEMO_DURATION_LABEL}</span>
+          </button>
+        ) : null}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/85 via-slate-900/45 to-transparent px-4 pb-4 pt-16 sm:px-6 sm:pb-5">
+          <p className="max-w-3xl text-sm font-medium leading-relaxed text-white sm:text-base">
+            {scene.caption}
+          </p>
         </div>
       </div>
+
+      <div className="border-t border-slate-200 bg-white px-4 py-3 sm:px-5">
+        <div className="mb-3 h-1 overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="h-full rounded-full bg-blue-600 transition-[width] duration-100 ease-linear"
+            style={{ width: `${progress * 100}%` }}
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (finished) {
+                  restart();
+                  return;
+                }
+                togglePlay();
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              {finished ? (
+                <>
+                  <RotateCcw className="size-4" aria-hidden />
+                  Relancer
+                </>
+              ) : playing ? (
+                <>
+                  <Pause className="size-4" aria-hidden />
+                  Pause
+                </>
+              ) : (
+                <>
+                  <Play className="size-4 fill-white" aria-hidden />
+                  Lecture
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={restart}
+              className="rounded-full px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            >
+              Recommencer
+            </button>
+          </div>
+          <Link
+            href="/register"
+            onClick={onClose}
+            className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/25 transition-colors hover:bg-blue-700"
+          >
+            Créer mon compte
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (embedded) return player;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6">
+      <button
+        type="button"
+        className="absolute inset-0 bg-[#020617]/80 backdrop-blur-md"
+        aria-label="Fermer la démo"
+        onClick={onClose}
+      />
+      {player}
     </div>
   );
 }

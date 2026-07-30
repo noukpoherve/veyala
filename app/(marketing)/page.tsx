@@ -24,7 +24,7 @@ import { getActivePacks } from "@/lib/cached";
 import { siteUrl } from "@/lib/utils";
 import { Reveal } from "@/components/landing/reveal";
 import { Counter } from "@/components/landing/counter";
-import { DemoCta } from "@/components/landing/demo-player";
+import { DemoCta, DemoSection } from "@/components/landing/demo-player";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Below-the-fold interactive sections: lazy chunks keep the hero's JS payload small.
@@ -468,6 +468,9 @@ export default async function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* 2b. Product demo — Scape-style in-page walkthrough */}
+      <DemoSection />
 
       {/* 3. How it works */}
       <section
