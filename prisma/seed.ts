@@ -1,6 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { OFFICIAL_TEMPLATES } from "../lib/templates/official";
 import { templateFingerprint } from "../lib/templates/fingerprint";
+import { SEED_BLOG_POSTS } from "../lib/blog/posts";
+import { blocksToMarkdown } from "../lib/blog/markdown";
+import { toPrismaCategory } from "../lib/blog/mapper";
 
 const db = new PrismaClient();
 
@@ -64,10 +67,43 @@ async function seedAdmin() {
   if (emails.length) console.log(`✓ ${emails.length} admin(s)`);
 }
 
+async function seedBlog() {
+  for (const post of SEED_BLOG_POSTS) {
+    const bodyMarkdown = blocksToMarkdown(post.body);
+    const data = {
+      title: post.title,
+      description: post.description,
+      excerpt: post.excerpt,
+      category: toPrismaCategory(post.category),
+      tags: post.tags,
+      keywords: post.keywords,
+      focusKeyword: post.keywords[0] ?? post.tags[0] ?? null,
+      status: "PUBLISHED" as const,
+      featured: Boolean(post.featured),
+      accent: post.accent,
+      authorName: post.author.name,
+      authorRole: post.author.role,
+      body: post.body,
+      faq: post.faq ?? [],
+      bodyMarkdown,
+      readingTimeMin: post.readingTimeMin,
+      publishedAt: new Date(post.publishedAt),
+    };
+
+    await db.blogPost.upsert({
+      where: { slug: post.slug },
+      create: { slug: post.slug, ...data },
+      update: data,
+    });
+  }
+  console.log(`✓ ${SEED_BLOG_POSTS.length} articles blog`);
+}
+
 async function main() {
   await seedPacks();
   await seedTemplates();
   await seedAdmin();
+  await seedBlog();
 }
 
 main()

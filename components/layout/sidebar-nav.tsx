@@ -6,6 +6,7 @@ import { memo, useState } from "react";
 import {
   ChevronDown,
   CreditCard,
+  FileText,
   Inbox,
   LayoutDashboard,
   LifeBuoy,
@@ -31,6 +32,7 @@ const MAIN_ITEMS = [
 const ADMIN_ITEMS = [
   { href: "/admin", label: "Statistiques", icon: LayoutDashboard },
   { href: "/admin/inbox", label: "Boîte de réception", icon: Inbox },
+  { href: "/admin/blog", label: "Blog", icon: FileText },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },
   { href: "/admin/activity", label: "Activité", icon: ShieldCheck },
   { href: "/admin/templates", label: "Validation templates", icon: Palette },

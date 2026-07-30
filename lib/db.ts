@@ -1,11 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 
 /**
- * Dev singleton must be invalidated when the Prisma schema gains fields
- * (otherwise hot-reload keeps an old client → "Unknown argument `softSkills`").
+ * Dev singleton must be invalidated when the Prisma schema gains fields/models
+ * (otherwise hot-reload keeps an old client → missing delegates like `blogPost`).
  * Bump CLIENT_REV after schema changes that require a fresh PrismaClient.
  */
-const CLIENT_REV = "archive-activity-1";
+const CLIENT_REV = "blog-cms-2";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
@@ -18,8 +18,16 @@ function createClient() {
   });
 }
 
+function needsFreshClient(client: PrismaClient | undefined): boolean {
+  if (!client) return true;
+  if (globalForPrisma.prismaClientRev !== CLIENT_REV) return true;
+  // Stale HMR client created before `prisma generate` for BlogPost.
+  const blog = (client as PrismaClient & { blogPost?: { findMany?: unknown } }).blogPost;
+  return typeof blog?.findMany !== "function";
+}
+
 if (process.env.NODE_ENV !== "production") {
-  if (globalForPrisma.prismaClientRev !== CLIENT_REV) {
+  if (needsFreshClient(globalForPrisma.prisma)) {
     void globalForPrisma.prisma?.$disconnect().catch(() => undefined);
     globalForPrisma.prisma = createClient();
     globalForPrisma.prismaClientRev = CLIENT_REV;

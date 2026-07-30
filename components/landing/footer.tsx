@@ -16,7 +16,7 @@ const FOOTER_COLUMNS = [
   {
     title: "Ressources",
     links: [
-      { href: "/#fonctionnalites", label: "Blog" },
+      { href: "/blog", label: "Blog" },
       { href: "/#comment-ca-marche", label: "Guide CV" },
       { href: "/#comment-ca-marche", label: "Guide lettre" },
       { href: "/#faq", label: "FAQ" },

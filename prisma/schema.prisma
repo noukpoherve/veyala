@@ -347,3 +347,50 @@ model LLMProvider {
   isDefault Boolean     @default(false)
   createdAt DateTime    @default(now())
 }
+
+// ---------- Blog CMS ----------
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum BlogCategory {
+  CV
+  ATS
+  LETTRE
+  EMPLOI
+  ETUDES
+  IA
+}
+
+model BlogPost {
+  id             String         @id @default(cuid())
+  slug           String         @unique
+  title          String
+  description    String
+  excerpt        String
+  category       BlogCategory
+  tags           String[]       @default([])
+  keywords       String[]       @default([])
+  focusKeyword   String?
+  status         BlogPostStatus @default(DRAFT)
+  featured       Boolean        @default(false)
+  accent         String         @default("#2563EB")
+  authorName     String         @default("Équipe Veyala")
+  authorRole     String         @default("Experts CV, ATS & candidature")
+  /// Structured article body (ContentBlock[]).
+  body           Json
+  /// Optional FAQ for FAQPage JSON-LD.
+  faq            Json?
+  /// Markdown source edited in admin (kept in sync with `body` on save).
+  bodyMarkdown   String         @db.Text
+  readingTimeMin Int            @default(5)
+  publishedAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([featured, status])
+  @@index([category, status])
+}
