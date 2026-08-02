@@ -1,1 +1,10 @@
+# Strip Cursor/AI attribution trailers injected by the agent harness before linting.
+# The user never wants Co-authored-by / Made-with Cursor on commits.
+sed -i.bak -E \
+  -e '/^Co-authored-by:[[:space:]]*Cursor[[:space:]]*<cursoragent@cursor\.com>[[:space:]]*$/Id' \
+  -e '/^Made-with:[[:space:]]*Cursor[[:space:]]*$/Id' \
+  -e '/^Made with Cursor[[:space:]]*$/Id' \
+  "$1"
+rm -f "$1.bak"
+
 npx --no -- commitlint --edit "$1"
