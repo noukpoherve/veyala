@@ -435,7 +435,7 @@ export default async function LandingPage() {
           </Reveal>
 
           {/* Trust band */}
-          <Reveal delay={500}>
+          {/* <Reveal delay={500}>
             <div className="mt-20">
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
                 Utilisé par des étudiants de
@@ -448,7 +448,7 @@ export default async function LandingPage() {
                 ))}
               </ul>
             </div>
-          </Reveal>
+          </Reveal> */}
         </div>
       </section>
 

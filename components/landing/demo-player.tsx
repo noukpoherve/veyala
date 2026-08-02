@@ -76,9 +76,9 @@ const SCENES: Scene[] = [
   },
   {
     id: "serp",
-    durationMs: 3200,
+    durationMs: 4800,
     label: "Découverte",
-    caption: "Elle trouve Veyala : CV + lettre adaptés à chaque offre, compatible ATS.",
+    caption: "Parmi les outils CV / ATS, elle repère Veyala — adapté à chaque offre, en français.",
   },
   {
     id: "landing",
@@ -153,7 +153,7 @@ export function DemoCta({ className }: { className?: string }) {
         <Play className="size-3 fill-slate-700 text-slate-700" aria-hidden />
       </span>
       Voir une démo
-      <span className="text-sm font-medium text-slate-400">{DEMO_DURATION_LABEL}</span>
+      {/* <span className="text-sm font-medium text-slate-400">{DEMO_DURATION_LABEL}</span> */}
     </a>
   );
 }
@@ -163,7 +163,7 @@ export function DemoSection() {
   return (
     <section
       id="demo"
-      aria-labelledby="demo-title"
+      aria-label="Démo produit Veyala"
       className="scroll-mt-20 border-b border-slate-100 bg-slate-50/80"
     >
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-24">
@@ -546,29 +546,106 @@ function GoogleScene({ progress }: { progress: number }) {
   );
 }
 
+const SERP_RESULTS = [
+  {
+    id: "veyala",
+    domain: "veyala.fr",
+    title: "Veyala — CV adapté à chaque offre, compatible ATS",
+    snippet:
+      "Importez votre CV, collez une offre : analyse de matching gratuite, puis CV + lettre optimisés ATS. Export Word & PDF.",
+  },
+  {
+    id: "kickresume",
+    domain: "kickresume.com",
+    title: "Kickresume — Créateur de CV et lettre par IA",
+    snippet:
+      "Plus de 40 modèles, génération IA et vérificateur ATS. Idéal pour étudiants et profils créatifs.",
+  },
+  {
+    id: "rezi",
+    domain: "rezi.ai",
+    title: "Rezi — Optimiseur de CV ATS avec score en temps réel",
+    snippet:
+      "Analysez votre CV pour les ATS, extrayez les mots-clés d’une offre et améliorez votre score Rezi.",
+  },
+  {
+    id: "teal",
+    domain: "tealhq.com",
+    title: "Teal — CV builder et suivi de candidatures",
+    snippet:
+      "Créez votre CV, suivez vos candidatures et gérez votre recherche d’emploi depuis un seul tableau de bord.",
+  },
+  {
+    id: "resumeio",
+    domain: "resume.io",
+    title: "Resume.io — Modèles de CV professionnels en ligne",
+    snippet:
+      "Construisez un CV en quelques minutes avec des templates prêts à l’emploi et un export PDF.",
+  },
+  {
+    id: "cvpass",
+    domain: "cvpass.fr",
+    title: "CVpass — Scanner ATS et suite carrière (France)",
+    snippet: "Score ATS calibré sur le marché français, lettre, LinkedIn et suivi de candidatures.",
+  },
+] as const;
+
 function SerpScene({ progress }: { progress: number }) {
-  const highlight = progress > 0.3;
+  const highlight = progress > 0.35;
+
   return (
-    <div className="h-full overflow-hidden bg-white px-4 py-6 sm:px-10">
+    <div className="h-full overflow-hidden bg-white px-3 py-4 sm:px-8 sm:py-5">
       <div className="mx-auto max-w-2xl">
-        <div className="mb-4 flex items-center gap-3 rounded-full border border-slate-200 px-4 py-2.5 shadow-sm">
+        <div className="mb-3 flex items-center gap-3 rounded-full border border-slate-200 px-4 py-2.5 shadow-sm">
           <SearchGlyph />
-          <p className="text-sm text-slate-700">{SEARCH_QUERY}</p>
+          <p className="truncate text-sm text-slate-700">{SEARCH_QUERY}</p>
         </div>
-        <div
-          className={cn(
-            "rounded-xl p-3 transition-all duration-500",
-            highlight && "bg-blue-50 ring-2 ring-blue-500 ring-offset-2"
-          )}
-        >
-          <p className="text-xs text-slate-500">veyala.fr</p>
-          <p className="mt-0.5 text-lg text-[#1a0dab]">
-            Veyala — CV adapté à chaque offre, compatible ATS
-          </p>
-          <p className="mt-1 text-sm text-slate-600">
-            Importez votre CV, collez une offre : analyse de matching gratuite, puis CV + lettre
-            optimisés ATS. Export Word & PDF.
-          </p>
+        <p className="mb-3 text-[11px] text-slate-500">
+          Environ 2&nbsp;840&nbsp;000 résultats (0,38&nbsp;s)
+        </p>
+        <div className="space-y-4">
+          {SERP_RESULTS.map((result) => {
+            const isVeyala = result.id === "veyala";
+            const showHighlight = isVeyala && highlight;
+            return (
+              <div
+                key={result.id}
+                className={cn(
+                  "rounded-xl p-2.5 transition-all duration-500 sm:p-3",
+                  showHighlight && "bg-blue-50 ring-2 ring-blue-500 ring-offset-2"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "flex size-5 items-center justify-center rounded-full text-[9px] font-bold",
+                      isVeyala ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-600"
+                    )}
+                  >
+                    {result.domain.charAt(0).toUpperCase()}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[11px] text-slate-700">{result.domain}</p>
+                    <p className="truncate text-[10px] text-slate-400">
+                      https://{result.domain}
+                      {isVeyala ? " ›" : ""}
+                    </p>
+                  </div>
+                </div>
+                <p
+                  className={cn(
+                    "mt-1 text-base leading-snug sm:text-lg",
+                    isVeyala ? "text-[#1a0dab]" : "text-[#1a0dab]/90"
+                  )}
+                >
+                  {result.title}
+                </p>
+                <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-slate-600 sm:text-sm">
+                  {result.snippet}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
