@@ -1,3 +1,12 @@
+## [1.7.1](https://github.com/noukpoherve/veyala/compare/v1.7.0...v1.7.1) (2026-08-02)
+
+
+### Bug Fixes
+
+* **landing:** hide unverified student trust band ([64427ec](https://github.com/noukpoherve/veyala/commit/64427ecca6dad8aea41b15e3d79d984be30573cd))
+* **landing:** make demo SERP look like a real results list ([9f5d600](https://github.com/noukpoherve/veyala/commit/9f5d6002a22daf65921d4c594bb9838d6c7126cb))
+* **landing:** show mark logo in demo player header ([414bd54](https://github.com/noukpoherve/veyala/commit/414bd54fac51c1bbc8158650925b7a58d9b1ab0a))
+
 # [1.7.0](https://github.com/noukpoherve/veyala/compare/v1.6.0...v1.7.0) (2026-07-30)
 
 
