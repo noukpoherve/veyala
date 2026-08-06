@@ -31,6 +31,7 @@ const baseCv: CVData = {
     },
   ],
   education: [],
+  certifications: [],
   skills: [
     { category: "Frontend", items: ["React", "TypeScript", "CSS"] },
     { category: "Backend", items: ["Node.js", "PostgreSQL"] },

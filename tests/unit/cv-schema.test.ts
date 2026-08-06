@@ -13,10 +13,28 @@ describe("cvSchema", () => {
     expect(parsed.summary).toBe("");
     expect(parsed.experiences).toEqual([]);
     expect(parsed.education).toEqual([]);
+    expect(parsed.certifications).toEqual([]);
     expect(parsed.skills).toEqual([]);
     expect(parsed.languages).toEqual([]);
     expect(parsed.interests).toEqual([]);
     expect(parsed.contact.links).toEqual([]);
+  });
+
+  it("preserves certifications", () => {
+    const parsed = cvSchema.parse({
+      ...minimalCv,
+      certifications: [
+        {
+          name: "AWS SAA",
+          issuer: "Amazon",
+          dates: "2024",
+          url: "https://aws.amazon.com/verify/x",
+          credentialId: "ABC",
+        },
+      ],
+    });
+    expect(parsed.certifications[0]?.name).toBe("AWS SAA");
+    expect(parsed.certifications[0]?.url).toBe("https://aws.amazon.com/verify/x");
   });
 
   it("rejects a CV without a full name", () => {

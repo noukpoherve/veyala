@@ -4,8 +4,14 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { Check, Search, Wand2, X } from "lucide-react";
 import type { EditorTemplate } from "@/components/cv/cv-editor";
 import { DesignControls } from "@/components/cv/design-controls";
+import { SectionLayoutControls } from "@/components/cv/section-layout-controls";
 import { TemplateSwatch } from "@/components/templates/template-swatch";
-import type { ColorsOverride, TemplateDefinition } from "@/lib/templates/definition";
+import type {
+  ChipStyle,
+  ColorsOverride,
+  SectionId,
+  TemplateDefinition,
+} from "@/lib/templates/definition";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -34,10 +40,28 @@ export function CustomizationStudio({
   hasPhoto,
   logo,
   hasOverride,
+  skillsStyle,
+  chipStyle,
+  chipBackground,
+  chipText,
+  chipBorder,
+  sidebarDecor,
+  hasSidebarDecorAsset,
+  layout,
+  templateSidebar,
+  templateMain,
+  sidebarSections,
+  mainSections,
   onChangeColors,
   onChangePhoto,
   onChangePhotoShape,
   onChangeLogo,
+  onChangeSkillsStyle,
+  onChangeChipStyle,
+  onChangeChipColors,
+  onChangeSidebarDecor,
+  onChangeSections,
+  onResetSections,
   onReset,
   cvHtml,
 }: {
@@ -52,10 +76,32 @@ export function CustomizationStudio({
   hasPhoto: boolean;
   logo?: string;
   hasOverride: boolean;
+  skillsStyle: TemplateDefinition["skillsStyle"];
+  chipStyle: ChipStyle;
+  chipBackground?: string;
+  chipText?: string;
+  chipBorder?: string;
+  sidebarDecor: boolean;
+  hasSidebarDecorAsset: boolean;
+  layout: TemplateDefinition["layout"];
+  templateSidebar: SectionId[];
+  templateMain: SectionId[];
+  sidebarSections: SectionId[];
+  mainSections: SectionId[];
   onChangeColors: (patch: ColorsOverride) => void;
   onChangePhoto: (show: boolean) => void;
   onChangePhotoShape: (shape: "circle" | "square") => void;
   onChangeLogo: (dataUrl: string) => void;
+  onChangeSkillsStyle: (style: TemplateDefinition["skillsStyle"]) => void;
+  onChangeChipStyle: (style: ChipStyle) => void;
+  onChangeChipColors: (patch: {
+    chipBackground?: string;
+    chipText?: string;
+    chipBorder?: string;
+  }) => void;
+  onChangeSidebarDecor: (show: boolean) => void;
+  onChangeSections: (next: { sidebarSections: SectionId[]; mainSections: SectionId[] }) => void;
+  onResetSections: () => void;
   onReset: () => void;
   cvHtml: string;
 }) {
@@ -206,8 +252,8 @@ export function CustomizationStudio({
           </div>
         </div>
 
-        {/* Right rail: appearance controls */}
-        <aside className="min-h-0 overflow-y-auto border-t bg-muted/20 p-3 lg:border-l lg:border-t-0">
+        {/* Right rail: appearance first, sections at the bottom */}
+        <aside className="min-h-0 space-y-3 overflow-y-auto border-t bg-muted/20 p-3 lg:border-l lg:border-t-0">
           <DesignControls
             colors={colors}
             photo={photo}
@@ -215,12 +261,37 @@ export function CustomizationStudio({
             hasPhoto={hasPhoto}
             logo={logo}
             hasOverride={hasOverride}
+            skillsStyle={skillsStyle}
+            chipStyle={chipStyle}
+            chipBackground={chipBackground}
+            chipText={chipText}
+            chipBorder={chipBorder}
+            sidebarDecor={sidebarDecor}
+            hasSidebarDecorAsset={hasSidebarDecorAsset}
             onChangeColors={onChangeColors}
             onChangePhoto={onChangePhoto}
             onChangePhotoShape={onChangePhotoShape}
             onChangeLogo={onChangeLogo}
+            onChangeSkillsStyle={onChangeSkillsStyle}
+            onChangeChipStyle={onChangeChipStyle}
+            onChangeChipColors={onChangeChipColors}
+            onChangeSidebarDecor={onChangeSidebarDecor}
             onReset={onReset}
           />
+          <div className="rounded-xl border bg-card p-3.5">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Sections
+            </h3>
+            <SectionLayoutControls
+              layout={layout}
+              templateSidebar={templateSidebar}
+              templateMain={templateMain}
+              sidebarSections={sidebarSections}
+              mainSections={mainSections}
+              onChange={onChangeSections}
+              onReset={onResetSections}
+            />
+          </div>
         </aside>
       </div>
     </div>

@@ -67,6 +67,7 @@ export const RATE_LIMITS = {
   login: { limit: 10, windowMs: 15 * 60 * 1000 },
   register: { limit: 5, windowMs: 60 * 60 * 1000 },
   otp: { limit: 15, windowMs: 15 * 60 * 1000 },
+  stripeSync: { limit: 10, windowMs: 10 * 60 * 1000 },
 } as const;
 
 /**

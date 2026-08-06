@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { extractText, ALLOWED_CV_TYPES, MAX_UPLOAD_BYTES } from "@/lib/extract-text";
+import { extractText, resolveCvMime, MAX_UPLOAD_BYTES } from "@/lib/extract-text";
 import { structureCV } from "@/lib/import-cv";
 import { saveFile } from "@/lib/storage";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
@@ -31,22 +31,28 @@ export async function POST(req: Request) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Aucun fichier reçu." }, { status: 400 });
   }
-  if (!ALLOWED_CV_TYPES[file.type]) {
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return NextResponse.json({ error: "Fichier trop volumineux (8 Mo max)." }, { status: 413 });
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const resolved = resolveCvMime(buffer, file.type, file.name);
+  if (!resolved) {
     return NextResponse.json(
       { error: "Format non supporté : PDF ou DOCX uniquement." },
       { status: 415 }
     );
   }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return NextResponse.json({ error: "Fichier trop volumineux (8 Mo max)." }, { status: 413 });
-  }
 
   try {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const text = await extractText(buffer, file.type);
+    const text = await extractText(buffer, resolved.mime);
     const [data, stored] = await Promise.all([
       structureCV(text),
-      saveFile(buffer, { dir: `cv-source/${userId}`, filename: file.name, contentType: file.type }),
+      saveFile(buffer, {
+        dir: `cv-source/${userId}`,
+        filename: file.name,
+        contentType: resolved.mime,
+      }),
     ]);
 
     await db.baseProfile.upsert({
@@ -69,10 +75,22 @@ export async function POST(req: Request) {
         { status: 502 }
       );
     }
+    if (e instanceof Error && /extraire assez de texte|scan ou document vide/i.test(e.message)) {
+      return NextResponse.json(
+        {
+          error:
+            "Impossible d'extraire le texte de ce fichier. Utilisez un PDF ou DOCX texte (pas un scan image) de 8 Mo max.",
+        },
+        { status: 422 }
+      );
+    }
+    if (e instanceof Error && /Format non supporté/i.test(e.message)) {
+      return NextResponse.json({ error: e.message }, { status: 415 });
+    }
     return NextResponse.json(
       {
         error:
-          "Impossible de lire ce fichier. Utilisez un PDF ou DOCX texte (pas un scan image) de 8 Mo max.",
+          "L'import a échoué après lecture du fichier. Réessayez dans un instant ; si le problème continue, utilisez le DOCX exporté.",
       },
       { status: 422 }
     );

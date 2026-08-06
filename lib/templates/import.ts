@@ -24,7 +24,7 @@ Règles :
 - "headerStyle" : "band" si les titres de sections sont sur un fond de couleur pleine, "underline" s'ils sont en texte souligné d'un trait de couleur.
 - "namePlacement" : "sidebar" si le nom du candidat est affiché dans la colonne latérale, "main" sinon.
 - "datesStyle" : "pill" si les dates sont dans des pastilles/badges alignés à droite des intitulés, "inline" sinon.
-- "sidebarSections" / "mainSections" : sections détectées dans l'ordre. Utilise EXACTEMENT ces identifiants anglais (jamais les titres affichés sur l'image) : "contact", "summary", "experience", "education", "skills", "languages", "interests". "mainSections" contient au moins "experience".
+- "sidebarSections" / "mainSections" : sections détectées dans l'ordre. Utilise EXACTEMENT ces identifiants anglais (jamais les titres affichés sur l'image) : "contact", "summary", "experience", "education", "certifications", "skills", "languages", "interests". "mainSections" contient au moins "experience".
 - Réponds UNIQUEMENT avec l'objet JSON, sans backticks ni texte autour.`;
 
 /** Maps free-form section labels (often French, from the image) to schema ids. */
@@ -33,6 +33,7 @@ const SECTION_ALIASES: [RegExp, string][] = [
   [/^(summary|profil|resume|about|a.?propos|objectif)/, "summary"],
   [/^(experience|parcours|emploi|mission)/, "experience"],
   [/^(education|formation|diplome|etude)/, "education"],
+  [/^(certif|accreditation|badge|credential)/, "certifications"],
   [/^(skill|competence|techno|expertise|outil)/, "skills"],
   [/^(language|langue)/, "languages"],
   [/^(interest|inter|hobb|loisir|centre|engagement|divers)/, "interests"],

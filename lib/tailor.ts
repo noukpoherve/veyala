@@ -138,6 +138,7 @@ export async function tailorCV(params: TailorParams): Promise<TailorResult> {
     },
     contact: baseCV.contact,
     education: baseCV.education,
+    certifications: baseCV.certifications ?? [],
     languages: baseCV.languages,
     interests: baseCV.interests,
     softSkills: baseCV.softSkills ?? [],

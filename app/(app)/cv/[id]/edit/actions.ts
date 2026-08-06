@@ -7,8 +7,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
 import {
-  applyStyleOverride,
   parseTemplateDefinition,
+  resolveDefinition,
   styleOverrideSchema,
 } from "@/lib/templates/definition";
 import { renderAndStoreExports } from "@/lib/generate-cv";
@@ -63,7 +63,10 @@ export async function saveCvEdits(input: unknown): Promise<SaveCvEditsResult> {
       cv: data,
       letterBody: coverLetter,
       jobTitle: cv.jobTitle,
-      definition: applyStyleOverride(parseTemplateDefinition(template.definition), styleOverride),
+      definition: resolveDefinition(parseTemplateDefinition(template.definition), {
+        override: styleOverride,
+        photoUrl: data.identity.photoUrl,
+      }),
     });
 
     await db.generatedCV.update({

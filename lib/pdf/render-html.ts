@@ -132,6 +132,32 @@ function educationSection(cv: CVData, def: TemplateDefinition): string {
   return `<section class="education"><h2>Formation</h2>${items}</section>`;
 }
 
+function certificationsSection(cv: CVData, def: TemplateDefinition): string {
+  const list = cv.certifications ?? [];
+  if (list.length === 0) return "";
+  const items = list
+    .map((c) => {
+      const issuerLine = [c.issuer, c.credentialId ? `ID ${c.credentialId}` : ""]
+        .filter(Boolean)
+        .map(esc)
+        .join(" — ");
+      const name = c.url ? `<a href="${esc(httpUrl(c.url))}">${esc(c.name)}</a>` : esc(c.name);
+      const inlineMeta =
+        def.datesStyle === "pill"
+          ? ""
+          : c.dates
+            ? `<p class="meta"><strong>${esc(c.dates)}</strong></p>`
+            : "";
+      return `<article class="job">
+      ${jobHead(name, c.dates, def)}
+      ${issuerLine ? `<p class="company">${issuerLine}</p>` : ""}
+      ${inlineMeta}
+    </article>`;
+    })
+    .join("");
+  return `<section class="certifications"><h2>Certifications</h2>${items}</section>`;
+}
+
 function languagesSection(cv: CVData): string {
   if (cv.languages.length === 0) return "";
   return `<section class="languages"><h2>Langues</h2>
@@ -161,6 +187,8 @@ function renderSection(
       return experienceSection(cv, def);
     case "education":
       return educationSection(cv, def);
+    case "certifications":
+      return certificationsSection(cv, def);
     case "skills":
       return skillsSection(cv, def);
     case "languages":
@@ -168,6 +196,28 @@ function renderSection(
     case "interests":
       return interestsSection(cv);
   }
+}
+
+/** CSS for skill bricks from template chip overrides (solid / outline / ghost). */
+function brickItemCss(
+  def: TemplateDefinition,
+  opts: { lightSidebar: boolean; inSidebar: boolean }
+): string {
+  const { lightSidebar, inSidebar } = opts;
+  const defaultBorder = inSidebar && !lightSidebar ? "#ffffff55" : "#d5d9e2";
+  const defaultText = inSidebar && !lightSidebar ? def.colors.sidebarText : def.colors.body;
+  const defaultBg = inSidebar && !lightSidebar ? "#ffffff22" : "#ffffff";
+  const border = def.chipBorder ?? defaultBorder;
+  const text = def.chipText ?? defaultText;
+  const style = def.chipStyle ?? "solid";
+
+  if (style === "ghost") {
+    return `background: transparent; border: 1px solid ${border}; color: ${text};`;
+  }
+  if (style === "outline") {
+    return `background: transparent; border: 1.5px solid ${def.chipBorder ?? def.colors.band}; color: ${def.chipText ?? def.colors.heading};`;
+  }
+  return `background: ${def.chipBackground ?? defaultBg}; border: 1px solid ${border}; color: ${text};`;
 }
 
 /** Name heading; in sidebar placement the last word gets the accent color. */
@@ -271,10 +321,9 @@ function sidebarLayout(cv: CVData, def: TemplateDefinition): string {
         </div>
       </header>`;
 
-  // Chip and rule colors adapt to light vs dark sidebars.
-  const chipCss = light
-    ? `background: #ffffff; border: 1px solid #d5d9e2; color: ${c.body};`
-    : `background: #ffffff22; border: 1px solid #ffffff55; color: ${c.sidebarText};`;
+  // Chip and rule colors adapt to light vs dark sidebars + user chip overrides.
+  const sidebarBrickCss = brickItemCss(def, { lightSidebar: light, inSidebar: true });
+  const mainBrickCss = brickItemCss(def, { lightSidebar: light, inSidebar: false });
   const ruleColor = light ? c.band : "#ffffff66";
 
   return `<style>
@@ -297,9 +346,9 @@ function sidebarLayout(cv: CVData, def: TemplateDefinition): string {
     .sidebar h3 { font-size: 8.8pt; margin: 2.2mm 0 1mm; color: ${light ? c.heading : c.sidebarText}; }
     .sidebar .photo { display: block; margin: 0 auto 4mm; }
     .sidebar .inline-skills { font-size: 8.4pt; }
-    .sidebar .bricks li { ${chipCss} }
+    .sidebar .bricks li { ${sidebarBrickCss} }
     .main { flex: 1; padding: 8mm 7mm 8mm 7mm; background: #ffffff; }
-    .main .bricks li { background: #ffffff; border: 1px solid #d5d9e2; color: ${c.body}; }
+    .main .bricks li { ${mainBrickCss} }
     .identity { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5mm; }
   </style>
   <div class="sidebar">
@@ -315,13 +364,14 @@ function sidebarLayout(cv: CVData, def: TemplateDefinition): string {
 
 function singleColumnLayout(cv: CVData, def: TemplateDefinition): string {
   const main = def.mainSections.map((s) => renderSection(s, cv, def, false)).join("");
+  const brickCss = brickItemCss(def, { lightSidebar: true, inSidebar: false });
   return `<style>
     ${baseCss(def)}
     body { padding: 10mm 14mm; }
     .identity { display: flex; justify-content: space-between; align-items: center;
       border-bottom: 2px solid ${def.colors.heading}; padding-bottom: 3mm; margin-bottom: 5mm; }
     .contact ul { display: flex; flex-wrap: wrap; gap: 1mm 5mm; }
-    .bricks li { background: #ffffff; border: 1px solid #d5d9e2; color: ${def.colors.body}; }
+    .bricks li { ${brickCss} }
   </style>
   ${headerHtml(cv, def)}
   <main>${main}</main>`;

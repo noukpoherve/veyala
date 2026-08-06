@@ -17,10 +17,15 @@ const db = {
   $transaction: vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx)),
   payment: {
     updateMany: vi.fn(),
+    findMany: vi.fn(),
   },
 };
 
+const retrieve = vi.fn();
 vi.mock("@/lib/db", () => ({ db }));
+vi.mock("@/lib/stripe", () => ({
+  getStripe: () => ({ checkout: { sessions: { retrieve } } }),
+}));
 
 describe("payments", () => {
   beforeEach(() => {
@@ -75,5 +80,28 @@ describe("payments", () => {
       where: { stripeSessionId: "cs_test_1", status: "PENDING" },
       data: { status: "FAILED" },
     });
+  });
+
+  it("syncPendingCheckouts fulfills sessions Stripe reports as paid", async () => {
+    db.payment.findMany.mockResolvedValue([
+      { id: "pay_1", userId: "u1", stripeSessionId: "cs_paid", creditsPurchased: 5 },
+      { id: "pay_2", userId: "u1", stripeSessionId: "cs_open", creditsPurchased: 5 },
+    ]);
+    retrieve
+      .mockResolvedValueOnce({ payment_status: "paid", payment_intent: "pi_1" })
+      .mockResolvedValueOnce({ payment_status: "unpaid", payment_intent: null });
+    tx.payment.updateMany.mockResolvedValue({ count: 1 });
+    tx.payment.findUnique.mockResolvedValue({
+      id: "pay_1",
+      userId: "u1",
+      creditsPurchased: 5,
+    });
+    tx.credits.upsert.mockResolvedValue({});
+    tx.creditTransaction.create.mockResolvedValue({});
+
+    const { syncPendingCheckouts } = await import("@/lib/payments");
+    const result = await syncPendingCheckouts("u1");
+    expect(result.credited).toBe(1);
+    expect(retrieve).toHaveBeenCalledTimes(2);
   });
 });

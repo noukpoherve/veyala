@@ -5,7 +5,11 @@ import { cvSchema, type CVData } from "@/lib/cv-schema";
 import { debitCredits, creditCreditsWithRetry, InsufficientCreditsError } from "@/lib/credits";
 import { fetchJobText, tailorCV } from "@/lib/tailor";
 import { writeCoverLetter } from "@/lib/cover-letter";
-import { parseTemplateDefinition, type TemplateDefinition } from "@/lib/templates/definition";
+import {
+  parseTemplateDefinition,
+  resolveDefinition,
+  type TemplateDefinition,
+} from "@/lib/templates/definition";
 import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { htmlToPdf } from "@/lib/pdf";
@@ -299,7 +303,7 @@ export async function generateCV(
       cv,
       letterBody,
       jobTitle: detectedTitle,
-      definition,
+      definition: resolveDefinition(definition, { photoUrl: cv.identity.photoUrl }),
     });
 
     emit({ step: "scoring_after", message: "Recalcul du matching optimisé…" });

@@ -47,6 +47,15 @@ export const languageSchema = z.object({
   level: z.string().default(""),
 });
 
+export const certificationSchema = z.object({
+  name: z.string().min(1),
+  issuer: z.string().default(""),
+  dates: z.string().default(""),
+  /** Credential URL (http/https only when set). */
+  url: z.string().default(""),
+  credentialId: z.string().default(""),
+});
+
 export const cvSchema = z.object({
   identity: z.object({
     fullName: z.string().min(1),
@@ -68,6 +77,7 @@ export const cvSchema = z.object({
   summary: z.string().default(""),
   experiences: z.array(experienceSchema).default([]),
   education: z.array(educationSchema).default([]),
+  certifications: z.array(certificationSchema).default([]),
   skills: z.array(skillGroupSchema).default([]),
   /** Soft skills chosen from the predefined catalog (profile). */
   softSkills: z.array(z.string()).default([]),
@@ -78,6 +88,7 @@ export const cvSchema = z.object({
 export type CVData = z.infer<typeof cvSchema>;
 export type CVExperience = z.infer<typeof experienceSchema>;
 export type CVEducation = z.infer<typeof educationSchema>;
+export type CVCertification = z.infer<typeof certificationSchema>;
 export type CVSkillGroup = z.infer<typeof skillGroupSchema>;
 
 /** Validates LLM/form data; throws a descriptive ZodError otherwise. */
@@ -108,6 +119,7 @@ export const CV_JSON_SHAPE = `{
     "links": [{ "label": string, "url": string }]
   }],
   "education": [{ "degree": string, "school": string, "place": string, "dates": string, "details": string }],
+  "certifications": [{ "name": string, "issuer": string, "dates": string, "url": string, "credentialId": string }],
   "skills": [{ "category": string, "items": [string] }],
   "softSkills": [string],
   "languages": [{ "name": string, "level": string }],

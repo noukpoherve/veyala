@@ -250,7 +250,16 @@ function skillsParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
   const out: Paragraph[] = [
     inSidebar ? sideTitle("Compétences", ctx) : bandTitle("Compétences", ctx),
   ];
+  const itemColor = ctx.def.chipText
+    ? hex(ctx.def.chipText)
+    : inSidebar
+      ? hex(ctx.def.colors.sidebarText)
+      : hex(ctx.def.colors.body);
+  const sep = ctx.def.skillsStyle === "list" ? "\n• " : " · ";
+
   for (const group of ctx.cv.skills) {
+    const itemsText =
+      ctx.def.skillsStyle === "list" ? `• ${group.items.join("\n• ")}` : group.items.join(sep);
     if (inSidebar) {
       out.push(sideText(group.category, ctx, { bold: true, after: 40 }));
       out.push(
@@ -258,8 +267,8 @@ function skillsParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
           spacing: { after: 46, line: 236, lineRule: "auto" },
           children: [
             new TextRun({
-              text: group.items.join(" · "),
-              color: hex(ctx.def.colors.sidebarText),
+              text: itemsText,
+              color: itemColor,
               size: 14,
               font: ctx.font,
             }),
@@ -268,7 +277,19 @@ function skillsParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
       );
     } else {
       out.push(itemTitle(group.category, ctx));
-      out.push(bodyText(group.items.join(" · "), ctx));
+      out.push(
+        new Paragraph({
+          spacing: { after: 60, line: 240, lineRule: "auto" },
+          children: [
+            new TextRun({
+              text: itemsText,
+              color: itemColor,
+              size: 16,
+              font: ctx.font,
+            }),
+          ],
+        })
+      );
     }
   }
   return out;
@@ -397,6 +418,43 @@ function educationParagraphs(ctx: Ctx): Paragraph[] {
   return out;
 }
 
+function certificationsParagraphs(ctx: Ctx): Paragraph[] {
+  const list = ctx.cv.certifications ?? [];
+  if (list.length === 0) return [];
+  const out: Paragraph[] = [bandTitle("Certifications", ctx)];
+  for (const cert of list) {
+    if (cert.url) {
+      out.push(
+        new Paragraph({
+          spacing: { before: 90, after: 10 },
+          children: [
+            new ExternalHyperlink({
+              link: normalizeHttpUrl(cert.url),
+              children: [
+                new TextRun({
+                  text: cert.name,
+                  bold: true,
+                  color: hex(ctx.def.colors.link),
+                  underline: {},
+                  size: 18,
+                  font: ctx.font,
+                }),
+              ],
+            }),
+          ],
+        })
+      );
+    } else {
+      out.push(itemTitle(cert.name, ctx));
+    }
+    const meta = [cert.issuer, cert.credentialId ? `ID ${cert.credentialId}` : ""]
+      .filter(Boolean)
+      .join(" — ");
+    out.push(metaLine(cert.dates, meta, ctx));
+  }
+  return out;
+}
+
 function languagesParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
   if (ctx.cv.languages.length === 0) return [];
   const out: Paragraph[] = [inSidebar ? sideTitle("Langues", ctx) : bandTitle("Langues", ctx)];
@@ -431,6 +489,8 @@ function sectionParagraphs(id: SectionId, ctx: Ctx, inSidebar: boolean): Paragra
       return experienceParagraphs(ctx);
     case "education":
       return educationParagraphs(ctx);
+    case "certifications":
+      return certificationsParagraphs(ctx);
     case "skills":
       return skillsParagraphs(ctx, inSidebar);
     case "languages":
@@ -443,7 +503,7 @@ function sectionParagraphs(id: SectionId, ctx: Ctx, inSidebar: boolean): Paragra
 // ---------- assets ----------
 
 async function loadSidebarImage(def: TemplateDefinition): Promise<Buffer | null> {
-  if (!def.sidebarImageAsset) return null;
+  if (def.sidebarDecor === false || !def.sidebarImageAsset) return null;
   try {
     return await readFile(path.join(process.cwd(), def.sidebarImageAsset));
   } catch {
@@ -451,19 +511,44 @@ async function loadSidebarImage(def: TemplateDefinition): Promise<Buffer | null>
   }
 }
 
-async function loadPhoto(url: string): Promise<Buffer | null> {
+type DocxImageType = "jpg" | "png" | "gif" | "bmp";
+
+/** Detects a DOCX-supported image type from a data-URL MIME or magic bytes. */
+function detectDocxImageType(buf: Buffer, dataUrl?: string): DocxImageType | null {
+  const mime = dataUrl?.match(/^data:(image\/[a-z0-9.+-]+);/i)?.[1]?.toLowerCase();
+  if (mime === "image/png") return "png";
+  if (mime === "image/jpeg" || mime === "image/jpg") return "jpg";
+  if (mime === "image/gif") return "gif";
+  if (mime === "image/bmp" || mime === "image/x-ms-bmp") return "bmp";
+  // WebP and others are not accepted by docx ImageRun.
+  if (mime) return null;
+
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "jpg";
+  if (buf.length >= 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47)
+    return "png";
+  if (buf.length >= 6 && buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) return "gif";
+  if (buf.length >= 2 && buf[0] === 0x42 && buf[1] === 0x4d) return "bmp";
+  return null;
+}
+
+async function loadPhoto(url: string): Promise<{ data: Buffer; type: DocxImageType } | null> {
   try {
+    let data: Buffer | null = null;
+    let dataUrl: string | undefined;
     if (url.startsWith("data:image/")) {
-      return Buffer.from(url.slice(url.indexOf(",") + 1), "base64");
-    }
-    // Only the authenticated app proxy — never fetch arbitrary http(s) (SSRF).
-    if (url.startsWith("/api/files/")) {
+      dataUrl = url;
+      data = Buffer.from(url.slice(url.indexOf(",") + 1), "base64");
+    } else if (url.startsWith("/api/files/")) {
+      // Only the authenticated app proxy — never fetch arbitrary http(s) (SSRF).
       const { readStoredFile } = await import("@/lib/storage");
       const key = decodeURIComponent(url.slice("/api/files/".length));
       if (!key || key.includes("..")) return null;
-      return readStoredFile(key);
+      data = await readStoredFile(key);
     }
-    return null;
+    if (!data?.length) return null;
+    const type = detectDocxImageType(data, dataUrl);
+    if (!type) return null;
+    return { data, type };
   } catch {
     return null;
   }
@@ -553,7 +638,11 @@ async function sidebarDocument(ctx: Ctx): Promise<Document> {
           alignment: AlignmentType.CENTER,
           spacing: { before: 70, after: 60 },
           children: [
-            new ImageRun({ type: "png", data: photo, transformation: { width: 118, height: 134 } }),
+            new ImageRun({
+              type: photo.type,
+              data: photo.data,
+              transformation: { width: 118, height: 134 },
+            }),
           ],
         })
       );
@@ -644,8 +733,29 @@ async function sidebarDocument(ctx: Ctx): Promise<Document> {
   });
 }
 
-function singleColumnDocument(ctx: Ctx): Document {
-  const children: Paragraph[] = [...nameHeader(ctx)];
+async function singleColumnDocument(ctx: Ctx): Promise<Document> {
+  const children: Paragraph[] = [];
+
+  if (ctx.def.photo && ctx.cv.identity.photoUrl) {
+    const photo = await loadPhoto(ctx.cv.identity.photoUrl);
+    if (photo) {
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.RIGHT,
+          spacing: { after: 80 },
+          children: [
+            new ImageRun({
+              type: photo.type,
+              data: photo.data,
+              transformation: { width: 110, height: 124 },
+            }),
+          ],
+        })
+      );
+    }
+  }
+
+  children.push(...nameHeader(ctx));
   for (const id of ctx.def.mainSections) children.push(...sectionParagraphs(id, ctx, false));
 
   return new Document({
@@ -665,6 +775,6 @@ function singleColumnDocument(ctx: Ctx): Document {
 export async function renderCVDocx(cv: CVData, def: TemplateDefinition): Promise<Buffer> {
   const ctx: Ctx = { cv, def, font: def.fonts.body };
   const doc =
-    def.layout === "sidebar-left" ? await sidebarDocument(ctx) : singleColumnDocument(ctx);
+    def.layout === "sidebar-left" ? await sidebarDocument(ctx) : await singleColumnDocument(ctx);
   return Packer.toBuffer(doc);
 }
