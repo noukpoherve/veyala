@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getStripe } from "@/lib/stripe";
 
 /**
  * Marks a checkout as paid and credits the buyer, exactly once.
@@ -40,4 +41,36 @@ export async function failCheckout(stripeSessionId: string): Promise<void> {
     where: { stripeSessionId, status: "PENDING" },
     data: { status: "FAILED" },
   });
+}
+
+/**
+ * Fallback when the Stripe webhook is delayed or misconfigured: ask Stripe for
+ * each of the user's recent PENDING sessions and credit those already paid.
+ * Idempotent — safe to call repeatedly from the billing success page.
+ */
+export async function syncPendingCheckouts(userId: string): Promise<{ credited: number }> {
+  const pending = await db.payment.findMany({
+    where: { userId, status: "PENDING" },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+  if (pending.length === 0) return { credited: 0 };
+
+  const stripe = getStripe();
+  let credited = 0;
+
+  for (const payment of pending) {
+    try {
+      const session = await stripe.checkout.sessions.retrieve(payment.stripeSessionId);
+      if (session.payment_status !== "paid") continue;
+      const paymentIntent =
+        typeof session.payment_intent === "string" ? session.payment_intent : undefined;
+      await fulfillCheckout(payment.stripeSessionId, paymentIntent);
+      credited += 1;
+    } catch (e) {
+      console.error("[stripe/sync]", payment.stripeSessionId, e);
+    }
+  }
+
+  return { credited };
 }

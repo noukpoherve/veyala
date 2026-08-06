@@ -11,6 +11,7 @@ export const SECTION_IDS = [
   "summary",
   "experience",
   "education",
+  "certifications",
   "skills",
   "languages",
   "interests",
@@ -19,7 +20,22 @@ export const SECTION_IDS = [
 export const sectionIdSchema = z.enum(SECTION_IDS);
 export type SectionId = z.infer<typeof sectionIdSchema>;
 
+/** French labels for atelier / editor section controls. */
+export const SECTION_LABELS: Record<SectionId, string> = {
+  contact: "Contact",
+  summary: "Profil",
+  experience: "Expériences",
+  education: "Formations",
+  certifications: "Certifications",
+  skills: "Compétences",
+  languages: "Langues",
+  interests: "Centres d'intérêt",
+};
+
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Couleur hex attendue (#rrggbb)");
+
+export const chipStyleSchema = z.enum(["solid", "outline", "ghost"]);
+export type ChipStyle = z.infer<typeof chipStyleSchema>;
 
 export const templateDefinitionSchema = z.object({
   layout: z.enum(["sidebar-left", "single-column"]),
@@ -46,6 +62,13 @@ export const templateDefinitionSchema = z.object({
   logo: z.string().optional(),
   /** Skill rendering: "bricks" (chips), "list" (bullets) or "inline" (dot-separated). */
   skillsStyle: z.enum(["bricks", "list", "inline"]).default("inline"),
+  /** Brick fill: solid, outline, or transparent (ghost). */
+  chipStyle: chipStyleSchema.default("solid"),
+  chipBackground: hexColor.optional(),
+  chipText: hexColor.optional(),
+  chipBorder: hexColor.optional(),
+  /** When false, ignore sidebarImageAsset and use solid/gradient colors only. */
+  sidebarDecor: z.boolean().default(true),
   /** Section titles: filled color band or plain text with an underline rule. */
   headerStyle: z.enum(["band", "underline"]).default("band"),
   /** Where the candidate's name block lives (sidebar-left layout only). */
@@ -85,12 +108,34 @@ const colorsOverrideSchema = z
 
 export type ColorsOverride = z.infer<typeof colorsOverrideSchema>;
 
+/** Dedupes section ids while preserving first-seen order. */
+export function uniqueSectionIds(ids: SectionId[]): SectionId[] {
+  const seen = new Set<SectionId>();
+  const out: SectionId[] = [];
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
 export const styleOverrideSchema = z.object({
   colors: colorsOverrideSchema.optional(),
   photo: z.boolean().optional(),
   photoShape: z.enum(["circle", "square"]).optional(),
   /** Logo (data URL); empty string clears an inherited logo. */
   logo: z.string().optional(),
+  /** When set, replaces the template sidebar section list entirely. */
+  sidebarSections: z.array(sectionIdSchema).optional(),
+  /** When set, replaces the template main section list entirely. */
+  mainSections: z.array(sectionIdSchema).optional(),
+  skillsStyle: z.enum(["bricks", "list", "inline"]).optional(),
+  chipStyle: chipStyleSchema.optional(),
+  chipBackground: hexColor.optional(),
+  chipText: hexColor.optional(),
+  chipBorder: hexColor.optional(),
+  sidebarDecor: z.boolean().optional(),
 });
 
 export type StyleOverride = z.infer<typeof styleOverrideSchema>;
@@ -98,12 +143,33 @@ export type StyleOverride = z.infer<typeof styleOverrideSchema>;
 /** True when an override carries no actual customisation. */
 export function isEmptyStyleOverride(override?: StyleOverride | null): boolean {
   if (!override) return true;
-  const { colors, photo, photoShape, logo } = override;
+  const {
+    colors,
+    photo,
+    photoShape,
+    logo,
+    sidebarSections,
+    mainSections,
+    skillsStyle,
+    chipStyle,
+    chipBackground,
+    chipText,
+    chipBorder,
+    sidebarDecor,
+  } = override;
   return (
     (!colors || Object.keys(colors).length === 0) &&
     photo === undefined &&
     photoShape === undefined &&
-    logo === undefined
+    logo === undefined &&
+    sidebarSections === undefined &&
+    mainSections === undefined &&
+    skillsStyle === undefined &&
+    chipStyle === undefined &&
+    chipBackground === undefined &&
+    chipText === undefined &&
+    chipBorder === undefined &&
+    sidebarDecor === undefined
   );
 }
 
@@ -127,5 +193,35 @@ export function applyStyleOverride(
   if (typeof override!.photo === "boolean") next = { ...next, photo: override!.photo };
   if (override!.photoShape) next = { ...next, photoShape: override!.photoShape };
   if (override!.logo !== undefined) next = { ...next, logo: override!.logo || undefined };
+  if (override!.sidebarSections !== undefined) {
+    next = { ...next, sidebarSections: uniqueSectionIds(override!.sidebarSections) };
+  }
+  if (override!.mainSections !== undefined) {
+    const main = uniqueSectionIds(override!.mainSections);
+    // Keep at least one main section so Zod-shaped definitions stay valid.
+    next = { ...next, mainSections: main.length > 0 ? main : def.mainSections };
+  }
+  if (override!.skillsStyle) next = { ...next, skillsStyle: override!.skillsStyle };
+  if (override!.chipStyle) next = { ...next, chipStyle: override!.chipStyle };
+  if (override!.chipBackground) next = { ...next, chipBackground: override!.chipBackground };
+  if (override!.chipText) next = { ...next, chipText: override!.chipText };
+  if (override!.chipBorder) next = { ...next, chipBorder: override!.chipBorder };
+  if (typeof override!.sidebarDecor === "boolean") {
+    next = { ...next, sidebarDecor: override!.sidebarDecor };
+  }
   return next;
+}
+
+/**
+ * Template definition ready for render: applies overrides, then auto-enables
+ * the portrait whenever the CV has one (unless the user explicitly hid it).
+ */
+export function resolveDefinition(
+  def: TemplateDefinition,
+  options?: { override?: StyleOverride | null; photoUrl?: string | null }
+): TemplateDefinition {
+  const merged = applyStyleOverride(def, options?.override);
+  if (options?.override?.photo !== undefined) return merged;
+  if (options?.photoUrl && !merged.photo) return { ...merged, photo: true };
+  return merged;
 }

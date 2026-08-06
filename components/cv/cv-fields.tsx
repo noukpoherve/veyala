@@ -185,7 +185,7 @@ function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
           ) : null}
         </div>
         <p className="text-xs text-muted-foreground">
-          JPG, PNG ou WebP — affichée uniquement sur les templates avec photo.
+          JPG, PNG ou WebP — affichée sur tous les templates (désactivable dans Personnaliser).
         </p>
       </div>
     </div>
@@ -200,6 +200,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
   const details = useFieldArray({ control, name: "contact.details" });
   const experiences = useFieldArray({ control, name: "experiences" });
   const education = useFieldArray({ control, name: "education" });
+  const certifications = useFieldArray({ control, name: "certifications" });
   const skills = useFieldArray({ control, name: "skills" });
   const languages = useFieldArray({ control, name: "languages" });
 
@@ -438,6 +439,74 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             </Button>
           ) : null}
         </div>
+      </SectionCard>
+
+      <SectionCard title="Certifications">
+        {certifications.fields.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Aucune certification — ajoutez AWS, Scrum, Google Cloud, etc.
+          </p>
+        ) : null}
+        <SortableList ids={certifications.fields.map((f) => f.id)} onMove={certifications.move}>
+          {(handle, i) => (
+            <div className="flex items-start gap-2 rounded-lg border bg-card p-4">
+              <div className="pt-6">{handle}</div>
+              <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Nom *</Label>
+                  <Input
+                    {...register(`certifications.${i}.name`)}
+                    placeholder="AWS Solutions Architect Associate"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Organisme</Label>
+                  <Input
+                    {...register(`certifications.${i}.issuer`)}
+                    placeholder="Amazon Web Services"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Date</Label>
+                  <Input {...register(`certifications.${i}.dates`)} placeholder="2024" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>URL du credential</Label>
+                  <Input
+                    {...register(`certifications.${i}.url`)}
+                    placeholder="https://…"
+                    inputMode="url"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>N° / ID</Label>
+                  <Input {...register(`certifications.${i}.credentialId`)} />
+                </div>
+              </div>
+              <RemoveButton
+                onClick={() => certifications.remove(i)}
+                label={`Supprimer la certification ${i + 1}`}
+              />
+            </div>
+          )}
+        </SortableList>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            certifications.append({
+              name: "",
+              issuer: "",
+              dates: "",
+              url: "",
+              credentialId: "",
+            })
+          }
+        >
+          <Plus />
+          Ajouter une certification
+        </Button>
       </SectionCard>
 
       <SectionCard title="Compétences">

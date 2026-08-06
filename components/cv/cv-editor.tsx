@@ -15,9 +15,10 @@ import {
 } from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
 import {
-  applyStyleOverride,
-  type ColorsOverride,
   isEmptyStyleOverride,
+  resolveDefinition,
+  type ColorsOverride,
+  type SectionId,
   type StyleOverride,
   type TemplateDefinition,
 } from "@/lib/templates/definition";
@@ -88,10 +89,18 @@ export function CvEditor({
 
   // Effective definition: the chosen template's palette with the user's
   // per-CV colour overrides merged on top, so the preview reflects both.
-  const definition = useMemo(() => {
-    const base = templates.find((t) => t.id === templateId)?.definition ?? templates[0]!.definition;
-    return applyStyleOverride(base, styleOverride);
-  }, [templates, templateId, styleOverride]);
+  const baseTemplate = useMemo(
+    () => templates.find((t) => t.id === templateId)?.definition ?? templates[0]!.definition,
+    [templates, templateId]
+  );
+  const definition = useMemo(
+    () =>
+      resolveDefinition(baseTemplate, {
+        override: styleOverride,
+        photoUrl: values.identity?.photoUrl,
+      }),
+    [baseTemplate, styleOverride, values.identity?.photoUrl]
+  );
 
   const patchColors = (patch: ColorsOverride) =>
     setStyleOverride((prev) => ({ ...prev, colors: { ...prev?.colors, ...patch } }));
@@ -99,6 +108,29 @@ export function CvEditor({
   const setPhotoShape = (shape: "circle" | "square") =>
     setStyleOverride((prev) => ({ ...prev, photoShape: shape }));
   const setLogo = (dataUrl: string) => setStyleOverride((prev) => ({ ...prev, logo: dataUrl }));
+  const setSkillsStyle = (skillsStyle: TemplateDefinition["skillsStyle"]) =>
+    setStyleOverride((prev) => ({ ...prev, skillsStyle }));
+  const setChipStyle = (chipStyle: NonNullable<StyleOverride["chipStyle"]>) =>
+    setStyleOverride((prev) => ({ ...prev, chipStyle }));
+  const patchChipColors = (patch: {
+    chipBackground?: string;
+    chipText?: string;
+    chipBorder?: string;
+  }) => setStyleOverride((prev) => ({ ...prev, ...patch }));
+  const setSidebarDecor = (sidebarDecor: boolean) =>
+    setStyleOverride((prev) => ({ ...prev, sidebarDecor }));
+  const setSections = (next: { sidebarSections: SectionId[]; mainSections: SectionId[] }) =>
+    setStyleOverride((prev) => ({
+      ...prev,
+      sidebarSections: next.sidebarSections,
+      mainSections: next.mainSections,
+    }));
+  const resetSections = () =>
+    setStyleOverride((prev) => {
+      if (!prev) return prev;
+      const { sidebarSections: _s, mainSections: _m, ...rest } = prev;
+      return Object.keys(rest).length ? rest : undefined;
+    });
 
   // Any edit after mount makes the saved exports stale until the next save.
   const mounted = useRef(false);
@@ -299,10 +331,28 @@ export function CvEditor({
         hasPhoto={Boolean(parsedData.identity.photoUrl)}
         logo={definition.logo}
         hasOverride={!isEmptyStyleOverride(styleOverride)}
+        skillsStyle={definition.skillsStyle}
+        chipStyle={definition.chipStyle ?? "solid"}
+        chipBackground={definition.chipBackground}
+        chipText={definition.chipText}
+        chipBorder={definition.chipBorder}
+        sidebarDecor={definition.sidebarDecor !== false}
+        hasSidebarDecorAsset={Boolean(baseTemplate.sidebarImageAsset)}
+        layout={definition.layout}
+        templateSidebar={baseTemplate.sidebarSections}
+        templateMain={baseTemplate.mainSections}
+        sidebarSections={definition.sidebarSections}
+        mainSections={definition.mainSections}
         onChangeColors={patchColors}
         onChangePhoto={setPhoto}
         onChangePhotoShape={setPhotoShape}
         onChangeLogo={setLogo}
+        onChangeSkillsStyle={setSkillsStyle}
+        onChangeChipStyle={setChipStyle}
+        onChangeChipColors={patchChipColors}
+        onChangeSidebarDecor={setSidebarDecor}
+        onChangeSections={setSections}
+        onResetSections={resetSections}
         onReset={() => setStyleOverride(undefined)}
         cvHtml={cvHtml}
       />

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getActivePacks } from "@/lib/cached";
 import { getBalance } from "@/lib/credits";
 import { BuyPackButton } from "@/components/billing/buy-pack-button";
+import { BillingPaymentSync } from "@/components/billing/billing-payment-sync";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
@@ -60,14 +61,20 @@ export default async function BillingPage({ searchParams }: { searchParams: { st
         </Badge>
       </header>
 
-      {searchParams.status === "success" ? (
-        <Alert variant="success" title="Paiement confirmé">
-          Vos crédits sont ajoutés dès la réception du webhook Stripe (quelques secondes).
-        </Alert>
-      ) : null}
+      {searchParams.status === "success" ? <BillingPaymentSync auto /> : null}
       {searchParams.status === "cancelled" ? (
         <Alert variant="info" title="Paiement annulé">
           Aucun montant n&apos;a été débité. Vous pouvez réessayer quand vous voulez.
+        </Alert>
+      ) : null}
+
+      {payments.some((p) => p.status === "PENDING") && searchParams.status !== "success" ? (
+        <Alert variant="info" title="Paiement en attente de confirmation">
+          <p className="mb-3">
+            Un paiement est encore marqué « En attente ». Cliquez pour forcer la synchronisation
+            avec Stripe.
+          </p>
+          <BillingPaymentSync auto={false} />
         </Alert>
       ) : null}
 

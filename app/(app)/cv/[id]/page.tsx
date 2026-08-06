@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
 import {
-  applyStyleOverride,
+  resolveDefinition,
   parseStyleOverride,
   parseTemplateDefinition,
 } from "@/lib/templates/definition";
@@ -30,10 +30,10 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
   if (!cv || cv.userId !== session!.user.id) notFound();
 
   const data = cvSchema.parse(cv.tailoredData);
-  const definition = applyStyleOverride(
-    parseTemplateDefinition(cv.template.definition),
-    parseStyleOverride(cv.styleOverride)
-  );
+  const definition = resolveDefinition(parseTemplateDefinition(cv.template.definition), {
+    override: parseStyleOverride(cv.styleOverride),
+    photoUrl: data.identity.photoUrl,
+  });
   const previewHtml = renderCVHtml(data, definition);
   const letterHtml = cv.coverLetter
     ? renderCoverLetterHtml(data, { body: cv.coverLetter, jobTitle: cv.jobTitle }, definition)
