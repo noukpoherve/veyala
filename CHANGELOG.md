@@ -1,3 +1,20 @@
+# [1.8.0](https://github.com/noukpoherve/veyala/compare/v1.7.1...v1.8.0) (2026-08-07)
+
+
+### Bug Fixes
+
+* **payments:** harden idempotent fulfillCheckout and sync UX ([d25598e](https://github.com/noukpoherve/veyala/commit/d25598e62cb7886a76fba64b4a7151c34979b5dd))
+
+
+### Features
+
+* **admin:** make activity journal human-readable ([b6d9bf9](https://github.com/noukpoherve/veyala/commit/b6d9bf95a906b7f8dc1d30dcafd79bf49852be63))
+* **billing:** add app-owned promo codes at checkout ([8ea7355](https://github.com/noukpoherve/veyala/commit/8ea7355ffeffb0d546c19670ec37dd1c5d843469))
+* **db:** add payment idempotency constraints and promo code schema ([3c18c71](https://github.com/noukpoherve/veyala/commit/3c18c719fca19bcacfd211d0665046bd92860421))
+* flexible CV atelier, import/photo fixes, and Stripe checkout sync ([a7e82ab](https://github.com/noukpoherve/veyala/commit/a7e82ab4fff303042e34cb33cfc6e5aff030b3b9))
+* **ui:** add shared offset pagination helpers ([42ed887](https://github.com/noukpoherve/veyala/commit/42ed887db35667d0b46b11233d87568bb659ea13))
+* **ui:** paginate admin and app list views ([013c2b2](https://github.com/noukpoherve/veyala/commit/013c2b267100144f4ebf419d7fef07c8ea73c4b2))
+
 ## [1.7.1](https://github.com/noukpoherve/veyala/compare/v1.7.0...v1.7.1) (2026-08-02)
 
 
