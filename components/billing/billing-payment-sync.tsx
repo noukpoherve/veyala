@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button";
 /**
  * After Checkout redirects to /billing?status=success, asks Stripe (via our
  * API) to confirm any PENDING sessions and credit them. Covers missing webhooks.
+ * Safe to click repeatedly: the API is idempotent and will not double-credit.
  */
 export function BillingPaymentSync({ auto }: { auto: boolean }) {
   const router = useRouter();
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [credited, setCredited] = useState(0);
   const [message, setMessage] = useState("");
   const ran = useRef(false);
 
@@ -30,12 +32,13 @@ export function BillingPaymentSync({ auto }: { auto: boolean }) {
         setMessage(body?.error || "Synchronisation impossible. Réessayez.");
         return;
       }
-      const credited = body?.credited ?? 0;
+      const n = body?.credited ?? 0;
+      setCredited(n);
       setState("done");
       setMessage(
-        credited > 0
-          ? "Crédits ajoutés. Votre solde a été mis à jour."
-          : "Aucun paiement en attente à créditer. Si le statut reste « En attente », vérifiez le webhook Stripe ou contactez le support."
+        n > 0
+          ? "De nouveaux crédits ont été ajoutés à votre solde."
+          : "Aucun nouveau crédit à ajouter. Votre solde est déjà à jour (un paiement « Payé » ne sera jamais re-crédité)."
       );
       router.refresh();
     } catch {
@@ -62,10 +65,10 @@ export function BillingPaymentSync({ auto }: { auto: boolean }) {
 
   if (state === "loading") {
     return (
-      <Alert variant="info" title="Finalisation du paiement…">
+      <Alert variant="info" title="Vérification en cours…">
         <span className="inline-flex items-center gap-2">
           <Loader2 className="size-4 animate-spin" aria-hidden />
-          Vérification auprès de Stripe…
+          Synchronisation avec Stripe…
         </span>
       </Alert>
     );
@@ -73,7 +76,7 @@ export function BillingPaymentSync({ auto }: { auto: boolean }) {
 
   if (state === "error") {
     return (
-      <Alert variant="error" title="Crédit non synchronisé">
+      <Alert variant="error" title="Synchronisation impossible">
         <p>{message}</p>
         <Button
           type="button"
@@ -90,7 +93,10 @@ export function BillingPaymentSync({ auto }: { auto: boolean }) {
 
   if (state === "done") {
     return (
-      <Alert variant="success" title="Paiement traité">
+      <Alert
+        variant={credited > 0 ? "success" : "info"}
+        title={credited > 0 ? "Crédits ajoutés" : "Solde déjà à jour"}
+      >
         {message}
       </Alert>
     );

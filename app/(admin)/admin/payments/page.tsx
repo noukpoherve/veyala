@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
+import { Pagination } from "@/components/ui/pagination";
+import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Paiements · Admin" };
 
@@ -18,12 +20,24 @@ const STATUS: Record<string, { label: string; variant: "success" | "secondary" |
     FAILED: { label: "Échoué", variant: "destructive" },
   };
 
-export default async function AdminPaymentsPage() {
-  const payments = await db.payment.findMany({
-    include: { user: { select: { email: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+export default async function AdminPaymentsPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
+  const page = parsePage(searchParams.page);
+  const [total, payments] = await Promise.all([
+    db.payment.count(),
+    db.payment.findMany({
+      include: {
+        user: { select: { email: true } },
+        promoCode: { select: { code: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: paginationSkip(page),
+      take: DEFAULT_PAGE_SIZE,
+    }),
+  ]);
 
   return (
     <article className="space-y-6">
@@ -46,6 +60,9 @@ export default async function AdminPaymentsPage() {
                 Crédits
               </th>
               <th scope="col" className="p-3 font-medium">
+                Promo
+              </th>
+              <th scope="col" className="p-3 font-medium">
                 Statut
               </th>
               <th scope="col" className="p-3 font-medium">
@@ -60,15 +77,23 @@ export default async function AdminPaymentsPage() {
                 <tr key={payment.id} className="border-t">
                   <td className="p-3">{dateFr(payment.createdAt)}</td>
                   <td className="p-3">{payment.user.email}</td>
-                  <td className="p-3 font-medium">{euros(payment.amountCents)}</td>
+                  <td className="p-3 font-medium">
+                    {euros(payment.amountCents)}
+                    {payment.discountCents > 0 ? (
+                      <span className="ml-1 text-xs text-emerald-700">
+                        (−{euros(payment.discountCents)})
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="p-3">+{payment.creditsPurchased}</td>
+                  <td className="p-3 font-mono text-xs">{payment.promoCode?.code ?? "—"}</td>
                   <td className="p-3">
                     <Badge variant={status.variant}>{status.label}</Badge>
                   </td>
                   <td className="p-3">
                     {payment.stripePaymentIntent ? (
                       <a
-                        href={`https://dashboard.stripe.com/test/payments/${payment.stripePaymentIntent}`}
+                        href={`https://dashboard.stripe.com/payments/${payment.stripePaymentIntent}`}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-primary underline"
@@ -89,6 +114,14 @@ export default async function AdminPaymentsPage() {
       {payments.length === 0 ? (
         <p className="text-sm text-muted-foreground">Aucun paiement pour le moment.</p>
       ) : null}
+
+      <Pagination
+        pathname="/admin/payments"
+        searchParams={searchParams}
+        page={page}
+        totalPages={totalPages(total)}
+        totalItems={total}
+      />
     </article>
   );
 }

@@ -46,6 +46,7 @@ model User {
   credits            Credits?
   creditTransactions CreditTransaction[]
   payments           Payment[]
+  promoCodesCreated  PromoCode[]         @relation("PromoCodeCreator")
   baseProfile        BaseProfile?
   templates          Template[]
   generatedCVs       GeneratedCV[]
@@ -121,6 +122,8 @@ model CreditTransaction {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  // Prevents double-crediting the same purchase/generation (NULL refId allowed many times).
+  @@unique([reason, refId])
 }
 
 enum PaymentStatus {
@@ -133,16 +136,22 @@ model Payment {
   id                  String        @id @default(cuid())
   userId              String
   stripeSessionId     String        @unique
-  stripePaymentIntent String?
+  stripePaymentIntent String?       @unique
+  packId              String?
+  promoCodeId         String?
   amountCents         Int
+  discountCents       Int           @default(0)
   currency            String        @default("eur")
   creditsPurchased    Int
   status              PaymentStatus @default(PENDING)
   createdAt           DateTime      @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pack      Pack?      @relation(fields: [packId], references: [id], onDelete: SetNull)
+  promoCode PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+  @@index([promoCodeId])
 }
 
 model Pack {
@@ -152,6 +161,40 @@ model Pack {
   credits    Int
   active     Boolean @default(true)
   sortOrder  Int     @default(0)
+
+  payments   Payment[]
+  promoCodes PromoCode[]
+}
+
+enum PromoKind {
+  PERCENT
+  FIXED_CENTS
+  BONUS_CREDITS
+}
+
+/** App-owned promo codes applied before Stripe Checkout (amount/credits fixed on Payment). */
+model PromoCode {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  kind            PromoKind
+  percentOff      Int?
+  amountOffCents  Int?
+  bonusCredits    Int?
+  packId          String?
+  maxRedemptions  Int?
+  redemptionCount Int       @default(0)
+  perUserLimit    Int       @default(1)
+  expiresAt       DateTime?
+  active          Boolean   @default(true)
+  createdById     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  pack      Pack?     @relation(fields: [packId], references: [id], onDelete: SetNull)
+  createdBy User?     @relation("PromoCodeCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  payments  Payment[]
+
+  @@index([active, expiresAt])
 }
 
 // ---------- CV ----------

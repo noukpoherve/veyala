@@ -4,21 +4,33 @@ import { Inbox } from "lucide-react";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
+import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Boîte de réception" };
 
 const dateFr = (d: Date) =>
   new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(d);
 
-export default async function AdminInboxPage() {
-  const threads = await db.supportThread.findMany({
-    orderBy: { updatedAt: "desc" },
-    include: {
-      user: { select: { email: true, name: true } },
-      messages: { orderBy: { createdAt: "desc" }, take: 1 },
-      _count: { select: { messages: { where: { fromAdmin: false, isRead: false } } } },
-    },
-  });
+export default async function AdminInboxPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
+  const page = parsePage(searchParams.page);
+  const [total, threads] = await Promise.all([
+    db.supportThread.count(),
+    db.supportThread.findMany({
+      orderBy: { updatedAt: "desc" },
+      skip: paginationSkip(page),
+      take: DEFAULT_PAGE_SIZE,
+      include: {
+        user: { select: { email: true, name: true } },
+        messages: { orderBy: { createdAt: "desc" }, take: 1 },
+        _count: { select: { messages: { where: { fromAdmin: false, isRead: false } } } },
+      },
+    }),
+  ]);
 
   const unreadTotal = threads.reduce((sum, thread) => sum + thread._count.messages, 0);
 
@@ -28,10 +40,8 @@ export default async function AdminInboxPage() {
         <div>
           <h1 className="font-display text-2xl font-bold">Boîte de réception</h1>
           <p className="text-sm text-muted-foreground">
-            {threads.length} conversation{threads.length > 1 ? "s" : ""}
-            {unreadTotal > 0
-              ? ` · ${unreadTotal} message${unreadTotal > 1 ? "s" : ""} non lu${unreadTotal > 1 ? "s" : ""}`
-              : ""}
+            {total} conversation{total > 1 ? "s" : ""}
+            {unreadTotal > 0 ? ` · ${unreadTotal} non lu${unreadTotal > 1 ? "s" : ""} (page)` : ""}
           </p>
         </div>
       </header>
@@ -91,6 +101,14 @@ export default async function AdminInboxPage() {
           })}
         </ul>
       )}
+
+      <Pagination
+        pathname="/admin/inbox"
+        searchParams={searchParams}
+        page={page}
+        totalPages={totalPages(total)}
+        totalItems={total}
+      />
     </article>
   );
 }

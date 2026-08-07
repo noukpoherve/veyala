@@ -2,14 +2,19 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { logActivity } from "@/lib/activity";
+import { PromoValidationError, resolvePromoForCheckout } from "@/lib/promo";
 import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
-const bodySchema = z.object({ packId: z.string().min(1) });
+const bodySchema = z.object({
+  packId: z.string().min(1),
+  promoCode: z.string().max(64).optional(),
+});
 
-/** Creates a Stripe Checkout session for a credit pack. */
+/** Creates a Stripe Checkout session for a credit pack (optional promo). */
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) {
@@ -26,7 +31,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Ce pack n'est plus disponible." }, { status: 404 });
   }
 
+  let amountCents = pack.priceCents;
+  let creditsPurchased = pack.credits;
+  let discountCents = 0;
+  let promoCodeId: string | undefined;
+  let promoLabel: string | undefined;
+
+  const rawPromo = parsed.data.promoCode?.trim();
+  if (rawPromo) {
+    try {
+      const quote = await resolvePromoForCheckout({
+        code: rawPromo,
+        pack,
+        userId: session.user.id,
+      });
+      amountCents = quote.amountCents;
+      creditsPurchased = quote.credits;
+      discountCents = quote.discountCents;
+      promoCodeId = quote.promo.id;
+      promoLabel = quote.promo.code;
+    } catch (e) {
+      const message = e instanceof PromoValidationError ? e.message : "Code promo invalide.";
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+  }
+
   const origin = siteUrl();
+  const description =
+    discountCents > 0 || creditsPurchased !== pack.credits
+      ? `${creditsPurchased} générations de CV${promoLabel ? ` · code ${promoLabel}` : ""}`
+      : `${pack.credits} générations de CV`;
 
   try {
     const stripe = getStripe();
@@ -39,15 +73,21 @@ export async function POST(req: Request) {
           quantity: 1,
           price_data: {
             currency: "eur",
-            unit_amount: pack.priceCents,
+            unit_amount: amountCents,
             product_data: {
               name: `Veyala — Pack ${pack.label}`,
-              description: `${pack.credits} générations de CV`,
+              description,
             },
           },
         },
       ],
-      metadata: { userId: session.user.id, packId: pack.id },
+      metadata: {
+        userId: session.user.id,
+        packId: pack.id,
+        ...(promoCodeId ? { promoCodeId, promoCode: promoLabel ?? "" } : {}),
+        discountCents: String(discountCents),
+        creditsPurchased: String(creditsPurchased),
+      },
       success_url: `${origin}/billing?status=success`,
       cancel_url: `${origin}/billing?status=cancelled`,
     });
@@ -56,10 +96,26 @@ export async function POST(req: Request) {
       data: {
         userId: session.user.id,
         stripeSessionId: checkout.id,
-        amountCents: pack.priceCents,
+        packId: pack.id,
+        promoCodeId,
+        amountCents,
+        discountCents,
         currency: "eur",
-        creditsPurchased: pack.credits,
+        creditsPurchased,
         status: "PENDING",
+      },
+    });
+
+    void logActivity({
+      action: "payment.checkout_started",
+      actorId: session.user.id,
+      subjectUserId: session.user.id,
+      meta: {
+        packLabel: pack.label,
+        amountCents,
+        discountCents,
+        credits: creditsPurchased,
+        ...(promoLabel ? { promoCode: promoLabel } : {}),
       },
     });
 

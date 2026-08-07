@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
+import { Pagination } from "@/components/ui/pagination";
+import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Utilisateurs · Admin" };
 
@@ -30,25 +32,32 @@ const INVITE_MESSAGES: Record<string, { text: string; tone: "success" | "error" 
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: { q?: string; invite?: string; deleted?: string };
+  searchParams: { q?: string; invite?: string; deleted?: string; page?: string };
 }) {
   const session = await auth();
   const q = searchParams.q?.trim() ?? "";
   const inviteMessage = searchParams.invite ? INVITE_MESSAGES[searchParams.invite] : null;
+  const page = parsePage(searchParams.page);
 
-  const users = await db.user.findMany({
-    where: q
-      ? {
-          OR: [
-            { email: { contains: q, mode: "insensitive" } },
-            { name: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
-    include: { credits: true, _count: { select: { generatedCVs: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+  const where = q
+    ? {
+        OR: [
+          { email: { contains: q, mode: "insensitive" as const } },
+          { name: { contains: q, mode: "insensitive" as const } },
+        ],
+      }
+    : undefined;
+
+  const [total, users] = await Promise.all([
+    db.user.count({ where }),
+    db.user.findMany({
+      where,
+      include: { credits: true, _count: { select: { generatedCVs: true } } },
+      orderBy: { createdAt: "desc" },
+      skip: paginationSkip(page),
+      take: DEFAULT_PAGE_SIZE,
+    }),
+  ]);
 
   return (
     <article className="space-y-6">
@@ -227,6 +236,14 @@ export default async function AdminUsersPage({
           Aucun utilisateur ne correspond à la recherche.
         </p>
       ) : null}
+
+      <Pagination
+        pathname="/admin/users"
+        searchParams={searchParams}
+        page={page}
+        totalPages={totalPages(total)}
+        totalItems={total}
+      />
     </article>
   );
 }
