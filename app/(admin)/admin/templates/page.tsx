@@ -8,21 +8,32 @@ import { TemplateSwatch } from "@/components/templates/template-swatch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
+import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Templates · Admin" };
 
-export default async function AdminTemplatesPage() {
-  const [pending, others] = await Promise.all([
+export default async function AdminTemplatesPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
+  const page = parsePage(searchParams.page);
+  const historyWhere = { status: { in: ["APPROVED", "REJECTED"] as ("APPROVED" | "REJECTED")[] } };
+
+  const [pending, historyTotal, others] = await Promise.all([
     db.template.findMany({
       where: { status: "PENDING" },
       include: { owner: { select: { email: true } } },
       orderBy: { createdAt: "asc" },
     }),
+    db.template.count({ where: historyWhere }),
     db.template.findMany({
-      where: { status: { in: ["APPROVED", "REJECTED"] } },
+      where: historyWhere,
       include: { owner: { select: { email: true } } },
       orderBy: { createdAt: "desc" },
-      take: 30,
+      skip: paginationSkip(page),
+      take: DEFAULT_PAGE_SIZE,
     }),
   ]);
 
@@ -136,6 +147,13 @@ export default async function AdminTemplatesPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          pathname="/admin/templates"
+          searchParams={searchParams}
+          page={page}
+          totalPages={totalPages(historyTotal)}
+          totalItems={historyTotal}
+        />
       </section>
     </article>
   );

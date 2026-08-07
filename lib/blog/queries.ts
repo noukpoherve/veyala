@@ -100,11 +100,19 @@ export async function getPublishedSlugs(): Promise<string[]> {
   }, []);
 }
 
-export async function listAdminPosts(): Promise<AdminBlogPost[]> {
-  const rows = await db.blogPost.findMany({
-    orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
-  });
-  return rows.map(mapAdminPost);
+export async function listAdminPosts(opts?: {
+  skip?: number;
+  take?: number;
+}): Promise<{ posts: AdminBlogPost[]; total: number }> {
+  const [total, rows] = await Promise.all([
+    db.blogPost.count(),
+    db.blogPost.findMany({
+      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+      skip: opts?.skip,
+      take: opts?.take,
+    }),
+  ]);
+  return { posts: rows.map(mapAdminPost), total };
 }
 
 export async function getAdminPostById(id: string): Promise<AdminBlogPost | null> {

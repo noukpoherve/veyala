@@ -7,11 +7,17 @@ import { deleteBlogPost, unpublishBlogPost } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
+import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Blog · Admin" };
 
-export default async function AdminBlogPage() {
-  const posts = await listAdminPosts();
+export default async function AdminBlogPage({ searchParams }: { searchParams: { page?: string } }) {
+  const page = parsePage(searchParams.page);
+  const { posts, total } = await listAdminPosts({
+    skip: paginationSkip(page),
+    take: DEFAULT_PAGE_SIZE,
+  });
   const published = posts.filter((post) => post.status === "PUBLISHED").length;
 
   return (
@@ -20,8 +26,8 @@ export default async function AdminBlogPage() {
         <div>
           <h1 className="font-display text-2xl font-bold">Blog</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {posts.length} article{posts.length > 1 ? "s" : ""} · {published} publié
-            {published > 1 ? "s" : ""}
+            {total} article{total > 1 ? "s" : ""} · {published} publié
+            {published > 1 ? "s" : ""} (page)
           </p>
         </div>
         <Button asChild variant="gradient">
@@ -95,6 +101,14 @@ export default async function AdminBlogPage() {
           ))}
         </ul>
       )}
+
+      <Pagination
+        pathname="/admin/blog"
+        searchParams={searchParams}
+        page={page}
+        totalPages={totalPages(total)}
+        totalItems={total}
+      />
     </article>
   );
 }
