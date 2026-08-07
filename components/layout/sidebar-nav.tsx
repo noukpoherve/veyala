@@ -14,6 +14,7 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  Tag,
   UserRound,
   Users,
   Wallet,
@@ -37,6 +38,7 @@ const ADMIN_ITEMS = [
   { href: "/admin/activity", label: "Activité", icon: ShieldCheck },
   { href: "/admin/templates", label: "Validation templates", icon: Palette },
   { href: "/admin/payments", label: "Paiements", icon: CreditCard },
+  { href: "/admin/promos", label: "Codes promo", icon: Tag },
   { href: "/admin/settings", label: "Réglages", icon: Settings },
 ];
 

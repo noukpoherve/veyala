@@ -4,11 +4,12 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActivePacks } from "@/lib/cached";
 import { getBalance } from "@/lib/credits";
-import { BuyPackButton } from "@/components/billing/buy-pack-button";
+import { BillingCheckout } from "@/components/billing/billing-checkout";
 import { BillingPaymentSync } from "@/components/billing/billing-payment-sync";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import { Pagination } from "@/components/ui/pagination";
+import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Crédits & factures" };
 
@@ -35,18 +36,40 @@ const STATUS_LABELS: Record<
   FAILED: { label: "Échoué", variant: "destructive" },
 };
 
-export default async function BillingPage({ searchParams }: { searchParams: { status?: string } }) {
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: { status?: string; page?: string; lpage?: string };
+}) {
   const session = await auth();
   const userId = session!.user.id;
+  const paymentsPage = parsePage(searchParams.page);
+  const ledgerPage = parsePage(searchParams.lpage);
 
-  const [balance, packs, payments, transactions] = await Promise.all([
+  const [balance, packs, paymentsTotal, payments, txTotal, transactions] = await Promise.all([
     getBalance(userId),
     getActivePacks(),
-    db.payment.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 20 }),
-    db.creditTransaction.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 30 }),
+    db.payment.count({ where: { userId } }),
+    db.payment.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      skip: paginationSkip(paymentsPage),
+      take: DEFAULT_PAGE_SIZE,
+      include: { promoCode: { select: { code: true } } },
+    }),
+    db.creditTransaction.count({ where: { userId } }),
+    db.creditTransaction.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      skip: paginationSkip(ledgerPage),
+      take: DEFAULT_PAGE_SIZE,
+    }),
   ]);
 
   const highlighted = Math.floor(packs.length / 2);
+  const pendingExists = await db.payment.count({
+    where: { userId, status: "PENDING" },
+  });
 
   return (
     <article className="mx-auto max-w-4xl space-y-8">
@@ -68,11 +91,12 @@ export default async function BillingPage({ searchParams }: { searchParams: { st
         </Alert>
       ) : null}
 
-      {payments.some((p) => p.status === "PENDING") && searchParams.status !== "success" ? (
-        <Alert variant="info" title="Paiement en attente de confirmation">
+      {pendingExists > 0 && searchParams.status !== "success" ? (
+        <Alert variant="info" title="Checkout non finalisé côté Stripe">
           <p className="mb-3">
-            Un paiement est encore marqué « En attente ». Cliquez pour forcer la synchronisation
-            avec Stripe.
+            Une session de paiement est encore « En attente » (souvent un checkout ouvert puis
+            abandonné). La synchronisation met le statut à jour ;{" "}
+            <strong>elle ne re-crédite jamais</strong> un achat déjà marqué « Payé ».
           </p>
           <BillingPaymentSync auto={false} />
         </Alert>
@@ -82,24 +106,7 @@ export default async function BillingPage({ searchParams }: { searchParams: { st
         <h2 id="packs-title" className="font-display text-lg font-semibold">
           Recharger mon compte
         </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {packs.map((pack, i) => (
-            <Card key={pack.id} className={i === highlighted ? "border-primary shadow-md" : ""}>
-              <CardHeader className="items-center text-center">
-                {i === highlighted ? <Badge className="mb-1">Le plus populaire</Badge> : null}
-                <CardTitle className="text-xl">{pack.label}</CardTitle>
-                <CardDescription>
-                  {pack.credits} génération{pack.credits > 1 ? "s" : ""} —{" "}
-                  {euros(Math.round(pack.priceCents / pack.credits))}/CV
-                </CardDescription>
-                <p className="font-display text-3xl font-bold">{euros(pack.priceCents)}</p>
-              </CardHeader>
-              <CardContent>
-                <BuyPackButton packId={pack.id} highlighted={i === highlighted} />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <BillingCheckout packs={packs} highlightedIndex={highlighted} />
       </section>
 
       <section aria-labelledby="payments-title" className="space-y-3">
@@ -109,41 +116,63 @@ export default async function BillingPage({ searchParams }: { searchParams: { st
         {payments.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aucun paiement pour le moment.</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left">
-                <tr>
-                  <th scope="col" className="p-3 font-medium">
-                    Date
-                  </th>
-                  <th scope="col" className="p-3 font-medium">
-                    Montant
-                  </th>
-                  <th scope="col" className="p-3 font-medium">
-                    Crédits
-                  </th>
-                  <th scope="col" className="p-3 font-medium">
-                    Statut
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((p) => {
-                  const status = STATUS_LABELS[p.status] ?? STATUS_LABELS.PENDING!;
-                  return (
-                    <tr key={p.id} className="border-t">
-                      <td className="p-3">{dateFr(p.createdAt)}</td>
-                      <td className="p-3">{euros(p.amountCents)}</td>
-                      <td className="p-3">+{p.creditsPurchased}</td>
-                      <td className="p-3">
-                        <Badge variant={status.variant}>{status.label}</Badge>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-left">
+                  <tr>
+                    <th scope="col" className="p-3 font-medium">
+                      Date
+                    </th>
+                    <th scope="col" className="p-3 font-medium">
+                      Montant
+                    </th>
+                    <th scope="col" className="p-3 font-medium">
+                      Crédits
+                    </th>
+                    <th scope="col" className="p-3 font-medium">
+                      Promo
+                    </th>
+                    <th scope="col" className="p-3 font-medium">
+                      Statut
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((p) => {
+                    const status = STATUS_LABELS[p.status] ?? STATUS_LABELS.PENDING!;
+                    return (
+                      <tr key={p.id} className="border-t">
+                        <td className="p-3">{dateFr(p.createdAt)}</td>
+                        <td className="p-3">
+                          {euros(p.amountCents)}
+                          {p.discountCents > 0 ? (
+                            <span className="ml-1 text-xs text-emerald-700">
+                              (−{euros(p.discountCents)})
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="p-3">
+                          {p.status === "PAID" ? `+${p.creditsPurchased}` : p.creditsPurchased}
+                        </td>
+                        <td className="p-3 font-mono text-xs">{p.promoCode?.code ?? "—"}</td>
+                        <td className="p-3">
+                          <Badge variant={status.variant}>{status.label}</Badge>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              pathname="/billing"
+              searchParams={searchParams}
+              page={paymentsPage}
+              totalPages={totalPages(paymentsTotal)}
+              totalItems={paymentsTotal}
+            />
+          </>
         )}
       </section>
 
@@ -154,36 +183,46 @@ export default async function BillingPage({ searchParams }: { searchParams: { st
         {transactions.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aucun mouvement pour le moment.</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left">
-                <tr>
-                  <th scope="col" className="p-3 font-medium">
-                    Date
-                  </th>
-                  <th scope="col" className="p-3 font-medium">
-                    Motif
-                  </th>
-                  <th scope="col" className="p-3 font-medium">
-                    Crédits
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((t) => (
-                  <tr key={t.id} className="border-t">
-                    <td className="p-3">{dateFr(t.createdAt)}</td>
-                    <td className="p-3">{REASON_LABELS[t.reason] ?? t.reason}</td>
-                    <td
-                      className={`p-3 font-medium ${t.delta > 0 ? "text-emerald-600" : "text-destructive"}`}
-                    >
-                      {t.delta > 0 ? `+${t.delta}` : t.delta}
-                    </td>
+          <>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-left">
+                  <tr>
+                    <th scope="col" className="p-3 font-medium">
+                      Date
+                    </th>
+                    <th scope="col" className="p-3 font-medium">
+                      Motif
+                    </th>
+                    <th scope="col" className="p-3 font-medium">
+                      Crédits
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {transactions.map((t) => (
+                    <tr key={t.id} className="border-t">
+                      <td className="p-3">{dateFr(t.createdAt)}</td>
+                      <td className="p-3">{REASON_LABELS[t.reason] ?? t.reason}</td>
+                      <td
+                        className={`p-3 font-medium ${t.delta > 0 ? "text-emerald-600" : "text-destructive"}`}
+                      >
+                        {t.delta > 0 ? `+${t.delta}` : t.delta}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              pathname="/billing"
+              searchParams={searchParams}
+              page={ledgerPage}
+              totalPages={totalPages(txTotal)}
+              totalItems={txTotal}
+              pageParam="lpage"
+            />
+          </>
         )}
       </section>
     </article>
