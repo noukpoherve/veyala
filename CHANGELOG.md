@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/noukpoherve/veyala/compare/v1.8.0...v1.9.0) (2026-08-11)
+
+
+### Features
+
+* **campus-france:** add formation dossier module with project proposals ([c71da22](https://github.com/noukpoherve/veyala/commit/c71da2244bc249e6e31dc949c35122e5c3b63e52))
+
 # [1.8.0](https://github.com/noukpoherve/veyala/compare/v1.7.1...v1.8.0) (2026-08-07)
 
 
