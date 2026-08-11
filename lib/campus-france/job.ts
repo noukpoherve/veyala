@@ -1,36 +1,16 @@
 import "server-only";
 import { db } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
-import {
-  generateCV,
-  GenerationError,
-  type GenerateParams,
-  type GenerateProgress,
-  type GenerateStep,
-} from "@/lib/generate-cv";
-import { jobOfferOptionsSchema } from "@/lib/job-offer-schema";
-import { runCampusFranceJob } from "@/lib/campus-france/job";
-import type { z } from "zod";
+import { GenerationError, type GenerateProgress, type GenerateStep } from "@/lib/generate-cv";
+import { campusFranceOptionsSchema, type CampusFranceOptions } from "@/lib/campus-france/schema";
+import { generateCampusFranceDossier } from "@/lib/campus-france/generate";
+import type { GenerationJobPublic } from "@/lib/generation-job";
 
-const jobParamsSchema = jobOfferOptionsSchema;
+export type CampusFranceJobParams = CampusFranceOptions;
 
-export type GenerationJobParams = z.infer<typeof jobParamsSchema>;
-
-export function parseGenerationJobParams(raw: unknown): GenerationJobParams {
-  return jobParamsSchema.parse(raw);
+export function parseCampusFranceJobParams(raw: unknown): CampusFranceJobParams {
+  return campusFranceOptionsSchema.parse(raw);
 }
-
-export type GenerationJobPublic = {
-  id: string;
-  status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
-  step: string | null;
-  message: string | null;
-  scoreBefore: number | null;
-  scoreAfter: number | null;
-  error: string | null;
-  errorStatus: number | null;
-  generatedCvId: string | null;
-};
 
 function toPublic(job: {
   id: string;
@@ -56,10 +36,10 @@ function toPublic(job: {
   };
 }
 
-/** Creates a QUEUED job (or returns an in-flight / completed one for the same key). */
-export async function enqueueGenerationJob(
+/** Creates a QUEUED Campus France job (or returns in-flight / completed for same key). */
+export async function enqueueCampusFranceJob(
   userId: string,
-  params: GenerationJobParams
+  params: CampusFranceJobParams
 ): Promise<GenerationJobPublic> {
   const idempotencyKey = params.idempotencyKey?.trim().slice(0, 64) || undefined;
 
@@ -75,11 +55,11 @@ export async function enqueueGenerationJob(
       ) {
         return toPublic(existing);
       }
-      // FAILED → re-queue for a clean retry (credit was refunded by generateCV).
       const reset = await db.generationJob.update({
         where: { id: existing.id },
         data: {
           status: "QUEUED",
+          universe: "CAMPUS_FRANCE",
           step: "reading_offer",
           message: "En file d'attente…",
           scoreBefore: null,
@@ -98,11 +78,12 @@ export async function enqueueGenerationJob(
 
   const attemptId = idempotencyKey
     ? `gen_${idempotencyKey}`
-    : `gen_${userId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    : `gen_cf_${userId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
   const job = await db.generationJob.create({
     data: {
       userId,
+      universe: "CAMPUS_FRANCE",
       status: "QUEUED",
       step: "reading_offer",
       message: "En file d'attente…",
@@ -112,14 +93,6 @@ export async function enqueueGenerationJob(
     },
   });
   return toPublic(job);
-}
-
-export async function getGenerationJobForUser(
-  jobId: string,
-  userId: string
-): Promise<GenerationJobPublic | null> {
-  const job = await db.generationJob.findFirst({ where: { id: jobId, userId } });
-  return job ? toPublic(job) : null;
 }
 
 async function writeProgress(jobId: string, event: GenerateProgress): Promise<void> {
@@ -142,26 +115,20 @@ async function writeProgress(jobId: string, event: GenerateProgress): Promise<vo
 }
 
 /**
- * Claims the job and runs the CV pipeline. Idempotent for SUCCEEDED jobs.
- * Safe to call from a dedicated worker route while the client polls status.
- * Dispatches Campus France jobs to the dedicated pipeline.
+ * Runs a Campus France generation job. Called from the shared runner when
+ * universe === CAMPUS_FRANCE.
  */
-export async function runGenerationJob(
+export async function runCampusFranceJob(
   jobId: string,
   userId: string
 ): Promise<GenerationJobPublic> {
-  const job = await db.generationJob.findFirst({ where: { id: jobId, userId } });
-  if (!job) throw new GenerationError("Job de génération introuvable.", 404);
-
-  if (job.universe === "CAMPUS_FRANCE") {
-    return runCampusFranceJob(jobId, userId);
-  }
+  const job = await db.generationJob.findFirst({
+    where: { id: jobId, userId, universe: "CAMPUS_FRANCE" },
+  });
+  if (!job) throw new GenerationError("Job Campus France introuvable.", 404);
 
   if (job.status === "SUCCEEDED") return toPublic(job);
-  if (job.status === "RUNNING") {
-    // Another worker is already on it — poller will observe the result.
-    return toPublic(job);
-  }
+  if (job.status === "RUNNING") return toPublic(job);
 
   const claimed = await db.generationJob.updateMany({
     where: { id: jobId, userId, status: { in: ["QUEUED", "FAILED"] } },
@@ -179,9 +146,9 @@ export async function runGenerationJob(
     return toPublic(latest);
   }
 
-  let params: GenerationJobParams;
+  let params: CampusFranceJobParams;
   try {
-    params = parseGenerationJobParams(job.params);
+    params = parseCampusFranceJobParams(job.params);
   } catch {
     await db.generationJob.update({
       where: { id: jobId },
@@ -195,22 +162,22 @@ export async function runGenerationJob(
     throw new GenerationError("Paramètres de génération invalides.", 400);
   }
 
-  const generateParams: GenerateParams = {
-    userId,
-    ...params,
-    idempotencyKey: params.idempotencyKey ?? undefined,
-  };
-
   try {
-    const cv = await generateCV(generateParams, {
-      onProgress: (event) => {
-        void writeProgress(jobId, event).catch((err) =>
-          console.error("[generation-job] progress write failed", err)
-        );
+    const cv = await generateCampusFranceDossier(
+      {
+        userId,
+        ...params,
+        idempotencyKey: params.idempotencyKey ?? undefined,
       },
-      // Reuse the job's attemptId so refunds match the debit ledger.
-      attemptIdOverride: job.attemptId,
-    });
+      {
+        onProgress: (event) => {
+          void writeProgress(jobId, event).catch((err) =>
+            console.error("[campus-france-job] progress write failed", err)
+          );
+        },
+        attemptIdOverride: job.attemptId,
+      }
+    );
 
     const done = await db.generationJob.update({
       where: { id: jobId },

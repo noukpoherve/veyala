@@ -57,7 +57,13 @@ function StatusCell({ status }: { status: MatchStatus }) {
  * Compact match bilan: score strip always visible, comparative table in an
  * accordion so the generated CV stays above the fold.
  */
-export function MatchReport({ breakdown }: { breakdown: MatchBreakdown }) {
+export function MatchReport({
+  breakdown,
+  title = "Bilan matching ATS",
+}: {
+  breakdown: MatchBreakdown;
+  title?: string;
+}) {
   const panelId = useId();
   const [open, setOpen] = useState(false);
   const rows = compareMatchBreakdown(breakdown);
@@ -80,7 +86,7 @@ export function MatchReport({ breakdown }: { breakdown: MatchBreakdown }) {
       >
         <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">Bilan matching ATS</p>
+          <p className="text-sm font-semibold">{title}</p>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
             <span className="tabular-nums text-foreground/80">{breakdown.before.score}%</span>
             <ArrowRight className="size-3.5" aria-hidden />

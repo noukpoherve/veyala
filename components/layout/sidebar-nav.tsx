@@ -7,6 +7,7 @@ import {
   ChevronDown,
   CreditCard,
   FileText,
+  GraduationCap,
   Inbox,
   LayoutDashboard,
   LifeBuoy,
@@ -24,6 +25,7 @@ import { cn } from "@/lib/utils";
 const MAIN_ITEMS = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/generate", label: "Générer un CV", icon: Sparkles },
+  { href: "/campus-france", label: "Campus France", icon: GraduationCap },
   { href: "/profile", label: "Mon CV de base", icon: UserRound },
   { href: "/templates", label: "Templates", icon: Palette },
   { href: "/billing", label: "Crédits & factures", icon: Wallet },

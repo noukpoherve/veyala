@@ -99,9 +99,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
                             )}
                           </time>
                         </CardDescription>
+                        {cv.universe === "CAMPUS_FRANCE" ? (
+                          <Badge variant="secondary" className="w-fit">
+                            Campus France
+                          </Badge>
+                        ) : null}
                         {cv.matchScoreBefore != null && cv.matchScoreAfter != null ? (
                           <Badge variant="secondary" className="w-fit">
-                            Matching {cv.matchScoreBefore}% → {cv.matchScoreAfter}%
+                            {cv.universe === "CAMPUS_FRANCE" ? "Cohérence" : "Matching"}{" "}
+                            {cv.matchScoreBefore}% → {cv.matchScoreAfter}%
                           </Badge>
                         ) : null}
                       </CardHeader>
