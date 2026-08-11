@@ -62,12 +62,16 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
             )}
           </p>
           <div className="flex flex-wrap gap-2">
+            {cv.universe === "CAMPUS_FRANCE" ? (
+              <Badge variant="secondary">Campus France</Badge>
+            ) : null}
             <Badge variant="secondary">
               Source : {cv.jobSource === "texte collé" ? "texte collé" : cv.jobSource}
             </Badge>
             {cv.matchScoreBefore != null && cv.matchScoreAfter != null ? (
               <Badge>
-                Matching {cv.matchScoreBefore}% → {cv.matchScoreAfter}%
+                {cv.universe === "CAMPUS_FRANCE" ? "Cohérence" : "Matching"} {cv.matchScoreBefore}%
+                → {cv.matchScoreAfter}%
                 {cv.matchScoreAfter - cv.matchScoreBefore >= 0
                   ? ` (+${cv.matchScoreAfter - cv.matchScoreBefore})`
                   : ` (${cv.matchScoreAfter - cv.matchScoreBefore})`}
@@ -82,17 +86,26 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
               Modifier dans l&apos;éditeur
             </Link>
           </Button>
-          <RegenerateForm cvId={cv.id} />
+          {cv.universe === "EMPLOYMENT" ? <RegenerateForm cvId={cv.id} /> : null}
         </div>
       </header>
 
-      {matchBreakdown ? <MatchReport breakdown={matchBreakdown} /> : null}
+      {matchBreakdown ? (
+        <MatchReport
+          breakdown={matchBreakdown}
+          title={
+            cv.universe === "CAMPUS_FRANCE"
+              ? "Bilan de cohérence Campus France"
+              : "Bilan matching ATS"
+          }
+        />
+      ) : null}
 
       <section aria-labelledby="cv-title" className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="cv-title" className="flex items-center gap-2 font-display text-lg font-semibold">
             <FileText className="size-5 text-primary" aria-hidden />
-            CV optimisé
+            {cv.universe === "CAMPUS_FRANCE" ? "CV académique" : "CV optimisé"}
           </h2>
           <div className="flex gap-2">
             {cv.docxUrl ? (

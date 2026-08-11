@@ -241,13 +241,19 @@ model Template {
   @@index([status, isPublic])
 }
 
+enum GenerationUniverse {
+  EMPLOYMENT
+  CAMPUS_FRANCE
+}
+
 model GeneratedCV {
-  id           String   @id @default(cuid())
+  id           String             @id @default(cuid())
   userId       String
   templateId   String
+  universe     GenerationUniverse @default(EMPLOYMENT)
   jobTitle     String
   jobSource    String
-  jobText      String   @db.Text
+  jobText      String             @db.Text
   jobTextHash  String
   tailoredData Json
   /** Per-CV colour overrides applied on top of the template palette (nullable). */
@@ -259,7 +265,7 @@ model GeneratedCV {
   coverLetterDocxUrl String?
   coverLetterPdfUrl  String?
 
-  /** Deterministic match % vs the job checklist (0–100), before / after tailoring. */
+  /** Deterministic match % vs the job/formation checklist (0–100), before / after. */
   matchScoreBefore Int?
   matchScoreAfter  Int?
   matchBreakdown   Json?
@@ -274,6 +280,7 @@ model GeneratedCV {
 
   @@unique([userId, idempotencyKey])
   @@index([userId, createdAt])
+  @@index([userId, universe, createdAt])
   @@index([jobTextHash])
 }
 
@@ -295,6 +302,27 @@ model JobAnalysis {
   updatedAt   DateTime @updatedAt
 }
 
+/**
+ * Cached structured formation checklist for Campus France coherence matching.
+ * LLM extracts once per programTextHash; later scoring is deterministic.
+ */
+model FormationAnalysis {
+  id                String   @id @default(cuid())
+  programTextHash   String   @unique
+  title             String   @default("")
+  domain            String   @default("")
+  level             String   @default("")
+  prerequisites     String[] @default([])
+  objectives        String[] @default([])
+  targetSkills      String[] @default([])
+  outcomes          String[] @default([])
+  selectionCriteria String[] @default([])
+  /** "llm" | "heuristic" */
+  source            String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
 enum GenerationJobStatus {
   QUEUED
   RUNNING
@@ -309,6 +337,7 @@ enum GenerationJobStatus {
 model GenerationJob {
   id             String              @id @default(cuid())
   userId         String
+  universe       GenerationUniverse  @default(EMPLOYMENT)
   status         GenerationJobStatus @default(QUEUED)
   /** Current pipeline step id (reading_offer, adapting_cv, …). */
   step           String?

@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
  * (otherwise hot-reload keeps an old client → missing delegates like `blogPost`).
  * Bump CLIENT_REV after schema changes that require a fresh PrismaClient.
  */
-const CLIENT_REV = "blog-cms-2";
+const CLIENT_REV = "campus-france-1";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
@@ -21,9 +21,14 @@ function createClient() {
 function needsFreshClient(client: PrismaClient | undefined): boolean {
   if (!client) return true;
   if (globalForPrisma.prismaClientRev !== CLIENT_REV) return true;
-  // Stale HMR client created before `prisma generate` for BlogPost.
-  const blog = (client as PrismaClient & { blogPost?: { findMany?: unknown } }).blogPost;
-  return typeof blog?.findMany !== "function";
+  // Stale HMR clients created before `prisma generate` for newer models.
+  const c = client as PrismaClient & {
+    blogPost?: { findMany?: unknown };
+    formationAnalysis?: { findUnique?: unknown };
+  };
+  if (typeof c.blogPost?.findMany !== "function") return true;
+  if (typeof c.formationAnalysis?.findUnique !== "function") return true;
+  return false;
 }
 
 if (process.env.NODE_ENV !== "production") {

@@ -5,6 +5,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 const PROTECTED_PREFIXES = [
   "/dashboard",
   "/generate",
+  "/campus-france",
   "/cv",
   "/profile",
   "/templates",
