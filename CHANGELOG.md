@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/noukpoherve/veyala/compare/v1.9.0...v1.10.0) (2026-08-14)
+
+
+### Features
+
+* add branded auth emails and phone app navigation ([ffe357b](https://github.com/noukpoherve/veyala/commit/ffe357b7a7d5c8b84b51a35fecb7d2b59089c6c1))
+
 # [1.9.0](https://github.com/noukpoherve/veyala/compare/v1.8.0...v1.9.0) (2026-08-11)
 
 
