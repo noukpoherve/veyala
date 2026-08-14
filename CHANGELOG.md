@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/noukpoherve/veyala/compare/v1.10.0...v1.10.1) (2026-08-14)
+
+
+### Bug Fixes
+
+* **exports:** name CV and letter downloads with Prenom_Nom ([39d21e6](https://github.com/noukpoherve/veyala/commit/39d21e62f61ad82f7a151921c41ebeaec50653e9))
+
 # [1.10.0](https://github.com/noukpoherve/veyala/compare/v1.9.0...v1.10.0) (2026-08-14)
 
 
