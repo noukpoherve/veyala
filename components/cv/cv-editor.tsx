@@ -25,6 +25,7 @@ import {
 import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { saveCvEdits } from "@/app/(app)/cv/[id]/edit/actions";
+import { exportFilename, withDownloadFilename } from "@/lib/export-filename";
 import { cn } from "@/lib/utils";
 import { USER_ERRORS } from "@/lib/user-facing-error";
 import { CvFields } from "@/components/cv/cv-fields";
@@ -213,8 +214,15 @@ export function CvEditor({
               {downloads.pdfUrl ? (
                 <Button asChild variant="outline" size="sm" aria-disabled={dirty}>
                   <a
-                    href={dirty ? undefined : downloads.pdfUrl}
-                    download
+                    href={
+                      dirty
+                        ? undefined
+                        : withDownloadFilename(
+                            downloads.pdfUrl,
+                            exportFilename("cv", parsedData.identity.fullName, "pdf")
+                          )
+                    }
+                    download={exportFilename("cv", parsedData.identity.fullName, "pdf")}
                     className={cn(dirty && "pointer-events-none opacity-50")}
                   >
                     <Download className="size-4" aria-hidden />
@@ -225,8 +233,15 @@ export function CvEditor({
               {downloads.docxUrl ? (
                 <Button asChild variant="outline" size="sm" aria-disabled={dirty}>
                   <a
-                    href={dirty ? undefined : downloads.docxUrl}
-                    download
+                    href={
+                      dirty
+                        ? undefined
+                        : withDownloadFilename(
+                            downloads.docxUrl,
+                            exportFilename("cv", parsedData.identity.fullName, "docx")
+                          )
+                    }
+                    download={exportFilename("cv", parsedData.identity.fullName, "docx")}
                     className={cn(dirty && "pointer-events-none opacity-50")}
                   >
                     <Download className="size-4" aria-hidden />

@@ -13,6 +13,7 @@ import {
 import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { parseMatchBreakdown } from "@/lib/match-score";
+import { exportFilename, withDownloadFilename } from "@/lib/export-filename";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,11 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
     ? renderCoverLetterHtml(data, { body: cv.coverLetter, jobTitle: cv.jobTitle }, definition)
     : null;
   const matchBreakdown = parseMatchBreakdown(cv.matchBreakdown);
+  const fullName = data.identity.fullName;
+  const cvDocxName = exportFilename("cv", fullName, "docx");
+  const cvPdfName = exportFilename("cv", fullName, "pdf");
+  const letterDocxName = exportFilename("letter", fullName, "docx");
+  const letterPdfName = exportFilename("letter", fullName, "pdf");
 
   return (
     <article className="mx-auto max-w-4xl space-y-6">
@@ -110,7 +116,7 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
           <div className="flex gap-2">
             {cv.docxUrl ? (
               <Button asChild size="sm">
-                <a href={cv.docxUrl} download>
+                <a href={withDownloadFilename(cv.docxUrl, cvDocxName)} download={cvDocxName}>
                   <Download />
                   Word (.docx)
                 </a>
@@ -118,7 +124,7 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
             ) : null}
             {cv.pdfUrl ? (
               <Button asChild size="sm" variant="outline">
-                <a href={cv.pdfUrl} download>
+                <a href={withDownloadFilename(cv.pdfUrl, cvPdfName)} download={cvPdfName}>
                   <Download />
                   PDF
                 </a>
@@ -149,7 +155,10 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
             <div className="flex gap-2">
               {cv.coverLetterDocxUrl ? (
                 <Button asChild size="sm">
-                  <a href={cv.coverLetterDocxUrl} download>
+                  <a
+                    href={withDownloadFilename(cv.coverLetterDocxUrl, letterDocxName)}
+                    download={letterDocxName}
+                  >
                     <Download />
                     Word (.docx)
                   </a>
@@ -157,7 +166,10 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
               ) : null}
               {cv.coverLetterPdfUrl ? (
                 <Button asChild size="sm" variant="outline">
-                  <a href={cv.coverLetterPdfUrl} download>
+                  <a
+                    href={withDownloadFilename(cv.coverLetterPdfUrl, letterPdfName)}
+                    download={letterPdfName}
+                  >
                     <Download />
                     PDF
                   </a>

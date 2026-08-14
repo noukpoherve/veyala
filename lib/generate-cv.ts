@@ -16,6 +16,7 @@ import { htmlToPdf } from "@/lib/pdf";
 import { renderCVDocx } from "@/lib/docx";
 import { renderCoverLetterDocx } from "@/lib/docx/letter";
 import { saveFile } from "@/lib/storage";
+import { exportFilename } from "@/lib/export-filename";
 import { getOrCreateJobAnalysis } from "@/lib/job-analysis";
 import {
   scoreCvAgainstJob,
@@ -75,17 +76,6 @@ export class GenerationError extends Error {
   }
 }
 
-function slugify(text: string): string {
-  return (
-    text
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/[^a-zA-Z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "")
-      .slice(0, 40) || "offre"
-  );
-}
-
 /** Resolves the template to use: requested one (if allowed) or the default official. */
 async function resolveTemplate(userId: string, templateId?: string) {
   if (templateId) {
@@ -134,13 +124,28 @@ export async function renderAndStoreExports(params: {
   const letterPdf = await htmlToPdf(renderCoverLetterHtml(cv, letter, definition));
   const [cvDocx, letterDocx] = await Promise.all([cvDocxPromise, letterDocxPromise]);
 
-  const base = `${slugify(cv.identity.fullName)}_${slugify(jobTitle)}`;
   const dir = `exports/${userId}`;
   const [pdfFile, docxFile, letterPdfFile, letterDocxFile] = await Promise.all([
-    saveFile(cvPdf, { dir, filename: `CV_${base}.pdf`, contentType: "application/pdf" }),
-    saveFile(cvDocx, { dir, filename: `CV_${base}.docx`, contentType: DOCX_MIME }),
-    saveFile(letterPdf, { dir, filename: `LM_${base}.pdf`, contentType: "application/pdf" }),
-    saveFile(letterDocx, { dir, filename: `LM_${base}.docx`, contentType: DOCX_MIME }),
+    saveFile(cvPdf, {
+      dir,
+      filename: exportFilename("cv", cv.identity.fullName, "pdf"),
+      contentType: "application/pdf",
+    }),
+    saveFile(cvDocx, {
+      dir,
+      filename: exportFilename("cv", cv.identity.fullName, "docx"),
+      contentType: DOCX_MIME,
+    }),
+    saveFile(letterPdf, {
+      dir,
+      filename: exportFilename("letter", cv.identity.fullName, "pdf"),
+      contentType: "application/pdf",
+    }),
+    saveFile(letterDocx, {
+      dir,
+      filename: exportFilename("letter", cv.identity.fullName, "docx"),
+      contentType: DOCX_MIME,
+    }),
   ]);
 
   return {

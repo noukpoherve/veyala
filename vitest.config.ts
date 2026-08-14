@@ -26,6 +26,7 @@ export default defineConfig({
         "lib/payments.ts",
         "lib/emails/layout.ts",
         "lib/emails/auth.ts",
+        "lib/export-filename.ts",
       ],
       thresholds: {
         statements: 80,
