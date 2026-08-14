@@ -8,6 +8,16 @@ const bricolage = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-di
 
 const base = siteUrl();
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1527" },
+  ],
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(base),
   title: {

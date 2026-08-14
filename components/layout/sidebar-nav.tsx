@@ -63,7 +63,7 @@ const NavLink = memo(function NavLink({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+        "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors md:min-h-0 md:py-2",
         nested && "py-1.5 pl-9",
         active
           ? "bg-blue-50 font-semibold text-blue-700"
@@ -103,7 +103,7 @@ export function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
             aria-controls="admin-submenu"
             onClick={() => setAdminOpen((open) => !open)}
             className={cn(
-              "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+              "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors max-md:min-h-11",
               onAdminPage
                 ? "text-blue-700"
                 : "text-muted-foreground hover:bg-blue-50/60 hover:text-blue-700"

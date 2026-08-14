@@ -24,6 +24,8 @@ export default defineConfig({
         "lib/job-requirements.ts",
         "lib/credits.ts",
         "lib/payments.ts",
+        "lib/emails/layout.ts",
+        "lib/emails/auth.ts",
       ],
       thresholds: {
         statements: 80,

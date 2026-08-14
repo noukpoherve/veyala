@@ -28,6 +28,8 @@
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
     --radius: 0.75rem;
+    --app-header: calc(3.5rem + env(safe-area-inset-top, 0px));
+    --app-tabbar: calc(3.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   .dark {

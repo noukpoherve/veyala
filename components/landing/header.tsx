@@ -74,7 +74,7 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
 
         <button
           type="button"
-          className="justify-self-end rounded-md p-2 text-slate-600 md:hidden"
+          className="flex size-11 items-center justify-center justify-self-end rounded-md text-slate-600 md:hidden"
           aria-expanded={menuOpen}
           aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
           onClick={() => setMenuOpen((open) => !open)}

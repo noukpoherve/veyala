@@ -226,16 +226,29 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# French Veyala templates (lib/emails/auth.ts).
+# CLI quirk: template.* paths are relative to the project root; notification.*
+# paths are relative to supabase/. See supabase/cli#5124.
+[auth.email.template.confirmation]
+subject = "Confirmez votre email — Veyala"
+content_path = "./supabase/templates/confirmation.html"
 
-# Uncomment to customize notification email template
-# [auth.email.notification.password_changed]
-# enabled = true
-# subject = "Your password has been changed"
-# content_path = "./templates/password_changed_notification.html"
+[auth.email.template.recovery]
+subject = "Réinitialisez votre mot de passe — Veyala"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.invite]
+subject = "Invitation à rejoindre Veyala"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.email_change]
+subject = "Confirmez votre nouvelle adresse — Veyala"
+content_path = "./supabase/templates/email-change.html"
+
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Votre mot de passe a été modifié — Veyala"
+content_path = "./templates/password-changed.html"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
