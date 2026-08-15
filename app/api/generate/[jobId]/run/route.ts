@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { runGenerationJob } from "@/lib/generation-job";
 import { GenerationError } from "@/lib/generate-cv";
+import { reportError } from "@/lib/sentry";
 
 export const runtime = "nodejs";
 // Same budget as before — the job row keeps progress if the client disconnects.
@@ -26,7 +27,7 @@ export async function POST(_req: Request, { params }: { params: { jobId: string 
         { status: e.status >= 400 && e.status < 600 ? e.status : 502 }
       );
     }
-    console.error("[generate/run]", e);
+    reportError(e, "generate/run");
     return Response.json({ error: "La génération a échoué." }, { status: 502 });
   }
 }

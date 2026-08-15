@@ -7,6 +7,7 @@ import {
 import { GenerationError } from "@/lib/generate-cv";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { logActivity } from "@/lib/activity";
+import { reportError } from "@/lib/sentry";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
     if (e instanceof z.ZodError) {
       return Response.json({ error: e.issues[0]?.message ?? "Requête invalide." }, { status: 400 });
     }
-    console.error("[generate] enqueue failed", e);
+    reportError(e, "generate/enqueue");
     return Response.json({ error: "Impossible de démarrer la génération." }, { status: 500 });
   }
 }

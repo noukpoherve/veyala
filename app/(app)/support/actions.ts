@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isMailerConfigured, sendSupportNotificationEmail } from "@/lib/mailer";
 import { rateLimit } from "@/lib/rate-limit";
+import { reportError } from "@/lib/sentry";
 
 const threadSchema = z.object({
   subject: z.string().trim().min(3).max(120),
@@ -31,7 +32,7 @@ async function notifyAdmins(userEmail: string, subject: string, body: string) {
     await sendSupportNotificationEmail({ to: adminRecipients(), userEmail, subject, body });
   } catch (error) {
     // The message is stored in the inbox either way; email is best-effort.
-    console.error("support notification email failed:", error);
+    reportError(error, "support/notify");
   }
 }
 

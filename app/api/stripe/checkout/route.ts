@@ -6,6 +6,7 @@ import { logActivity } from "@/lib/activity";
 import { PromoValidationError, resolvePromoForCheckout } from "@/lib/promo";
 import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/utils";
+import { reportError } from "@/lib/sentry";
 
 export const runtime = "nodejs";
 
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: checkout.url });
   } catch (e) {
-    console.error("[stripe/checkout]", e);
+    reportError(e, "stripe/checkout");
     return NextResponse.json(
       {
         error:

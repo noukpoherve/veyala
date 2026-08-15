@@ -1,6 +1,10 @@
+import { withSentryConfig } from "@sentry/nextjs";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
+    // Required on Next.js 14 to load `instrumentation.ts`.
+    instrumentationHook: true,
     // Node-native libraries used by API routes must stay unbundled.
     serverComponentsExternalPackages: [
       "pdf-parse",
@@ -20,4 +24,21 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  // Proxy browser events through the app so ad-blockers don't drop them.
+  tunnelRoute: "/monitoring",
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+  webpack: {
+    excludeServerRoutes: ["/api/health"],
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
+});

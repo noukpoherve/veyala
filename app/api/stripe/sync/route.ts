@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { syncPendingCheckouts } from "@/lib/payments";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { reportError } from "@/lib/sentry";
 
 export const runtime = "nodejs";
 
@@ -29,7 +30,7 @@ export async function POST() {
     const result = await syncPendingCheckouts(userId);
     return NextResponse.json({ ok: true, ...result });
   } catch (e) {
-    console.error("[stripe/sync]", e);
+    reportError(e, "stripe/sync");
     return NextResponse.json(
       { error: "Impossible de synchroniser le paiement pour le moment." },
       { status: 503 }

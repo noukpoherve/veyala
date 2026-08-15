@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { ErrorScreen } from "@/components/errors/error-screen";
+import { reportError } from "@/lib/sentry";
 
 export default function AdminError({
   error,
@@ -11,7 +12,7 @@ export default function AdminError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[admin/error]", error);
+    reportError(error, "admin/error");
   }, [error]);
 
   return (

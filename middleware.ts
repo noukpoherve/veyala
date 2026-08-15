@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { updateSession } from "@/lib/supabase/middleware";
 
 const PROTECTED_PREFIXES = [
@@ -20,6 +21,7 @@ const PROTECTED_PREFIXES = [
  */
 export default async function middleware(req: NextRequest) {
   const { response, user } = await updateSession(req);
+  Sentry.setUser(user?.id ? { id: user.id } : null);
 
   const { pathname } = req.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some(
@@ -36,5 +38,7 @@ export default async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|svg|ico)$).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|monitoring|.*\\.(?:png|jpg|svg|ico)$).*)",
+  ],
 };

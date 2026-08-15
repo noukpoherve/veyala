@@ -17,6 +17,7 @@ Document de suivi (pas un audit formel exhaustif). Mis à jour 2026-07-27.
 - `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — rate-limit distribué
 - `S3_PUBLIC_URL` — à éviter pour données perso (préférer le proxy `/api/files`)
 - `ENCRYPTION_KEY` — chiffrement clés LLM
+- `NEXT_PUBLIC_SENTRY_DSN` — DSN public (identifiant de projet, pas un secret). Pas de Session Replay ; cookies / Authorization strippés avant envoi.
 
 ## Backlog
 

@@ -19,6 +19,7 @@ avant ce qui existe déjà dans le CV importé.
   par variables d'env et surchargeable par l'admin (clés chiffrées AES-GCM en base)
 - **zod** (validation), **react-hook-form** (formulaires)
 - **Upstash Redis** (optionnel) pour le rate-limit distribué en multi-instance
+- **Sentry** (optionnel) pour le suivi des erreurs client / serveur / edge
 
 ## Démarrage rapide
 
@@ -133,6 +134,8 @@ prisma/               Schéma + migrations + seed
 5. Webhook Stripe prod → `/api/stripe/webhook`.
 6. Stockage : `STORAGE_DRIVER=s3` (R2) ou `supabase` — **`local` est refusé en prod/Vercel**.
 7. Rate-limit multi-instance : `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`.
+8. Sentry : `NEXT_PUBLIC_SENTRY_DSN` (runtime) + `SENTRY_ORG` / `SENTRY_PROJECT` /
+   `SENTRY_AUTH_TOKEN` (upload des source maps au build Vercel).
 
 ## Sécurité
 

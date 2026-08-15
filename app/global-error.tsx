@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { Inter, Bricolage_Grotesque } from "next/font/google";
 import { ErrorScreen } from "@/components/errors/error-screen";
+import { reportError } from "@/lib/sentry";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -20,7 +21,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[global-error]", error);
+    reportError(error, "global-error");
   }, [error]);
 
   return (
