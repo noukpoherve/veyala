@@ -16,6 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { TemplateOptionCard } from "@/components/templates/template-option";
 import { CoherencePanel } from "@/components/campus-france/coherence-panel";
+import { PipelineTimeline } from "@/components/generate/pipeline-timeline";
+import { StatCard } from "@/components/ui/stat-card";
 import {
   CV_LANGUAGE_OPTIONS,
   validateCvLanguage,
@@ -340,9 +342,6 @@ export function CampusFranceForm({
     }
   }
 
-  const currentIdx =
-    activeStep && activeStep !== "done" ? PIPELINE_STEPS.findIndex((s) => s.id === activeStep) : -1;
-
   return (
     <div className="space-y-6">
       {phase === "compose" || phase === "review" ? (
@@ -622,40 +621,19 @@ export function CampusFranceForm({
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ol className="space-y-2">
-              {PIPELINE_STEPS.map((step, index) => {
-                const done = activeStep === "done" || (currentIdx >= 0 && index < currentIdx);
-                const current = activeStep === step.id;
-                return (
-                  <li
-                    key={step.id}
-                    className={cn(
-                      "flex items-center gap-3 rounded-md px-2 py-1.5 text-sm",
-                      current && "bg-primary/5 font-medium",
-                      !done && !current && "text-muted-foreground/60"
-                    )}
-                  >
-                    <span className="flex size-6 items-center justify-center rounded-full border text-xs">
-                      {current ? <Loader2 className="size-3.5 animate-spin" /> : index + 1}
-                    </span>
-                    {step.label}
-                  </li>
-                );
-              })}
-            </ol>
+            <PipelineTimeline steps={PIPELINE_STEPS} activeStep={activeStep} />
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-md border p-3">
-                <p className="text-xs text-muted-foreground">Cohérence avant</p>
-                <p className="font-display text-2xl font-bold tabular-nums">
-                  {scoreBeforeLive ?? beforeScore}%
-                </p>
-              </div>
-              <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
-                <p className="text-xs text-muted-foreground">Cohérence après</p>
-                <p className="font-display text-2xl font-bold tabular-nums text-primary">
-                  {scoreAfterLive !== null ? `${scoreAfterLive}%` : "…"}
-                </p>
-              </div>
+              <StatCard
+                size="compact"
+                label="Cohérence avant"
+                value={`${scoreBeforeLive ?? beforeScore}%`}
+              />
+              <StatCard
+                size="compact"
+                emphasis
+                label="Cohérence après"
+                value={scoreAfterLive !== null ? `${scoreAfterLive}%` : "…"}
+              />
             </div>
           </CardContent>
         </Card>
