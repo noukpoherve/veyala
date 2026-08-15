@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { USER_ERRORS } from "@/lib/user-facing-error";
 import { CvFields } from "@/components/cv/cv-fields";
 import { CustomizationStudio } from "@/components/cv/customization-studio";
+import { PrintPreview } from "@/components/cv/print-preview";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,6 +73,12 @@ export function CvEditor({
   );
   const [tab, setTab] = useState<PreviewTab>("cv");
   const [studioOpen, setStudioOpen] = useState(false);
+  // Mobile only (lg: ignores this — both columns show side by side there).
+  // Below lg, the form and the preview/Personnaliser column used to just
+  // stack, burying the preview + "Personnaliser l'apparence" at the bottom
+  // of a long form — reachable in the DOM but not in practice (confirmed in
+  // the UX audit). A 2-way toggle keeps both one tap away instead.
+  const [mobileView, setMobileView] = useState<"form" | "preview">("form");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   // Downloads point at the last saved exports; refreshed after each save.
@@ -254,9 +261,45 @@ export function CvEditor({
         </div>
       </header>
 
+      <div
+        role="tablist"
+        aria-label="Vue de l'éditeur"
+        className="inline-flex rounded-md border p-0.5 lg:hidden"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mobileView === "form"}
+          className={cn(
+            "rounded px-4 py-1.5 text-sm font-medium",
+            mobileView === "form" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+          )}
+          onClick={() => setMobileView("form")}
+        >
+          Formulaire
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mobileView === "preview"}
+          className={cn(
+            "rounded px-4 py-1.5 text-sm font-medium",
+            mobileView === "preview"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground"
+          )}
+          onClick={() => setMobileView("preview")}
+        >
+          Aperçu
+        </button>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Left column: form */}
-        <section aria-label="Édition du contenu" className="space-y-6">
+        {/* Left column: form. Below lg, hidden while the mobile toggle above is on "preview". */}
+        <section
+          aria-label="Édition du contenu"
+          className={cn(mobileView === "preview" && "hidden lg:block", "space-y-6")}
+        >
           <CvFields form={form} />
           <Card>
             <CardHeader>
@@ -277,8 +320,14 @@ export function CvEditor({
           </Card>
         </section>
 
-        {/* Right column: live preview */}
-        <section aria-label="Aperçu en direct" className="lg:sticky lg:top-4 lg:self-start">
+        {/* Right column: live preview. Below lg, hidden while the mobile toggle above is on "form". */}
+        <section
+          aria-label="Aperçu en direct"
+          className={cn(
+            mobileView === "form" && "hidden lg:block",
+            "lg:sticky lg:top-4 lg:self-start"
+          )}
+        >
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div
@@ -322,14 +371,11 @@ export function CvEditor({
               </Button>
             </div>
 
-            <div className="overflow-hidden rounded-xl border shadow-sm">
-              <iframe
-                srcDoc={previewHtml}
-                title={tab === "cv" ? "Aperçu du CV" : "Aperçu de la lettre"}
-                className="aspect-[210/297] w-full bg-white"
-                sandbox=""
-              />
-            </div>
+            <PrintPreview
+              srcDoc={previewHtml}
+              title={tab === "cv" ? "Aperçu du CV" : "Aperçu de la lettre"}
+              className="rounded-xl border shadow-sm"
+            />
           </div>
         </section>
       </div>

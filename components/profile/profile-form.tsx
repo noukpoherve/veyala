@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { cvSchema, type CVData } from "@/lib/cv-schema";
 import { USER_ERRORS } from "@/lib/user-facing-error";
 import { saveProfile } from "@/app/(app)/profile/actions";
@@ -49,13 +49,21 @@ export function ProfileForm({ initialData }: { initialData: CVData }) {
         </Alert>
       ) : null}
 
-      <div className="sticky bottom-4 flex flex-wrap items-center gap-3">
-        <Button type="submit" variant="gradient" disabled={status === "saving"}>
-          {status === "saving" ? <Loader2 className="animate-spin" /> : null}
+      {/*
+       * Opaque, bordered action bar — not a transparent floating button.
+       * Confirmed bug: the previous `sticky bottom-4` (no background) could
+       * render pinned over the Email field on short-content pages (nothing
+       * stops position:sticky from settling mid-form when the scroll
+       * container isn't actually scrollable), and on mobile it sat behind
+       * the tab bar. Sitting right above --app-tabbar with a solid
+       * background fixes both.
+       */}
+      <div className="sticky bottom-[calc(var(--app-tabbar)+0.75rem)] z-10 -mx-4 flex flex-wrap items-center gap-3 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:bottom-4 md:mx-0 md:rounded-xl md:border md:shadow-elevation-hover">
+        <Button type="submit" variant="gradient" loading={status === "saving"}>
           Enregistrer mon CV de base
         </Button>
         {status === "saved" ? (
-          <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+          <span className="flex items-center gap-1.5 text-sm text-success">
             <CheckCircle2 className="size-4" />
             Enregistré
           </span>

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MatchReport } from "@/components/generate/match-report";
+import { PrintPreview } from "@/components/cv/print-preview";
 import { RegenerateForm } from "./regenerate-form";
 
 export const metadata: Metadata = { title: "Aperçu du CV" };
@@ -132,14 +133,11 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
             ) : null}
           </div>
         </div>
-        <div className="overflow-hidden rounded-xl border shadow-sm">
-          <iframe
-            srcDoc={previewHtml}
-            title={`Aperçu du CV — ${cv.jobTitle}`}
-            className="h-[1188px] w-full bg-white"
-            sandbox=""
-          />
-        </div>
+        <PrintPreview
+          srcDoc={previewHtml}
+          title={`Aperçu du CV — ${cv.jobTitle}`}
+          className="rounded-xl border shadow-sm"
+        />
       </section>
 
       {letterHtml ? (
@@ -177,14 +175,11 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
               ) : null}
             </div>
           </div>
-          <div className="overflow-hidden rounded-xl border shadow-sm">
-            <iframe
-              srcDoc={letterHtml}
-              title={`Lettre de motivation — ${cv.jobTitle}`}
-              className="h-[1188px] w-full bg-white"
-              sandbox=""
-            />
-          </div>
+          <PrintPreview
+            srcDoc={letterHtml}
+            title={`Lettre de motivation — ${cv.jobTitle}`}
+            className="rounded-xl border shadow-sm"
+          />
         </section>
       ) : (
         <Card>
