@@ -66,7 +66,14 @@ export default function ForgotPasswordPage({
         <form className="space-y-3" action={requestReset}>
           <div className="space-y-1.5">
             <Label htmlFor="email">Adresse email</Label>
-            <Input id="email" name="email" type="email" required placeholder="vous@exemple.fr" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="vous@exemple.fr"
+            />
           </div>
           <Button type="submit" variant="gradient" className="w-full">
             Envoyer le lien de réinitialisation

@@ -15,7 +15,10 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed bottom-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-4 sm:right-4 sm:top-auto sm:max-w-sm sm:flex-col",
+      // Below md, MobileBottomNav (fixed, h-14 + safe-area, see --app-tabbar)
+      // sits at inset-x-0 bottom-0 too — anchor above it instead of just the
+      // safe-area inset, or a toast renders behind/under the tab bar.
+      "fixed bottom-[var(--app-tabbar)] z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 md:bottom-4 md:right-4 md:top-auto md:max-w-sm md:flex-col",
       className
     )}
     {...props}

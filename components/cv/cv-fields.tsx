@@ -110,6 +110,8 @@ function ExperienceLinks({ form, index }: { form: UseFormReturn<CVData>; index: 
           />
           <Input
             className="min-w-0 flex-1"
+            type="url"
+            inputMode="url"
             placeholder="https://…"
             {...form.register(`experiences.${index}.links.${i}.url`)}
           />
@@ -224,11 +226,11 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register("contact.email")} />
+            <Input id="email" type="email" autoComplete="email" {...register("contact.email")} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="phone">Téléphone</Label>
-            <Input id="phone" {...register("contact.phone")} />
+            <Input id="phone" type="tel" autoComplete="tel" {...register("contact.phone")} />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="location">Localisation</Label>
@@ -246,6 +248,8 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
               />
               <Input
                 className="min-w-0 flex-1"
+                type="url"
+                inputMode="url"
                 placeholder="https://…"
                 {...register(`contact.links.${i}.url`)}
               />
@@ -316,6 +320,8 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                   <div className="space-y-1.5 sm:col-span-2">
                     <Label>URL de l&apos;entreprise</Label>
                     <Input
+                      type="url"
+                      inputMode="url"
                       {...register(`experiences.${i}.companyUrl`)}
                       placeholder="https://entreprise.com"
                     />
@@ -482,6 +488,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                 <div className="space-y-1.5">
                   <Label>URL du credential</Label>
                   <Input
+                    type="url"
                     {...register(`certifications.${i}.url`)}
                     placeholder="https://…"
                     inputMode="url"
