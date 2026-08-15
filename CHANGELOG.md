@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/noukpoherve/veyala/compare/v1.10.1...v1.11.0) (2026-08-15)
+
+
+### Features
+
+* **auth:** replace GitHub OAuth with LinkedIn OIDC ([43d7bd3](https://github.com/noukpoherve/veyala/commit/43d7bd36e6fa4f8df67ffea7f3a99a6539f4f70d))
+
 ## [1.10.1](https://github.com/noukpoherve/veyala/compare/v1.10.0...v1.10.1) (2026-08-14)
 
 
