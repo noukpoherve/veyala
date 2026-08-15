@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
-import { TemplateSwatch } from "@/components/templates/template-swatch";
+import { TemplateOptionCard } from "@/components/templates/template-option";
 import { CoherencePanel } from "@/components/campus-france/coherence-panel";
 import {
   CV_LANGUAGE_OPTIONS,
@@ -419,26 +419,15 @@ export function CampusFranceForm({
               <fieldset className="grid gap-3 sm:grid-cols-3">
                 <legend className="sr-only">Choix du template</legend>
                 {templates.map((t) => (
-                  <label
+                  <TemplateOptionCard
                     key={t.id}
-                    className={cn(
-                      "cursor-pointer rounded-lg border p-3 transition-colors",
-                      templateId === t.id
-                        ? "border-primary ring-2 ring-primary/30"
-                        : "hover:border-muted-foreground/40"
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="template"
-                      value={t.id}
-                      checked={templateId === t.id}
-                      onChange={() => setTemplateId(t.id)}
-                      className="sr-only"
-                    />
-                    <TemplateSwatch layout={t.layout} colors={t.colors} band={t.band} />
-                    <span className="mt-2 block text-sm font-medium">{t.name}</span>
-                  </label>
+                    id={t.id}
+                    name={t.name}
+                    swatch={{ layout: t.layout, colors: t.colors, band: t.band }}
+                    selected={templateId === t.id}
+                    onSelect={() => setTemplateId(t.id)}
+                    groupName="template"
+                  />
                 ))}
               </fieldset>
             </CardContent>

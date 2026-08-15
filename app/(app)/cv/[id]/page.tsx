@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, FileText, Mail, PenLine } from "lucide-react";
+import { FileText, Mail, PenLine } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
@@ -13,12 +13,13 @@ import {
 import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { parseMatchBreakdown } from "@/lib/match-score";
-import { exportFilename, withDownloadFilename } from "@/lib/export-filename";
+import { exportFilename } from "@/lib/export-filename";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MatchReport } from "@/components/generate/match-report";
 import { PrintPreview } from "@/components/cv/print-preview";
+import { ExportButtons } from "@/components/cv/export-buttons";
 import { BackLink } from "@/components/ui/back-link";
 import { RegenerateForm } from "./regenerate-form";
 
@@ -109,24 +110,12 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
             <FileText className="size-5 text-primary" aria-hidden />
             {cv.universe === "CAMPUS_FRANCE" ? "CV académique" : "CV optimisé"}
           </h2>
-          <div className="flex gap-2">
-            {cv.docxUrl ? (
-              <Button asChild size="sm">
-                <a href={withDownloadFilename(cv.docxUrl, cvDocxName)} download={cvDocxName}>
-                  <Download />
-                  Word (.docx)
-                </a>
-              </Button>
-            ) : null}
-            {cv.pdfUrl ? (
-              <Button asChild size="sm" variant="outline">
-                <a href={withDownloadFilename(cv.pdfUrl, cvPdfName)} download={cvPdfName}>
-                  <Download />
-                  PDF
-                </a>
-              </Button>
-            ) : null}
-          </div>
+          <ExportButtons
+            docxUrl={cv.docxUrl}
+            pdfUrl={cv.pdfUrl}
+            docxName={cvDocxName}
+            pdfName={cvPdfName}
+          />
         </div>
         <PrintPreview
           srcDoc={previewHtml}
@@ -145,30 +134,12 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
               <Mail className="size-5 text-primary" aria-hidden />
               Lettre de motivation
             </h2>
-            <div className="flex gap-2">
-              {cv.coverLetterDocxUrl ? (
-                <Button asChild size="sm">
-                  <a
-                    href={withDownloadFilename(cv.coverLetterDocxUrl, letterDocxName)}
-                    download={letterDocxName}
-                  >
-                    <Download />
-                    Word (.docx)
-                  </a>
-                </Button>
-              ) : null}
-              {cv.coverLetterPdfUrl ? (
-                <Button asChild size="sm" variant="outline">
-                  <a
-                    href={withDownloadFilename(cv.coverLetterPdfUrl, letterPdfName)}
-                    download={letterPdfName}
-                  >
-                    <Download />
-                    PDF
-                  </a>
-                </Button>
-              ) : null}
-            </div>
+            <ExportButtons
+              docxUrl={cv.coverLetterDocxUrl}
+              pdfUrl={cv.coverLetterPdfUrl}
+              docxName={letterDocxName}
+              pdfName={letterPdfName}
+            />
           </div>
           <PrintPreview
             srcDoc={letterHtml}

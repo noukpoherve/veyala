@@ -2,7 +2,7 @@
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { CheckCircle2, Download, FileText, Loader2, Mail, Palette, Save } from "lucide-react";
+import { CheckCircle2, FileText, Loader2, Mail, Palette, Save } from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
 import {
   isEmptyStyleOverride,
@@ -15,12 +15,13 @@ import {
 import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { saveCvEdits } from "@/app/(app)/cv/[id]/edit/actions";
-import { exportFilename, withDownloadFilename } from "@/lib/export-filename";
+import { exportFilename } from "@/lib/export-filename";
 import { cn } from "@/lib/utils";
 import { USER_ERRORS } from "@/lib/user-facing-error";
 import { CvFields } from "@/components/cv/cv-fields";
 import { CustomizationStudio } from "@/components/cv/customization-studio";
 import { PrintPreview } from "@/components/cv/print-preview";
+import { ExportButtons } from "@/components/cv/export-buttons";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { BackLink } from "@/components/ui/back-link";
@@ -198,51 +199,13 @@ export function CvEditor({
             {status === "saving" ? <Loader2 className="animate-spin" /> : <Save />}
             Enregistrer
           </Button>
-          {downloads.pdfUrl || downloads.docxUrl ? (
-            <div
-              className="flex items-center gap-2"
-              title={dirty ? "Enregistrez pour télécharger votre dernière version." : undefined}
-            >
-              {downloads.pdfUrl ? (
-                <Button asChild variant="outline" size="sm" aria-disabled={dirty}>
-                  <a
-                    href={
-                      dirty
-                        ? undefined
-                        : withDownloadFilename(
-                            downloads.pdfUrl,
-                            exportFilename("cv", parsedData.identity.fullName, "pdf")
-                          )
-                    }
-                    download={exportFilename("cv", parsedData.identity.fullName, "pdf")}
-                    className={cn(dirty && "pointer-events-none opacity-50")}
-                  >
-                    <Download className="size-4" aria-hidden />
-                    PDF
-                  </a>
-                </Button>
-              ) : null}
-              {downloads.docxUrl ? (
-                <Button asChild variant="outline" size="sm" aria-disabled={dirty}>
-                  <a
-                    href={
-                      dirty
-                        ? undefined
-                        : withDownloadFilename(
-                            downloads.docxUrl,
-                            exportFilename("cv", parsedData.identity.fullName, "docx")
-                          )
-                    }
-                    download={exportFilename("cv", parsedData.identity.fullName, "docx")}
-                    className={cn(dirty && "pointer-events-none opacity-50")}
-                  >
-                    <Download className="size-4" aria-hidden />
-                    Word
-                  </a>
-                </Button>
-              ) : null}
-            </div>
-          ) : null}
+          <ExportButtons
+            docxUrl={downloads.docxUrl}
+            pdfUrl={downloads.pdfUrl}
+            docxName={exportFilename("cv", parsedData.identity.fullName, "docx")}
+            pdfName={exportFilename("cv", parsedData.identity.fullName, "pdf")}
+            dirty={dirty}
+          />
         </div>
       </header>
 
