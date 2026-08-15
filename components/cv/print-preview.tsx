@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -38,6 +38,8 @@ export function PrintPreview({
   useEffect(() => {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
+    // Catches real resize events (window resize, sidebar toggle, etc.) that
+    // don't otherwise cause this component to re-render.
     const observer = new ResizeObserver((entries) => {
       const width = entries[0]?.contentRect.width;
       if (width) setScale(width / PRINT_WIDTH_PX);
@@ -45,6 +47,24 @@ export function PrintPreview({
     observer.observe(wrapper);
     return () => observer.disconnect();
   }, []);
+
+  // Callers toggle this behind a CSS-only `hidden` class for mobile tabs
+  // (e.g. the CV editor's Formulaire/Aperçu switch). When mounted while
+  // hidden, ResizeObserver's first callback reports width 0 and isn't
+  // guaranteed to re-fire once the ancestor's `display:none` lifts (varies
+  // across browsers, and not something worth depending on) — scale stayed
+  // stuck at the initial 1, overflowing the real, narrower container. Rather
+  // than chase another observer API, re-measure directly and synchronously
+  // after every commit: cheap (one layout read), and correct regardless of
+  // *why* this render happened, including a parent's visibility toggle.
+  useLayoutEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const width = wrapper.getBoundingClientRect().width;
+    if (!width) return;
+    const next = width / PRINT_WIDTH_PX;
+    setScale((prev) => (Math.abs(prev - next) > 0.001 ? next : prev));
+  });
 
   // srcDoc changed (regeneration/edit) — re-measure once the new document loads,
   // don't keep the previous document's height in the meantime.

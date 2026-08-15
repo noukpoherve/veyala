@@ -107,6 +107,13 @@ export function CustomizationStudio({
   cvHtml: string;
 }) {
   const [query, setQuery] = useState("");
+  // Below lg, the 3-column layout (templates / preview / appearance) doesn't
+  // fit — each column's natural height stacked in one scroll made "Terminé"
+  // unreachable without scrolling past a near-full-height preview first.
+  // Same pattern as the CV editor's own mobile Formulaire/Aperçu toggle.
+  const [mobileSection, setMobileSection] = useState<"templates" | "preview" | "customize">(
+    "customize"
+  );
 
   const groups = useMemo<[string, EditorTemplate[]][]>(() => {
     const q = query.trim().toLowerCase();
@@ -156,9 +163,49 @@ export function CustomizationStudio({
             </div>
           </header>
 
-          <div className="grid min-h-0 flex-1 grid-rows-[auto_auto_1fr] overflow-y-auto lg:grid-cols-[minmax(200px,15rem)_1fr_minmax(15rem,19rem)] lg:grid-rows-1 lg:overflow-hidden">
+          <div
+            role="tablist"
+            aria-label="Section de l'atelier"
+            className="flex gap-1 border-b p-2 lg:hidden"
+          >
+            {(
+              [
+                { key: "templates", label: "Modèles" },
+                { key: "preview", label: "Aperçu" },
+                { key: "customize", label: "Personnaliser" },
+              ] as const
+            ).map((item) => (
+              <button
+                key={item.key}
+                id={`studio-tab-${item.key}`}
+                type="button"
+                role="tab"
+                aria-selected={mobileSection === item.key}
+                aria-controls={`studio-panel-${item.key}`}
+                className={cn(
+                  "flex-1 rounded-md px-3 py-1.5 text-sm font-medium",
+                  mobileSection === item.key
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground"
+                )}
+                onClick={() => setMobileSection(item.key)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:grid lg:grid-cols-[minmax(200px,15rem)_1fr_minmax(15rem,19rem)] lg:overflow-hidden">
             {/* Left rail: templates */}
-            <aside className="flex min-h-0 flex-col border-b bg-muted/20 lg:border-b-0 lg:border-r">
+            <aside
+              id="studio-panel-templates"
+              role="tabpanel"
+              aria-labelledby="studio-tab-templates"
+              className={cn(
+                "min-h-0 flex-col border-b bg-muted/20 lg:flex lg:border-b-0 lg:border-r",
+                mobileSection === "templates" ? "flex flex-1" : "hidden"
+              )}
+            >
               <div className="border-b p-3">
                 <div className="relative">
                   <Search
@@ -232,8 +279,16 @@ export function CustomizationStudio({
             {/* Centre: the CV as a document viewer — a readable-width page that
             fills the height, scrolling internally to reveal multi-page CVs
             (a fixed A4 ratio would crop anything past the first page). */}
-            <div className="flex min-h-0 justify-center overflow-hidden bg-muted/40 p-4 sm:p-6">
-              <div className="h-[70vh] w-full max-w-[54rem] overflow-hidden rounded-xl border bg-white shadow-lg lg:h-full">
+            <div
+              id="studio-panel-preview"
+              role="tabpanel"
+              aria-labelledby="studio-tab-preview"
+              className={cn(
+                "min-h-0 justify-center overflow-hidden bg-muted/40 p-4 sm:p-6 lg:flex",
+                mobileSection === "preview" ? "flex flex-1" : "hidden"
+              )}
+            >
+              <div className="h-full w-full max-w-[54rem] overflow-hidden rounded-xl border bg-white shadow-lg">
                 <iframe
                   srcDoc={cvHtml}
                   title="Aperçu du CV"
@@ -244,7 +299,15 @@ export function CustomizationStudio({
             </div>
 
             {/* Right rail: appearance first, sections at the bottom */}
-            <aside className="min-h-0 space-y-3 overflow-y-auto border-t bg-muted/20 p-3 lg:border-l lg:border-t-0">
+            <aside
+              id="studio-panel-customize"
+              role="tabpanel"
+              aria-labelledby="studio-tab-customize"
+              className={cn(
+                "min-h-0 space-y-3 overflow-y-auto border-t bg-muted/20 p-3 lg:block lg:border-l lg:border-t-0",
+                mobileSection === "customize" ? "block flex-1" : "hidden"
+              )}
+            >
               <DesignControls
                 colors={colors}
                 photo={photo}

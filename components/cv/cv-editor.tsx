@@ -246,7 +246,7 @@ export function CvEditor({
         {/* Left column: form. Below lg, hidden while the mobile toggle above is on "preview". */}
         <section
           aria-label="Édition du contenu"
-          className={cn(mobileView === "preview" && "hidden lg:block", "space-y-6")}
+          className={cn(mobileView === "preview" && "hidden lg:block", "min-w-0 space-y-6")}
         >
           <CvFields form={form} />
           <Card>
@@ -273,7 +273,7 @@ export function CvEditor({
           aria-label="Aperçu en direct"
           className={cn(
             mobileView === "form" && "hidden lg:block",
-            "lg:sticky lg:top-4 lg:self-start"
+            "min-w-0 lg:sticky lg:top-4 lg:self-start"
           )}
         >
           <div className="space-y-3">
