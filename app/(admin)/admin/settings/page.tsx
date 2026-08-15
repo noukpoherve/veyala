@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = { title: "Réglages · Admin" };
 
@@ -44,7 +45,7 @@ export default async function AdminSettingsPage({
 
   return (
     <article className="space-y-8">
-      <h1 className="font-display text-2xl font-bold">Réglages</h1>
+      <PageHeader title="Réglages" />
 
       {searchParams.test ? (
         <p

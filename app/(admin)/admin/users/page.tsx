@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
+import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
@@ -61,33 +62,33 @@ export default async function AdminUsersPage({
 
   return (
     <article className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="font-display text-2xl font-bold">Utilisateurs</h1>
-          <p className="text-sm text-muted-foreground">
-            <Link href="/admin/activity" className="underline hover:text-foreground">
-              Voir le journal d&apos;activité
-            </Link>
-          </p>
-        </div>
-        {/* biome-ignore lint/a11y/useSemanticElements: the <search> element lacks Safari support */}
-        <form method="get" role="search" className="flex gap-2">
-          <label htmlFor="q" className="sr-only">
-            Rechercher un utilisateur
-          </label>
-          <Input
-            id="q"
-            name="q"
-            defaultValue={q}
-            placeholder="Rechercher par email ou nom…"
-            className="w-64"
-          />
-          <Button type="submit" variant="outline">
-            <Search />
-            Rechercher
-          </Button>
-        </form>
-      </header>
+      <PageHeader
+        title="Utilisateurs"
+        description={
+          <Link href="/admin/activity" className="underline hover:text-foreground">
+            Voir le journal d&apos;activité
+          </Link>
+        }
+        actions={
+          // biome-ignore lint/a11y/useSemanticElements: the <search> element lacks Safari support
+          <form method="get" role="search" className="flex gap-2">
+            <label htmlFor="q" className="sr-only">
+              Rechercher un utilisateur
+            </label>
+            <Input
+              id="q"
+              name="q"
+              defaultValue={q}
+              placeholder="Rechercher par email ou nom…"
+              className="w-64"
+            />
+            <Button type="submit" variant="outline">
+              <Search />
+              Rechercher
+            </Button>
+          </form>
+        }
+      />
 
       {searchParams.deleted ? (
         <Alert variant="success" title="Compte effacé">

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { BackLink } from "@/components/ui/back-link";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = { title: "Éditer l'article · Admin" };
 
@@ -45,7 +46,7 @@ export default async function AdminBlogEditPage({
         </div>
       </nav>
 
-      <h1 className="font-display text-2xl font-bold">Éditer l&apos;article</h1>
+      <PageHeader title="Éditer l&apos;article" />
       {searchParams.saved ? <Alert variant="success">Article enregistré.</Alert> : null}
       <BlogPostForm mode="edit" post={post} />
     </article>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
@@ -41,7 +42,7 @@ export default async function AdminPaymentsPage({
 
   return (
     <article className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Paiements</h1>
+      <PageHeader title="Paiements" />
 
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">

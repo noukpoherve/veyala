@@ -21,9 +21,9 @@ export function PageHeader({
 }) {
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
-      <div>
+      <div className="space-y-1">
         <h1 className="font-display text-2xl font-bold">{title}</h1>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        {description ? <div className="text-sm text-muted-foreground">{description}</div> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>

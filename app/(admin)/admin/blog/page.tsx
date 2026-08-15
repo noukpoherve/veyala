@@ -7,6 +7,7 @@ import { deleteBlogPost, unpublishBlogPost } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
@@ -22,21 +23,23 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: { 
 
   return (
     <article className="space-y-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold">Blog</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+      <PageHeader
+        title="Blog"
+        description={
+          <>
             {total} article{total > 1 ? "s" : ""} · {published} publié
             {published > 1 ? "s" : ""} (page)
-          </p>
-        </div>
-        <Button asChild variant="gradient">
-          <Link href="/admin/blog/new">
-            <Plus />
-            Nouvel article
-          </Link>
-        </Button>
-      </header>
+          </>
+        }
+        actions={
+          <Button asChild variant="gradient">
+            <Link href="/admin/blog/new">
+              <Plus />
+              Nouvel article
+            </Link>
+          </Button>
+        }
+      />
 
       {posts.length === 0 ? (
         <Card>

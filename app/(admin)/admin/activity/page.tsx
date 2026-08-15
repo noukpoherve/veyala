@@ -6,6 +6,7 @@ import { describeActivity, formatActivityMeta } from "@/lib/activity-labels";
 import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { Pagination } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = { title: "Activité · Admin" };
 
@@ -58,15 +59,17 @@ export default async function AdminActivityPage({
 
   return (
     <article className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="font-display text-2xl font-bold">Journal d&apos;activité</h1>
-        <p className="text-sm text-muted-foreground">
-          Historique lisible des actions utilisateurs et admin (paiements, crédits, comptes…).{" "}
-          <Link href="/admin/users" className="underline hover:text-foreground">
-            Retour utilisateurs
-          </Link>
-        </p>
-      </header>
+      <PageHeader
+        title="Journal d&apos;activité"
+        description={
+          <>
+            Historique lisible des actions utilisateurs et admin (paiements, crédits, comptes…).{" "}
+            <Link href="/admin/users" className="underline hover:text-foreground">
+              Retour utilisateurs
+            </Link>
+          </>
+        }
+      />
 
       <form method="get" className="flex flex-wrap gap-2">
         <label htmlFor="userId" className="sr-only">

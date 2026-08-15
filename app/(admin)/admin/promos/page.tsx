@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
@@ -54,12 +55,10 @@ export default async function AdminPromosPage({
 
   return (
     <article className="space-y-6">
-      <header>
-        <h1 className="font-display text-2xl font-bold">Codes promo</h1>
-        <p className="text-sm text-muted-foreground">
-          Remises % / montant fixe, ou crédits bonus — appliqués avant Stripe Checkout.
-        </p>
-      </header>
+      <PageHeader
+        title="Codes promo"
+        description="Remises % / montant fixe, ou crédits bonus — appliqués avant Stripe Checkout."
+      />
 
       <Card>
         <CardHeader>

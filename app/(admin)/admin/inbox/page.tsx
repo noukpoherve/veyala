@@ -4,6 +4,7 @@ import { Inbox } from "lucide-react";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
@@ -36,15 +37,15 @@ export default async function AdminInboxPage({
 
   return (
     <article className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold">Boîte de réception</h1>
-          <p className="text-sm text-muted-foreground">
+      <PageHeader
+        title="Boîte de réception"
+        description={
+          <>
             {total} conversation{total > 1 ? "s" : ""}
             {unreadTotal > 0 ? ` · ${unreadTotal} non lu${unreadTotal > 1 ? "s" : ""} (page)` : ""}
-          </p>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {threads.length === 0 ? (
         <Card className="border-dashed">
