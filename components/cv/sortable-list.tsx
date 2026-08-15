@@ -41,7 +41,7 @@ function SortableItem({
   const handle = (
     <button
       type="button"
-      className="flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+      className="flex size-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
       aria-label="Glisser pour réordonner"
       {...attributes}
       {...listeners}

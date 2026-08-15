@@ -102,13 +102,14 @@ function ExperienceLinks({ form, index }: { form: UseFormReturn<CVData>; index: 
     <div className="space-y-2">
       <Label>Liens de référence (package, démo, extension…)</Label>
       {links.fields.map((field, i) => (
-        <div key={field.id} className="flex gap-2">
+        <div key={field.id} className="flex flex-wrap gap-2">
           <Input
-            className="w-40"
+            className="w-full sm:w-40"
             placeholder="Label"
             {...form.register(`experiences.${index}.links.${i}.label`)}
           />
           <Input
+            className="min-w-0 flex-1"
             placeholder="https://…"
             {...form.register(`experiences.${index}.links.${i}.url`)}
           />
@@ -237,13 +238,17 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
         <div className="space-y-2">
           <Label>Liens (LinkedIn, GitHub, portfolio…)</Label>
           {links.fields.map((field, i) => (
-            <div key={field.id} className="flex gap-2">
+            <div key={field.id} className="flex flex-wrap gap-2">
               <Input
-                className="w-40"
+                className="w-full sm:w-40"
                 placeholder="Label"
                 {...register(`contact.links.${i}.label`)}
               />
-              <Input placeholder="https://…" {...register(`contact.links.${i}.url`)} />
+              <Input
+                className="min-w-0 flex-1"
+                placeholder="https://…"
+                {...register(`contact.links.${i}.url`)}
+              />
               <RemoveButton onClick={() => links.remove(i)} label={`Supprimer le lien ${i + 1}`} />
             </div>
           ))}
@@ -260,13 +265,17 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
         <div className="space-y-2">
           <Label>Informations complémentaires (ex. Permis → B, Nationalité…)</Label>
           {details.fields.map((field, i) => (
-            <div key={field.id} className="flex gap-2">
+            <div key={field.id} className="flex flex-wrap gap-2">
               <Input
-                className="w-40"
+                className="w-full sm:w-40"
                 placeholder="Permis"
                 {...register(`contact.details.${i}.label`)}
               />
-              <Input placeholder="B" {...register(`contact.details.${i}.value`)} />
+              <Input
+                className="min-w-0 flex-1"
+                placeholder="B"
+                {...register(`contact.details.${i}.value`)}
+              />
               <RemoveButton
                 onClick={() => details.remove(i)}
                 label={`Supprimer l'information ${i + 1}`}

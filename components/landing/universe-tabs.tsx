@@ -56,7 +56,7 @@ export function UniverseTabs() {
       <div
         role="tablist"
         aria-label="Choisir un univers"
-        className="mx-auto flex w-fit items-center gap-1 rounded-full bg-blue-50/80 p-1.5"
+        className="mx-auto flex w-fit flex-wrap items-center justify-center gap-1 rounded-full bg-blue-50/80 p-1.5"
       >
         {(
           [
@@ -71,7 +71,7 @@ export function UniverseTabs() {
             aria-selected={tab === item.key}
             onClick={() => setTab(item.key)}
             className={cn(
-              "transition-bounce inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold",
+              "transition-bounce inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold sm:px-6 sm:py-2.5",
               tab === item.key
                 ? "bg-white text-slate-900 shadow-md"
                 : "text-slate-400 hover:text-slate-600"

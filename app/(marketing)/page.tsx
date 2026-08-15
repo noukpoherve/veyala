@@ -626,7 +626,7 @@ export default async function LandingPage() {
             </header>
           </Reveal>
 
-          <div className="mx-auto mt-16 grid max-w-5xl items-start gap-6 lg:grid-cols-3">
+          <div className="mx-auto mt-16 grid max-w-5xl items-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {packs.map((pack, index) => {
               const meta = PLAN_META[Math.min(index, PLAN_META.length - 1)] ?? PLAN_META[0]!;
               const perCv = price(Math.round(pack.priceCents / pack.credits));

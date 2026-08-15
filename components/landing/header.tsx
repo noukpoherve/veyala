@@ -92,10 +92,10 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
           aria-label="Navigation mobile"
           className="border-t border-slate-100 bg-white/95 px-6 py-4 md:hidden"
         >
-          <ul className="space-y-3 text-sm font-medium text-slate-700">
+          <ul className="text-sm font-medium text-slate-700">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>
-                <a href={link.href} className="block py-1" onClick={() => setMenuOpen(false)}>
+                <a href={link.href} className="block py-2.5" onClick={() => setMenuOpen(false)}>
                   {link.label}
                 </a>
               </li>

@@ -67,7 +67,7 @@ function VisibleRow({
     >
       <button
         type="button"
-        className="flex size-7 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex size-8 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={`Réordonner ${SECTION_LABELS[id]}`}
         {...attributes}
         {...listeners}
@@ -89,7 +89,7 @@ function VisibleRow({
       <button
         type="button"
         onClick={onToggle}
-        className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         aria-pressed
         aria-label={`Masquer ${SECTION_LABELS[id]}`}
       >
@@ -102,12 +102,12 @@ function VisibleRow({
 function HiddenRow({ id, onToggle }: { id: SectionId; onToggle: () => void }) {
   return (
     <li className="flex items-center gap-1.5 rounded-lg border bg-card px-1.5 py-1.5 opacity-55">
-      <span className="size-7 shrink-0" aria-hidden />
+      <span className="size-8 shrink-0" aria-hidden />
       <span className="min-w-0 flex-1 truncate text-sm font-medium">{SECTION_LABELS[id]}</span>
       <button
         type="button"
         onClick={onToggle}
-        className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         aria-pressed={false}
         aria-label={`Afficher ${SECTION_LABELS[id]}`}
       >
