@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Download, FileText, Mail, PenLine } from "lucide-react";
+import { Download, FileText, Mail, PenLine } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MatchReport } from "@/components/generate/match-report";
 import { PrintPreview } from "@/components/cv/print-preview";
+import { BackLink } from "@/components/ui/back-link";
 import { RegenerateForm } from "./regenerate-form";
 
 export const metadata: Metadata = { title: "Aperçu du CV" };
@@ -50,13 +51,7 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
   return (
     <article className="mx-auto max-w-4xl space-y-6">
       <nav aria-label="Fil d'Ariane">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          Retour au tableau de bord
-        </Link>
+        <BackLink href="/dashboard">Retour au tableau de bord</BackLink>
       </nav>
 
       <header className="flex flex-wrap items-start justify-between gap-4">

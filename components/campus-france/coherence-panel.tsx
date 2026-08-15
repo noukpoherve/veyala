@@ -3,6 +3,7 @@
 import { memo } from "react";
 import type { CoherenceItem, CoherenceKind } from "@/lib/campus-france/coherence-score";
 import { Badge } from "@/components/ui/badge";
+import { StatCard } from "@/components/ui/stat-card";
 
 const KIND_LABEL: Record<CoherenceKind, string> = {
   prerequisite: "Prérequis",
@@ -62,16 +63,8 @@ export const CoherencePanel = memo(function CoherencePanel({
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-lg border p-3">
-          <p className="text-xs text-muted-foreground">Score de cohérence</p>
-          <p className="font-display text-3xl font-bold tabular-nums">{beforeScore}%</p>
-        </div>
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
-          <p className="text-xs text-muted-foreground">Critères couverts</p>
-          <p className="font-display text-3xl font-bold tabular-nums text-primary">
-            {covered}/{total}
-          </p>
-        </div>
+        <StatCard size="compact" label="Score de cohérence" value={`${beforeScore}%`} />
+        <StatCard size="compact" emphasis label="Critères couverts" value={`${covered}/${total}`} />
       </div>
 
       {gaps.length === 0 ? (

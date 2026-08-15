@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { db } from "@/lib/db";
 import { adminReplyToThread, setThreadStatus } from "../actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackLink } from "@/components/ui/back-link";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Conversation" };
@@ -35,13 +35,7 @@ export default async function AdminThreadPage({ params }: { params: { id: string
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
-      <Link
-        href="/admin/inbox"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" aria-hidden />
-        Boîte de réception
-      </Link>
+      <BackLink href="/admin/inbox">Boîte de réception</BackLink>
 
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>

@@ -1,18 +1,8 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Download,
-  FileText,
-  Loader2,
-  Mail,
-  Palette,
-  Save,
-} from "lucide-react";
+import { CheckCircle2, Download, FileText, Loader2, Mail, Palette, Save } from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
 import {
   isEmptyStyleOverride,
@@ -33,6 +23,7 @@ import { CustomizationStudio } from "@/components/cv/customization-studio";
 import { PrintPreview } from "@/components/cv/print-preview";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { BackLink } from "@/components/ui/back-link";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -193,13 +184,7 @@ export function CvEditor({
       ) : null}
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Link
-            href={`/cv/${cvId}`}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-4" aria-hidden />
-            Retour à l&apos;aperçu
-          </Link>
+          <BackLink href={`/cv/${cvId}`}>Retour à l&apos;aperçu</BackLink>
           <h1 className="font-display text-lg font-bold">Éditeur — {jobTitle}</h1>
         </div>
         <div className="flex items-center gap-3">

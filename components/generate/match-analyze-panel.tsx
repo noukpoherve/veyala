@@ -3,6 +3,7 @@
 import { memo } from "react";
 import type { MatchClaim, MatchItem, MatchKind } from "@/lib/match-score";
 import { Badge } from "@/components/ui/badge";
+import { StatCard } from "@/components/ui/stat-card";
 import { cn } from "@/lib/utils";
 
 const KIND_LABEL: Record<MatchKind, string> = {
@@ -59,20 +60,14 @@ export const MatchAnalyzePanel = memo(function MatchAnalyzePanel({
       </header>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border p-3">
-          <p className="text-xs text-muted-foreground">Score actuel</p>
-          <p className="font-display text-3xl font-bold tabular-nums">{beforeScore}%</p>
-        </div>
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
-          <p className="text-xs text-muted-foreground">Score projeté (sélection)</p>
-          <p className="font-display text-3xl font-bold tabular-nums text-primary">
-            {projectedScore}%
-          </p>
-        </div>
-        <div className="rounded-lg border p-3">
-          <p className="text-xs text-muted-foreground">Max si tout est coché</p>
-          <p className="font-display text-3xl font-bold tabular-nums">{maxProjectedScore}%</p>
-        </div>
+        <StatCard size="compact" label="Score actuel" value={`${beforeScore}%`} />
+        <StatCard
+          size="compact"
+          emphasis
+          label="Score projeté (sélection)"
+          value={`${projectedScore}%`}
+        />
+        <StatCard size="compact" label="Max si tout est coché" value={`${maxProjectedScore}%`} />
       </div>
 
       {gaps.length === 0 ? (
