@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/noukpoherve/veyala/compare/v1.11.0...v1.12.0) (2026-08-15)
+
+
+### Features
+
+* **monitoring:** add Sentry error tracking ([f0b5dac](https://github.com/noukpoherve/veyala/commit/f0b5daca2f8cc8195dd3246094521c2467a0ffb3))
+
 # [1.11.0](https://github.com/noukpoherve/veyala/compare/v1.10.1...v1.11.0) (2026-08-15)
 
 
