@@ -1,17 +1,9 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useId,
-  useState,
-  type ReactNode,
-} from "react";
-import { createPortal } from "react-dom";
+import { createContext, useContext, useEffect, useId, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "veyala:sidebar";
@@ -50,16 +42,16 @@ export function useSidebarUi() {
 
 /**
  * Desktop: collapsible sidebar in the document flow.
- * Phones: drawer portaled to document.body so iOS cannot clip `position:fixed`
- * inside the overflow-hidden shell. The persistent tab bar opens it.
+ * Phones: drawer built on the Drawer primitive (Radix Dialog under the hood) —
+ * focus trap, Escape and body scroll lock come for free instead of the
+ * hand-rolled version this replaced (which had Escape wired manually but no
+ * focus trap, a gap flagged in the UX audit). The persistent tab bar opens it.
  */
 export function CollapsibleSidebar({ children }: { children: ReactNode }) {
   const { mobileOpen, setMobileOpen, navId } = useSidebarUi();
   const [desktopOpen, setDesktopOpen] = useState(true);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     if (localStorage.getItem(STORAGE_KEY) === "closed") setDesktopOpen(false);
   }, []);
 
@@ -75,58 +67,11 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const closeMobile = useCallback(() => setMobileOpen(false), [setMobileOpen]);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeMobile();
-    };
-    document.addEventListener("keydown", onEscape);
-    return () => document.removeEventListener("keydown", onEscape);
-  }, [mobileOpen, closeMobile]);
-
   const toggleDesktop = () =>
     setDesktopOpen((current) => {
       localStorage.setItem(STORAGE_KEY, current ? "closed" : "open");
       return !current;
     });
-
-  const drawer = (
-    <>
-      {mobileOpen ? (
-        <button
-          type="button"
-          tabIndex={-1}
-          aria-hidden
-          className="fixed inset-0 z-40 bg-slate-900/40 md:hidden"
-          onClick={closeMobile}
-        />
-      ) : null}
-      <aside
-        id={navId}
-        aria-label="Menu"
-        {...(mobileOpen ? { role: "dialog" as const, "aria-modal": true as const } : {})}
-        aria-hidden={!mobileOpen || undefined}
-        {...(!mobileOpen ? { inert: true } : {})}
-        className={cn(
-          "fixed z-50 flex w-[min(20rem,88vw)] flex-col overflow-hidden border-r border-border bg-card shadow-2xl transition-transform duration-300 ease-in-out md:hidden",
-          "top-[var(--app-header)] bottom-[var(--app-tabbar)] left-0",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        <button
-          type="button"
-          onClick={closeMobile}
-          aria-label="Fermer le menu"
-          className="absolute right-2 top-2 z-10 flex size-11 touch-manipulation items-center justify-center rounded-md text-muted-foreground hover:bg-accent"
-        >
-          <X className="size-5" aria-hidden />
-        </button>
-        <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">{children}</div>
-      </aside>
-    </>
-  );
 
   return (
     <>
@@ -135,31 +80,55 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
         aria-hidden={!desktopOpen || undefined}
         {...(!desktopOpen ? { inert: true } : {})}
         className={cn(
-          "hidden h-full min-h-0 flex-col overflow-hidden border-r border-border bg-card transition-[width] duration-300 ease-in-out md:flex",
+          "relative hidden h-full min-h-0 flex-col overflow-hidden border-r border-border bg-card transition-[width] duration-300 ease-in-out md:flex",
           desktopOpen ? "w-64" : "w-0 border-r-0"
         )}
       >
         <div className="flex h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden">{children}</div>
+        {/*
+         * Anchored to the sidebar's own edge (absolute within this `aside`,
+         * not `fixed` to the viewport) so it can never drift over scrolled
+         * page content the way a viewport-fixed button did before — that was
+         * a confirmed bug (this toggle clipped page headings at ~820px).
+         * Only rendered while open: collapsing this aside to w-0 hides it,
+         * the reopen affordance below takes over.
+         */}
+        <button
+          type="button"
+          onClick={toggleDesktop}
+          aria-label="Masquer la navigation"
+          aria-expanded="true"
+          className="absolute right-0 top-4 z-10 flex size-9 translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-blue-600 shadow-elevation-hover hover:bg-accent"
+        >
+          <PanelLeftClose className="size-4" aria-hidden />
+        </button>
       </aside>
 
-      {mounted ? createPortal(drawer, document.body) : null}
+      <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
+        <DrawerContent
+          id={navId}
+          aria-label="Menu"
+          side="left"
+          className={cn(
+            "inset-y-auto top-[var(--app-header)] h-auto max-w-none border-r-0 p-0 md:hidden",
+            "bottom-[var(--app-tabbar)] w-[min(20rem,88vw)]"
+          )}
+        >
+          <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">{children}</div>
+        </DrawerContent>
+      </Drawer>
 
-      <button
-        type="button"
-        onClick={toggleDesktop}
-        aria-label={desktopOpen ? "Masquer la navigation" : "Afficher la navigation"}
-        aria-expanded={desktopOpen}
-        className={cn(
-          "fixed bottom-6 z-40 hidden size-11 items-center justify-center rounded-full bg-card text-blue-600 shadow-lg shadow-blue-900/10 ring-1 ring-border transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-accent hover:shadow-xl md:flex",
-          desktopOpen ? "left-[17.25rem]" : "left-4"
-        )}
-      >
-        {desktopOpen ? (
-          <PanelLeftClose className="size-5" aria-hidden />
-        ) : (
-          <PanelLeftOpen className="size-5" aria-hidden />
-        )}
-      </button>
+      {!desktopOpen ? (
+        <button
+          type="button"
+          onClick={toggleDesktop}
+          aria-label="Afficher la navigation"
+          aria-expanded="false"
+          className="fixed left-4 top-4 z-40 hidden size-9 items-center justify-center rounded-full border border-border bg-card text-blue-600 shadow-elevation-hover hover:bg-accent md:flex"
+        >
+          <PanelLeftOpen className="size-4" aria-hidden />
+        </button>
+      ) : null}
     </>
   );
 }
