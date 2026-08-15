@@ -4,6 +4,7 @@ import { analyzeCampusFrance, CampusFranceAnalyzeError } from "@/lib/campus-fran
 import { campusFranceAnalyzeSchema } from "@/lib/campus-france/schema";
 import { rateLimit, RATE_LIMITS, clientIp } from "@/lib/rate-limit";
 import { logActivity } from "@/lib/activity";
+import { reportError } from "@/lib/sentry";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -70,7 +71,6 @@ export async function POST(req: Request) {
       gaps: result.gaps,
     });
   } catch (e) {
-    console.error("[campus-france/analyze]", e);
     // `instanceof` can fail across Next.js bundles — also check name/status.
     const cfErr =
       e instanceof CampusFranceAnalyzeError
@@ -86,6 +86,7 @@ export async function POST(req: Request) {
     if (cfErr) {
       return NextResponse.json({ error: cfErr.message }, { status: cfErr.status });
     }
+    reportError(e, "campus-france/analyze");
     const message = e instanceof Error ? e.message : "L'analyse a échoué.";
     // Surface safe French messages; hide infra dumps.
     const safe =

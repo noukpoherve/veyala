@@ -10,6 +10,7 @@ import { db } from "@/lib/db";
 import { creditCredits, debitCredits } from "@/lib/credits";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { normalizeEmail, siteUrl } from "@/lib/utils";
+import { reportError } from "@/lib/sentry";
 
 const adjustSchema = z.object({
   userId: z.string().min(1),
@@ -66,7 +67,7 @@ export async function setUserRole(formData: FormData) {
         app_metadata: { role: parsed.data.role },
       });
     } catch (error) {
-      console.error("[admin] failed to sync role to Supabase app_metadata:", error);
+      reportError(error, "admin/users/role-sync");
     }
   }
   await logAdminAction({
@@ -98,7 +99,7 @@ export async function inviteAdmin(formData: FormData) {
     redirectTo: `${siteUrl()}/auth/callback?next=/reset-password`,
   });
   if (error || !data.user) {
-    console.error("[admin] invitation failed:", error);
+    reportError(error, "admin/users/invite");
     redirect("/admin/users?invite=failed");
   }
   await admin.auth.admin.updateUserById(data.user.id, { app_metadata: { role: "ADMIN" } });

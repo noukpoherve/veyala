@@ -16,6 +16,8 @@
 | `STORAGE_DRIVER` (+ `S3_*` ou `SUPABASE_*`) | Stockage fichiers (`local` interdit en prod / Vercel) | oui |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Rate-limit distribué (sinon mémoire process) | recommandé en multi-instance |
 | `NEXT_PUBLIC_SITE_URL` | URL publique (callbacks Auth, Stripe) | oui |
+| `NEXT_PUBLIC_SENTRY_DSN` | Suivi des erreurs (client + serveur). Vide = désactivé | recommandé en prod |
+| `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | Upload des source maps au build (token `project:releases`) | recommandé en prod |
 
 Stack Supabase locale dédiée : API `55321`, DB `55322`, Studio `55323`, Mailpit `55324`,
 SMTP `55325` (voir `supabase/config.toml`).

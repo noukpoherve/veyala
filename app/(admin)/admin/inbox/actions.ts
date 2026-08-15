@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { isMailerConfigured, sendSupportReplyEmail } from "@/lib/mailer";
+import { reportError } from "@/lib/sentry";
 
 const replySchema = z.object({
   threadId: z.string().min(1),
@@ -43,7 +44,7 @@ export async function adminReplyToThread(formData: FormData) {
         body: parsed.data.body,
       });
     } catch (error) {
-      console.error("support reply email failed:", error);
+      reportError(error, "admin/inbox/reply-email");
     }
   }
 

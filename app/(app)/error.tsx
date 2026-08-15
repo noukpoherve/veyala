@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { ErrorScreen } from "@/components/errors/error-screen";
+import { reportError } from "@/lib/sentry";
 
 /** App-shell errors: prefer dashboard + support CTAs. */
 export default function AppError({
@@ -12,7 +13,7 @@ export default function AppError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[app-shell/error]", error);
+    reportError(error, "app-shell/error");
   }, [error]);
 
   return (

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { ErrorScreen } from "@/components/errors/error-screen";
+import { reportError } from "@/lib/sentry";
 
 /**
  * Segment error boundary (runtime / render failures → friendly 500-style page).
@@ -16,7 +17,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[app/error]", error);
+    reportError(error, "app/error");
   }, [error]);
 
   return (

@@ -6,6 +6,7 @@ import { structureCV } from "@/lib/import-cv";
 import { saveFile } from "@/lib/storage";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { LLMError } from "@/lib/llm";
+import { reportError } from "@/lib/sentry";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -63,8 +64,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, data });
   } catch (e) {
-    console.error("[import-cv]", e);
     if (e instanceof LLMError) {
+      reportError(e, "import-cv");
       return NextResponse.json(
         {
           error:
@@ -87,6 +88,7 @@ export async function POST(req: Request) {
     if (e instanceof Error && /Format non supporté/i.test(e.message)) {
       return NextResponse.json({ error: e.message }, { status: 415 });
     }
+    reportError(e, "import-cv");
     return NextResponse.json(
       {
         error:
