@@ -59,7 +59,7 @@ export const MatchAnalyzePanel = memo(function MatchAnalyzePanel({
         </p>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3" role="status" aria-live="polite">
         <StatCard size="compact" label="Score actuel" value={`${beforeScore}%`} />
         <StatCard
           size="compact"
@@ -71,7 +71,7 @@ export const MatchAnalyzePanel = memo(function MatchAnalyzePanel({
       </div>
 
       {gaps.length === 0 ? (
-        <p className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+        <p className="rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success">
           Votre profil couvre déjà la checklist extraite. Vous pouvez générer directement.
         </p>
       ) : (

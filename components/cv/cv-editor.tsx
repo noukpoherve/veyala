@@ -215,9 +215,11 @@ export function CvEditor({
         className="inline-flex rounded-md border p-0.5 lg:hidden"
       >
         <button
+          id="cv-editor-tab-form"
           type="button"
           role="tab"
           aria-selected={mobileView === "form"}
+          aria-controls="cv-editor-panel-form"
           className={cn(
             "rounded px-4 py-1.5 text-sm font-medium",
             mobileView === "form" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
@@ -227,9 +229,11 @@ export function CvEditor({
           Formulaire
         </button>
         <button
+          id="cv-editor-tab-preview"
           type="button"
           role="tab"
           aria-selected={mobileView === "preview"}
+          aria-controls="cv-editor-panel-preview"
           className={cn(
             "rounded px-4 py-1.5 text-sm font-medium",
             mobileView === "preview"
@@ -245,7 +249,9 @@ export function CvEditor({
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Left column: form. Below lg, hidden while the mobile toggle above is on "preview". */}
         <section
-          aria-label="Édition du contenu"
+          id="cv-editor-panel-form"
+          role="tabpanel"
+          aria-labelledby="cv-editor-tab-form"
           className={cn(mobileView === "preview" && "hidden lg:block", "min-w-0 space-y-6")}
         >
           <CvFields form={form} />
@@ -270,7 +276,9 @@ export function CvEditor({
 
         {/* Right column: live preview. Below lg, hidden while the mobile toggle above is on "form". */}
         <section
-          aria-label="Aperçu en direct"
+          id="cv-editor-panel-preview"
+          role="tabpanel"
+          aria-labelledby="cv-editor-tab-preview"
           className={cn(
             mobileView === "form" && "hidden lg:block",
             "min-w-0 lg:sticky lg:top-4 lg:self-start"
@@ -284,9 +292,11 @@ export function CvEditor({
                 className="inline-flex rounded-md border p-0.5"
               >
                 <button
+                  id="cv-editor-tab-cv"
                   type="button"
                   role="tab"
                   aria-selected={tab === "cv"}
+                  aria-controls="cv-editor-panel-document"
                   className={cn(
                     "flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium",
                     tab === "cv" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
@@ -297,9 +307,11 @@ export function CvEditor({
                   CV
                 </button>
                 <button
+                  id="cv-editor-tab-letter"
                   type="button"
                   role="tab"
                   aria-selected={tab === "letter"}
+                  aria-controls="cv-editor-panel-document"
                   className={cn(
                     "flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium",
                     tab === "letter"
@@ -319,11 +331,17 @@ export function CvEditor({
               </Button>
             </div>
 
-            <PrintPreview
-              srcDoc={previewHtml}
-              title={tab === "cv" ? "Aperçu du CV" : "Aperçu de la lettre"}
-              className="rounded-xl border shadow-sm"
-            />
+            <div
+              id="cv-editor-panel-document"
+              role="tabpanel"
+              aria-labelledby={tab === "cv" ? "cv-editor-tab-cv" : "cv-editor-tab-letter"}
+            >
+              <PrintPreview
+                srcDoc={previewHtml}
+                title={tab === "cv" ? "Aperçu du CV" : "Aperçu de la lettre"}
+                className="rounded-xl border shadow-sm"
+              />
+            </div>
           </div>
         </section>
       </div>
