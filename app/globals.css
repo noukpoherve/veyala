@@ -27,7 +27,19 @@
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
+    /* Interactive radius (buttons, inputs, badges, dense cards) — feeds rounded-lg/md/sm. */
     --radius: 0.75rem;
+    /* Panel radius (cards, panels, modals) — one step up from --radius, replaces the
+       ad-hoc mix of rounded-xl/2xl/3xl found across the app. See docs/design-system.md. */
+    --radius-panel: 1rem;
+    /* Semantic status colors — derived from the emerald/amber already used by
+       Badge/Alert, promoted to tokens so every consumer (and dark mode) stays in sync. */
+    --success: 161 84% 32%;
+    --success-foreground: 0 0% 100%;
+    /* Amber-600 fails AA contrast with white text, so warning keeps a dark foreground
+       (unlike success/destructive) — same pattern most design systems use for yellow/amber. */
+    --warning: 32 95% 44%;
+    --warning-foreground: 20 60% 14%;
     --app-header: calc(3.5rem + env(safe-area-inset-top, 0px));
     --app-tabbar: calc(3.5rem + env(safe-area-inset-bottom, 0px));
   }
@@ -53,6 +65,10 @@
     --border: 218 34% 20%;
     --input: 218 34% 20%;
     --ring: 217 91% 60%;
+    --success: 161 70% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 32 90% 55%;
+    --warning-foreground: 20 40% 10%;
   }
 }
 
