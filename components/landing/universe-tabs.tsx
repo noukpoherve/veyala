@@ -66,9 +66,11 @@ export function UniverseTabs() {
         ).map((item) => (
           <button
             key={item.key}
+            id={`universe-tab-${item.key}`}
             type="button"
             role="tab"
             aria-selected={tab === item.key}
+            aria-controls={`universe-panel-${item.key}`}
             onClick={() => setTab(item.key)}
             className={cn(
               "transition-bounce inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold sm:px-6 sm:py-2.5",
@@ -83,7 +85,13 @@ export function UniverseTabs() {
         ))}
       </div>
 
-      <div key={tab} className="tab-panel mt-14 grid items-center gap-12 lg:grid-cols-2">
+      <div
+        key={tab}
+        id={`universe-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`universe-tab-${tab}`}
+        className="tab-panel mt-14 grid items-center gap-12 lg:grid-cols-2"
+      >
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3.5 py-1 text-xs font-semibold text-white">
             <Icon className="size-3" aria-hidden />

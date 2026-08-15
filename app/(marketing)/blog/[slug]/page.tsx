@@ -165,7 +165,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                 {post.faq.map((item) => (
                   <details
                     key={item.question}
-                    className="group rounded-2xl border border-slate-200 bg-white px-5 py-4 open:border-blue-200 open:bg-blue-50/40"
+                    className="group rounded-panel border border-slate-200 bg-white px-5 py-4 open:border-blue-200 open:bg-blue-50/40"
                   >
                     <summary className="cursor-pointer list-none font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
                       {item.question}

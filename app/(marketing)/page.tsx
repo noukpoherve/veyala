@@ -237,7 +237,7 @@ function HeroVisual() {
       <div className="absolute left-0 top-24 hidden -rotate-6 md:block">
         <div className="animate-float-b w-48 rounded-2xl bg-white/90 p-4 text-left shadow-xl shadow-blue-900/10 ring-1 ring-slate-900/5 backdrop-blur">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="size-4 text-emerald-500" />
+            <CheckCircle2 className="size-4 text-success" />
             <span className="text-xs font-bold text-slate-800">ATS Score</span>
           </div>
           <div className="relative mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
@@ -333,9 +333,9 @@ function HeroVisual() {
               <div className="h-1 w-10/12 rounded-full bg-slate-100" />
             </div>
           </div>
-          <div className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
-            <CheckCircle2 className="size-3 shrink-0 text-emerald-600" />
-            <span className="text-[10px] font-semibold text-emerald-700">
+          <div className="flex items-center gap-1.5 rounded-lg border border-success/30 bg-success/10 px-3 py-2">
+            <CheckCircle2 className="size-3 shrink-0 text-success" />
+            <span className="text-[10px] font-semibold text-success">
               Compatible ATS · Score 94/100
             </span>
           </div>
@@ -503,7 +503,7 @@ export default async function LandingPage() {
                 key={step.number}
                 as="li"
                 delay={index * 150}
-                className="relative h-full rounded-2xl border border-blue-100/70 bg-gradient-to-b from-blue-50/70 to-white p-7 transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-900/5"
+                className="relative h-full rounded-panel border border-blue-100/70 bg-gradient-to-b from-blue-50/70 to-white p-7 transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-900/5"
               >
                 <div className="flex items-start justify-between">
                   <span
@@ -569,7 +569,7 @@ export default async function LandingPage() {
                 key={feature.title}
                 as="li"
                 delay={(index % 3) * 120}
-                className="h-full rounded-2xl border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5"
+                className="h-full rounded-panel border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5"
               >
                 <span
                   className={`flex size-11 items-center justify-center rounded-xl ${feature.chip}`}
@@ -729,7 +729,7 @@ export default async function LandingPage() {
           <ul className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {TESTIMONIALS.map((testimonial, index) => (
               <Reveal key={testimonial.name} as="li" delay={index * 100} className="h-full">
-                <figure className="flex h-full flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
+                <figure className="flex h-full flex-col rounded-panel border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
                   <div role="img" className="flex gap-0.5" aria-label="5 étoiles sur 5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star

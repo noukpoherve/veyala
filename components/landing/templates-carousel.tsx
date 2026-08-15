@@ -38,7 +38,7 @@ const TEMPLATES: Template[] = [
 // Memoized: cards are static, no need to re-render them with the carousel.
 const TemplateCard = memo(function TemplateCard({ template }: { template: Template }) {
   return (
-    <article className="w-44 shrink-0 snap-start overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg">
+    <article className="w-44 shrink-0 snap-start overflow-hidden rounded-panel border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg">
       <div aria-hidden className="h-40">
         {template.layout === "header" ? (
           <div className="flex h-full flex-col">

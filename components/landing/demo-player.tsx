@@ -731,7 +731,7 @@ function ProfileScene({ progress }: { progress: number }) {
             className={cn(
               "mt-3 flex items-center justify-center gap-2 rounded-xl border border-dashed px-3 py-5 text-sm font-medium transition-colors",
               imported
-                ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                ? "border-success/30 bg-success/10 text-success"
                 : "border-slate-300 bg-slate-50 text-slate-700"
             )}
           >
@@ -968,7 +968,7 @@ function GeneratingScene({ progress }: { progress: number }) {
                     {current ? (
                       <Loader2 className="size-3 animate-spin text-blue-600" aria-hidden />
                     ) : done ? (
-                      <CheckCircle2 className="size-3 text-emerald-500" aria-hidden />
+                      <CheckCircle2 className="size-3 text-success" aria-hidden />
                     ) : (
                       index + 1
                     )}
