@@ -17,7 +17,9 @@ export const SIGNUP_BONUS_CREDITS = 2;
  */
 export const oauthProviderFlags = {
   google: process.env.NEXT_PUBLIC_AUTH_GOOGLE === "true",
-  github: process.env.NEXT_PUBLIC_AUTH_GITHUB === "true",
+  // github: process.env.NEXT_PUBLIC_AUTH_GITHUB === "true",
+  /** Supabase provider id is `linkedin_oidc` (OpenID Connect). */
+  linkedin_oidc: process.env.NEXT_PUBLIC_AUTH_LINKEDIN === "true",
 } as const;
 
 export type OAuthProvider = keyof typeof oauthProviderFlags;

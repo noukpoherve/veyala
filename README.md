@@ -12,7 +12,7 @@ avant ce qui existe déjà dans le CV importé.
 - **Next.js 14** (App Router, Server Components) · **TypeScript strict** · **React 18**
 - **Tailwind CSS** + **shadcn/ui** + **lucide-react**
 - **PostgreSQL** via **Prisma** (transactions pour tous les mouvements de crédits)
-- **Supabase Auth** : email/mot de passe, confirmation, reset, OAuth (Google/GitHub)
+- **Supabase Auth** : email/mot de passe, confirmation, reset, OAuth (Google/LinkedIn)
 - **Stripe** : Checkout + webhook signé et idempotent
 - **docx** pour le Word, **Playwright** + **@sparticuz/chromium** pour le PDF (local et Vercel)
 - **Couche LLM agnostique** : tout fournisseur OpenAI-compatible ou Anthropic, configurable

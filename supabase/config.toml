@@ -328,14 +328,20 @@ secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 # Required for local sign in with Google auth.
 skip_nonce_check = true
 
-# GitHub OAuth — create the OAuth app in GitHub > Settings > Developer settings >
-# OAuth Apps; authorization callback URL = the Supabase /auth/v1/callback URL
-# (local: http://127.0.0.1:55321/auth/v1/callback). Same enable procedure as Google,
-# with NEXT_PUBLIC_AUTH_GITHUB=true for the button.
-[auth.external.github]
+# GitHub OAuth — temporarily disabled in favor of LinkedIn (OIDC).
+# [auth.external.github]
+# enabled = true
+# client_id = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID)"
+# secret = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET)"
+
+# LinkedIn (OIDC) — create the app at linkedin.com/developers/apps, request
+# "Sign In with LinkedIn using OpenID Connect", then set the redirect URL to
+# the Supabase /auth/v1/callback. Enable the button with NEXT_PUBLIC_AUTH_LINKEDIN=true.
+# Cloud: dashboard > Authentication > Providers > LinkedIn (OIDC).
+[auth.external.linkedin_oidc]
 enabled = true
-client_id = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID)"
-secret = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET)"
+client_id = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_SECRET)"
 
 [auth.external.apple]
 enabled = false

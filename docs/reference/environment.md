@@ -7,7 +7,7 @@
 | `NEXT_PUBLIC_SUPABASE_URL` | URL API Supabase (Auth + optionnellement Storage) | oui |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé anon (client navigateur / SSR cookies) | oui |
 | `SUPABASE_SERVICE_ROLE_KEY` | Clé service-role (admin Auth, Storage REST) — **jamais** côté client | oui |
-| `NEXT_PUBLIC_AUTH_GOOGLE` / `NEXT_PUBLIC_AUTH_GITHUB` | Affiche les boutons OAuth (`true`/`false`) | optionnel |
+| `NEXT_PUBLIC_AUTH_GOOGLE` / `NEXT_PUBLIC_AUTH_LINKEDIN` | Affiche les boutons OAuth (`true`/`false`) — LinkedIn = provider Supabase `linkedin_oidc` | optionnel |
 | `ENCRYPTION_KEY` | Chiffrement des clés LLM admin (32 octets base64) | oui |
 | `ADMIN_EMAILS` | Emails promus ADMIN + destinataires des notifications support | oui |
 | `EMAIL_SERVER` / `EMAIL_FROM` | SMTP app (notifications support) — les emails Auth sont envoyés par Supabase | optionnel |
