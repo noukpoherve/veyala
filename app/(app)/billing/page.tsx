@@ -92,10 +92,10 @@ export default async function BillingPage({
       ) : null}
 
       {pendingExists > 0 && searchParams.status !== "success" ? (
-        <Alert variant="info" title="Checkout non finalisé côté Stripe">
+        <Alert variant="info" title="Un paiement récent est encore en cours de traitement">
           <p className="mb-3">
-            Une session de paiement est encore « En attente » (souvent un checkout ouvert puis
-            abandonné). La synchronisation met le statut à jour ;{" "}
+            Un achat est resté « En attente » (souvent une page de paiement ouverte puis fermée sans
+            aller au bout). La synchronisation met le statut à jour ;{" "}
             <strong>elle ne re-crédite jamais</strong> un achat déjà marqué « Payé ».
           </p>
           <BillingPaymentSync auto={false} />

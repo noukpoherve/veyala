@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Briefcase, Check, Download, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type UniverseKey = "emploi" | "etudes";
 
@@ -102,16 +103,19 @@ export function UniverseTabs() {
               </li>
             ))}
           </ul>
-          <Link
-            href="/login"
-            className="group mt-9 inline-flex items-center gap-2 rounded-full bg-blue-600 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-bounce hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl"
+          <Button
+            asChild
+            size="lg"
+            className="group mt-9 h-auto gap-2 px-7 py-3.5 shadow-lg shadow-blue-600/25 hover:shadow-xl"
           >
-            Commencer maintenant
-            <ArrowRight
-              className="size-4 transition-transform group-hover:translate-x-0.5"
-              aria-hidden
-            />
-          </Link>
+            <Link href="/login">
+              Commencer maintenant
+              <ArrowRight
+                className="size-4 transition-transform group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </Link>
+          </Button>
         </div>
 
         <div

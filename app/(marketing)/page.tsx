@@ -26,6 +26,7 @@ import { Reveal } from "@/components/landing/reveal";
 import { Counter } from "@/components/landing/counter";
 import { DemoCta, DemoSection } from "@/components/landing/demo-player";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 // Below-the-fold interactive sections: lazy chunks keep the hero's JS payload small.
 const UniverseTabs = dynamic(
@@ -419,13 +420,16 @@ export default async function LandingPage() {
 
           <Reveal delay={300}>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-600/25 transition-bounce hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30"
+              <Button
+                asChild
+                size="lg"
+                className="h-auto gap-2 px-7 py-3.5 text-base shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/30"
               >
-                <Sparkles className="size-4" aria-hidden />
-                Générer mon CV gratuitement
-              </Link>
+                <Link href="/login">
+                  <Sparkles className="size-4" aria-hidden />
+                  Générer mon CV gratuitement
+                </Link>
+              </Button>
               <DemoCta />
             </div>
           </Reveal>
@@ -819,13 +823,16 @@ export default async function LandingPage() {
           </Reveal>
           <Reveal delay={300}>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-600/30 transition-bounce hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-xl"
+              <Button
+                asChild
+                size="lg"
+                className="h-auto gap-2 px-7 py-3.5 text-base shadow-lg shadow-blue-600/30 hover:bg-blue-500 hover:shadow-xl"
               >
-                <Sparkles className="size-4" aria-hidden />
-                Générer mon CV gratuitement
-              </Link>
+                <Link href="/login">
+                  <Sparkles className="size-4" aria-hidden />
+                  Générer mon CV gratuitement
+                </Link>
+              </Button>
               <a
                 href="#templates"
                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-7 py-3.5 text-base font-semibold text-white backdrop-blur transition-bounce hover:-translate-y-0.5 hover:bg-white/10"

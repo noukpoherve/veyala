@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Upload } from "lucide-react";
+import { ImagePlus, Loader2, Upload } from "lucide-react";
 import { resolveApiError, toUserMessage, USER_ERRORS } from "@/lib/user-facing-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ type Feedback = { kind: "success" | "duplicate" | "error"; message: string } | n
 
 export function TemplateImportForm() {
   const router = useRouter();
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [imageName, setImageName] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
 
@@ -36,6 +38,7 @@ export function TemplateImportForm() {
         message: body?.message ?? "Template soumis.",
       });
       form.reset();
+      setImageName(null);
       router.refresh();
     } catch (e) {
       setFeedback({ kind: "error", message: toUserMessage(e, USER_ERRORS.template) });
@@ -59,13 +62,27 @@ export function TemplateImportForm() {
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="template-image">Image de référence (PNG, JPEG ou WebP, 5 Mo max)</Label>
+        {/*
+         * Native <input type="file"> hidden (sr-only), triggered by a styled
+         * Button — matches the upload pattern used everywhere else in the app
+         * (cv-upload.tsx, cv-fields.tsx, design-controls.tsx). This was the
+         * one flow still showing the browser's raw "Choose File" control,
+         * flagged in the UX audit as a visible inconsistency.
+         */}
         <Input
+          ref={imageInputRef}
           id="template-image"
           name="image"
           type="file"
           required
           accept="image/png,image/jpeg,image/webp"
+          className="sr-only"
+          onChange={(e) => setImageName(e.target.files?.[0]?.name ?? null)}
         />
+        <Button type="button" variant="outline" onClick={() => imageInputRef.current?.click()}>
+          <ImagePlus />
+          {imageName ?? "Choisir une image"}
+        </Button>
         <p className="text-xs text-muted-foreground">
           Une capture ou photo du design de CV à reproduire : l&apos;IA en extrait les couleurs, la
           mise en page et les sections.

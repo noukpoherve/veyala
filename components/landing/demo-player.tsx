@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { VeyalaMark } from "@/components/landing/logo";
 
 type SceneId =
@@ -395,14 +396,12 @@ function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embed
               Recommencer
             </button>
           </div>
-          <Link
-            href="/register"
-            onClick={onClose}
-            className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/25 transition-colors hover:bg-blue-700"
-          >
-            Créer mon compte
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
+          <Button asChild size="sm">
+            <Link href="/register" onClick={onClose}>
+              Créer mon compte
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </Button>
         </div>
       </div>
     </div>
