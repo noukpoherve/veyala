@@ -33,8 +33,11 @@
        ad-hoc mix of rounded-xl/2xl/3xl found across the app. See docs/design-system.md. */
     --radius-panel: 1rem;
     /* Semantic status colors — derived from the emerald/amber already used by
-       Badge/Alert, promoted to tokens so every consumer (and dark mode) stays in sync. */
-    --success: 161 84% 32%;
+       Badge/Alert, promoted to tokens so every consumer (and dark mode) stays in sync.
+       success: 28% lightness is the darkest point that still clears 4.5:1 with white
+       text (measured, not eyeballed — see docs/design-system.md). The original 32%
+       only reached 3.75:1, which fails AA for the small text Badge actually uses it at. */
+    --success: 161 84% 28%;
     --success-foreground: 0 0% 100%;
     /* Amber-600 fails AA contrast with white text, so warning keeps a dark foreground
        (unlike success/destructive) — same pattern most design systems use for yellow/amber. */
@@ -65,8 +68,12 @@
     --border: 218 34% 20%;
     --input: 218 34% 20%;
     --ring: 217 91% 60%;
-    --success: 161 70% 45%;
-    --success-foreground: 0 0% 100%;
+    /* Dark mode needs the opposite trade-off from light: bright bg + dark text,
+       not dark bg + white text — a dark-enough green for 4.5:1 with white would be
+       nearly invisible as text against the dark card background used for the
+       success-soft Badge variant. Measured: 8.4:1 (solid) / 9.7:1 (soft text). */
+    --success: 161 70% 55%;
+    --success-foreground: 161 84% 10%;
     --warning: 32 90% 55%;
     --warning-foreground: 20 40% 10%;
   }

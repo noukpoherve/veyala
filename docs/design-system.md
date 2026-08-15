@@ -29,9 +29,13 @@ via `tailwind.config.ts` (`hsl(var(--token))`). Always reach for the semantic to
 | `warning` / `warning-foreground` **(new)** | Non-blocking warnings |
 | `border` / `input` / `ring` | Borders, form outlines, focus rings |
 
-`warning-foreground` is intentionally **dark**, not white like `success`/`destructive` —
-amber at usable saturation fails WCAG AA contrast with white text. Don't "fix" this to match
-the other variants without re-checking contrast.
+`warning-foreground` is intentionally **dark** in both themes — amber at usable
+saturation fails WCAG AA contrast with white text. `success-foreground` is white in
+light mode but **dark in dark mode** — the reverse trade-off applies there (a green
+dark enough for 4.5:1 with white text is nearly invisible as the `success-soft` badge's
+text color against the dark card background). Both were measured, not eyeballed — see
+the contrast math in the design-tokens commit. Don't "fix" either to look consistent
+with `destructive` without re-checking contrast in both themes.
 
 ## Radius — 2 tiers (was 4: `lg`/`xl`/`2xl`/`3xl` used interchangeably)
 
