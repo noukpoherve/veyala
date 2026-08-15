@@ -9,6 +9,7 @@ import { parseTemplateDefinition } from "@/lib/templates/definition";
 import type { TemplateOption } from "@/components/generate/generate-form";
 import { CampusFranceForm } from "@/components/campus-france/campus-france-form";
 import { Alert } from "@/components/ui/alert";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = { title: "Campus France" };
 
@@ -41,13 +42,10 @@ export default async function CampusFrancePage() {
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
-      <header className="space-y-1">
-        <h1 className="font-display text-2xl font-bold">Dossier Campus France</h1>
-        <p className="text-sm text-muted-foreground">
-          1. Analysez la formation : le système propose un projet d&apos;études et un projet
-          professionnel adaptés. 2. Validez / ajustez. 3. Générez (1 crédit) la lettre et le CV.
-        </p>
-      </header>
+      <PageHeader
+        title="Dossier Campus France"
+        description="1. Analysez la formation : le système propose un projet d'études et un projet professionnel adaptés. 2. Validez / ajustez. 3. Générez (1 crédit) la lettre et le CV."
+      />
 
       {!profile ? (
         <Alert

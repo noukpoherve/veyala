@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Support" };
@@ -50,12 +51,10 @@ export default async function SupportPage({ searchParams }: { searchParams: { st
 
   return (
     <article className="mx-auto max-w-3xl space-y-8">
-      <header className="space-y-1">
-        <h1 className="font-display text-2xl font-bold">Support</h1>
-        <p className="text-sm text-muted-foreground">
-          Une question, un problème ? Écrivez-nous : la réponse arrive ici et par email.
-        </p>
-      </header>
+      <PageHeader
+        title="Support"
+        description="Une question, un problème ? Écrivez-nous : la réponse arrive ici et par email."
+      />
 
       {feedback ? (
         <Alert

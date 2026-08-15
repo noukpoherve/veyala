@@ -8,6 +8,7 @@ import { mergeTemplateLists } from "@/lib/templates/merge";
 import { parseTemplateDefinition } from "@/lib/templates/definition";
 import { GenerateForm, type TemplateOption } from "@/components/generate/generate-form";
 import { Alert } from "@/components/ui/alert";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = { title: "Générer un CV" };
 
@@ -40,13 +41,10 @@ export default async function GeneratePage() {
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
-      <header className="space-y-1">
-        <h1 className="font-display text-2xl font-bold">Générer un CV adapté</h1>
-        <p className="text-sm text-muted-foreground">
-          1. Analysez gratuitement le matching. 2. Cochez les compétences manquantes que vous
-          assumez. 3. Générez (1 crédit) pour obtenir un CV optimisé ATS.
-        </p>
-      </header>
+      <PageHeader
+        title="Générer un CV adapté"
+        description="1. Analysez gratuitement le matching. 2. Cochez les compétences manquantes que vous assumez. 3. Générez (1 crédit) pour obtenir un CV optimisé ATS."
+      />
 
       {!profile ? (
         <Alert

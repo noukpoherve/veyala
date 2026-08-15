@@ -7,6 +7,7 @@ import { ArchiveAccountForm } from "@/components/profile/archive-account-form";
 import { CvUpload } from "@/components/profile/cv-upload";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = { title: "Mon CV de base" };
 
@@ -19,13 +20,10 @@ export default async function ProfilePage() {
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
-      <header className="space-y-1">
-        <h1 className="font-display text-2xl font-bold">Mon CV de base</h1>
-        <p className="text-sm text-muted-foreground">
-          C&apos;est la source de vérité utilisée pour toutes les générations : l&apos;IA reformule
-          et réordonne ces données, elle n&apos;invente jamais rien.
-        </p>
-      </header>
+      <PageHeader
+        title="Mon CV de base"
+        description="C'est la source de vérité utilisée pour toutes les générations : l'IA reformule et réordonne ces données, elle n'invente jamais rien."
+      />
 
       <section aria-labelledby="import-title">
         <Card>
