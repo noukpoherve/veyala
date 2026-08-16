@@ -11,7 +11,7 @@ import { renderCVDocx } from "../lib/docx";
 const demoCV = cvSchema.parse({
   identity: {
     fullName: "Jean Dupont",
-    headline: "Développeur Full-Stack — React, Node.js, PostgreSQL",
+    headline: "Développeur Full-Stack, React, Node.js, PostgreSQL",
   },
   contact: {
     email: "jean.dupont@mail.fr",
@@ -29,7 +29,7 @@ const demoCV = cvSchema.parse({
       title: "Développeur Full-Stack Senior",
       company: "Acme SaaS",
       place: "Paris",
-      dates: "2022 — 2025",
+      dates: "2022-2025",
       bullets: [
         "Conception et développement d'une plateforme multi-tenant Next.js/PostgreSQL servant 40 000 utilisateurs actifs mensuels.",
         "Réduction de 45 % du temps de chargement via le rendu serveur, le cache HTTP et l'optimisation des requêtes Prisma.",
@@ -41,7 +41,7 @@ const demoCV = cvSchema.parse({
       title: "Développeur Back-End",
       company: "Startup Labs",
       place: "Lyon",
-      dates: "2020 — 2022",
+      dates: "2020-2022",
       bullets: [
         "Développement d'APIs REST Node.js/Express consommées par 3 applications mobiles.",
         "Migration progressive d'un monolithe PHP vers des services Node.js sans interruption de service.",
@@ -54,8 +54,8 @@ const demoCV = cvSchema.parse({
       degree: "Master Informatique",
       school: "Université Paris-Saclay",
       place: "Paris",
-      dates: "2018 — 2020",
-      details: "Spécialité génie logiciel — major de promotion.",
+      dates: "2018-2020",
+      details: "Spécialité génie logiciel, major de promotion.",
     },
   ],
   skills: [

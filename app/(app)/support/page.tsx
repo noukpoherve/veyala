@@ -20,13 +20,13 @@ const dateFr = (d: Date) =>
   new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(d);
 
 const STATUS_MESSAGES: Record<string, { text: string; tone: "ok" | "error" }> = {
-  sent: { text: "Message envoyé — notre équipe vous répondra par email et ici même.", tone: "ok" },
+  sent: { text: "Message envoyé. Notre équipe vous répondra par email et ici même.", tone: "ok" },
   invalid: {
     text: "Message invalide : sujet de 3 caractères minimum, message de 10 caractères minimum.",
     tone: "error",
   },
   ratelimited: {
-    text: "Trop de messages envoyés — réessayez dans quelques minutes.",
+    text: "Trop de messages envoyés. Réessayez dans quelques minutes.",
     tone: "error",
   },
 };

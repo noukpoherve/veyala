@@ -89,7 +89,7 @@ function experienceSection(cv: CVData, def: TemplateDefinition): string {
           ? `<a href="${esc(httpUrl(e.companyUrl))}">${esc(e.company)}</a>`
           : esc(e.company)
         : "";
-      const companyLine = [companyHtml, e.place ? esc(e.place) : ""].filter(Boolean).join(" — ");
+      const companyLine = [companyHtml, e.place ? esc(e.place) : ""].filter(Boolean).join(" · ");
       const inlineMeta =
         def.datesStyle === "pill"
           ? ""
@@ -118,7 +118,7 @@ function educationSection(cv: CVData, def: TemplateDefinition): string {
   if (cv.education.length === 0) return "";
   const items = cv.education
     .map((e) => {
-      const schoolLine = [e.school, e.place].filter(Boolean).map(esc).join(" — ");
+      const schoolLine = [e.school, e.place].filter(Boolean).map(esc).join(" · ");
       const inlineMeta =
         def.datesStyle === "pill" ? "" : `<p class="meta"><strong>${esc(e.dates)}</strong></p>`;
       return `<article class="job">
@@ -140,7 +140,7 @@ function certificationsSection(cv: CVData, def: TemplateDefinition): string {
       const issuerLine = [c.issuer, c.credentialId ? `ID ${c.credentialId}` : ""]
         .filter(Boolean)
         .map(esc)
-        .join(" — ");
+        .join(" · ");
       const name = c.url ? `<a href="${esc(httpUrl(c.url))}">${esc(c.name)}</a>` : esc(c.name);
       const inlineMeta =
         def.datesStyle === "pill"
@@ -161,7 +161,7 @@ function certificationsSection(cv: CVData, def: TemplateDefinition): string {
 function languagesSection(cv: CVData): string {
   if (cv.languages.length === 0) return "";
   return `<section class="languages"><h2>Langues</h2>
-    <ul>${cv.languages.map((l) => `<li>${esc(l.name)}${l.level ? ` — ${esc(l.level)}` : ""}</li>`).join("")}</ul>
+    <ul>${cv.languages.map((l) => `<li>${esc(l.name)}${l.level ? ` · ${esc(l.level)}` : ""}</li>`).join("")}</ul>
   </section>`;
 }
 
@@ -388,7 +388,7 @@ export function renderCVHtml(cv: CVData, def: TemplateDefinition): string {
 <html lang="fr">
 <head>
 <meta charset="utf-8" />
-<title>CV — ${esc(cv.identity.fullName)}</title>
+<title>CV : ${esc(cv.identity.fullName)}</title>
 <style>
   body { position: relative; }
   .cv-logo {

@@ -18,7 +18,7 @@ export function blocksToMarkdown(blocks: ContentBlock[]): string {
         case "callout":
           return `!!! ${block.title ?? ""}\n${block.text}`.trimEnd();
         case "quote":
-          return block.cite ? `> ${block.text}\n> — ${block.cite}` : `> ${block.text}`;
+          return block.cite ? `> ${block.text}\n> - ${block.cite}` : `> ${block.text}`;
         case "cta":
           return `@@cta|${block.href}|${block.label}\n${block.text}\n@@`;
         default:

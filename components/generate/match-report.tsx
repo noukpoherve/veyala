@@ -177,7 +177,7 @@ export function MatchReport({
 
           {stillMissing > 0 ? (
             <p className="text-xs text-amber-800">
-              {stillMissing} critère{stillMissing > 1 ? "s" : ""} hors parcours d&apos;origine — à
+              {stillMissing} critère{stillMissing > 1 ? "s" : ""} hors parcours d&apos;origine, à
               clarifier en entretien, pas à fabriquer dans le CV.
             </p>
           ) : (

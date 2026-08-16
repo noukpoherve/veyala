@@ -72,7 +72,7 @@ Règles STRICTES :
 - "summary" : 3-4 phrases (max 480 caractères) qui citent explicitement les must-have / tools que le candidat possède.
 - "skills" : réordonne pour placer d'abord les items utiles à l'offre ; ajoute les termes de l'offre déjà prouvés dans le CV.
 - "experiences" : mêmes expériences (mêmes title/company/companyUrl/dates/place/links). Reformule les puces avec le vocabulaire de l'offre et les mots-clés couvrables ; réordonne les puces (plus pertinentes en premier). Même nombre de puces (±1). Puces 110–220 caractères. Conserve les liens markdown [texte](url) déjà présents dans les puces. Enrichis "stack" avec les technos de l'expérience déjà présentes dans les puces / le CV.
-- "education", "languages", "interests", "contact" : recopiés à l'identique (sauf languages si l'offre demande une langue déjà listée — garde-la en premier).
+- "education", "languages", "interests", "contact" : recopiés à l'identique (sauf languages si l'offre demande une langue déjà listée : garde-la en premier).
 - Ajoute "detectedTitle" : intitulé du poste dans l'offre.
 - Réponds UNIQUEMENT avec un objet JSON valide, sans backticks ni texte autour, conforme à ce format (+ detectedTitle) :
 ${CV_JSON_SHAPE}`;

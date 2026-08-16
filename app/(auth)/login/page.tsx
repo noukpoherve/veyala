@@ -74,7 +74,7 @@ export default async function LoginPage({
   return (
     <Card className="relative w-full max-w-md rounded-3xl border-slate-100 shadow-xl shadow-blue-900/5">
       <CardHeader className="items-center text-center">
-        <Link href="/" className="mb-2" aria-label="Veyala — accueil">
+        <Link href="/" className="mb-2" aria-label="Accueil Veyala">
           <VeyalaLogo />
         </Link>
         <CardTitle className="font-display text-2xl font-extrabold tracking-tight">
