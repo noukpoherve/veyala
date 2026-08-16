@@ -8,7 +8,7 @@ const FAQ_ITEMS = [
   {
     question: "La génération est-elle vraiment instantanée ?",
     answer:
-      "Oui. En moyenne, la génération complète — CV optimisé et lettre de motivation — prend moins de 30 secondes. L'analyse de l'offre se fait en temps réel dès que vous la collez.",
+      "Oui. En moyenne, la génération complète (CV optimisé et lettre de motivation) prend moins de 30 secondes. L'analyse de l'offre se fait en temps réel dès que vous la collez.",
   },
   {
     question: "Mes données personnelles sont-elles protégées ?",
@@ -18,7 +18,7 @@ const FAQ_ITEMS = [
   {
     question: "Quels formats puis-je exporter ?",
     answer:
-      "Chaque génération produit un fichier Word (.docx) natif et un PDF haute définition au design identique, avec texte sélectionnable et liens cliquables — directement exploitables sur tous les portails de candidature.",
+      "Chaque génération produit un fichier Word (.docx) natif et un PDF haute définition au design identique, avec texte sélectionnable et liens cliquables, directement exploitables sur tous les portails de candidature.",
   },
   {
     question: "Quelle IA est utilisée par Veyala ?",
@@ -28,7 +28,7 @@ const FAQ_ITEMS = [
   {
     question: "Mon CV sera-t-il vraiment unique à chaque offre ?",
     answer:
-      "Oui. Chaque génération part de votre profil et de l'offre précise que vous collez : les mots-clés, l'ordre des rubriques et les formulations sont adaptés à cette candidature — sans jamais rien inventer.",
+      "Oui. Chaque génération part de votre profil et de l'offre précise que vous collez : les mots-clés, l'ordre des rubriques et les formulations sont adaptés à cette candidature, sans jamais rien inventer.",
   },
   {
     question: "Comment fonctionnent les crédits ?",

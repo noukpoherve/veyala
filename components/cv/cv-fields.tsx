@@ -188,7 +188,7 @@ function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
           ) : null}
         </div>
         <p className="text-xs text-muted-foreground">
-          JPG, PNG ou WebP — affichée sur tous les templates (désactivable dans Personnaliser).
+          JPG, PNG ou WebP, affichée sur tous les templates (désactivable dans Personnaliser).
         </p>
       </div>
     </div>
@@ -221,7 +221,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             <Input
               id="headline"
               {...register("identity.headline")}
-              placeholder="Développeur Full-Stack — React, Node"
+              placeholder="Développeur Full-Stack, React, Node"
             />
           </div>
           <div className="space-y-1.5">
@@ -332,7 +332,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Dates</Label>
-                    <Input {...register(`experiences.${i}.dates`)} placeholder="2023 — 2025" />
+                    <Input {...register(`experiences.${i}.dates`)} placeholder="2023-2025" />
                   </div>
                 </div>
                 <RemoveButton
@@ -459,7 +459,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
       <SectionCard title="Certifications">
         {certifications.fields.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Aucune certification — ajoutez AWS, Scrum, Google Cloud, etc.
+            Aucune certification. Ajoutez AWS, Scrum, Google Cloud, etc.
           </p>
         ) : null}
         <SortableList ids={certifications.fields.map((f) => f.id)} onMove={certifications.move}>

@@ -68,7 +68,7 @@ export function ArticleBody({ blocks }: { blocks: ContentBlock[] }) {
                 <p>{block.text}</p>
                 {block.cite ? (
                   <cite className="mt-2 block text-sm font-sans not-italic text-slate-500">
-                    — {block.cite}
+                    {block.cite}
                   </cite>
                 ) : null}
               </blockquote>

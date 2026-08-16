@@ -46,7 +46,7 @@ export const CoherencePanel = memo(function CoherencePanel({
           Analyse de cohérence
         </h2>
         <p className="text-sm text-muted-foreground">
-          Aucun crédit débité. Les projets proposés sont des brouillons à valider — la lettre
+          Aucun crédit débité. Les projets proposés sont des brouillons à valider. La lettre
           s&apos;appuiera dessus, le CV illustrera l&apos;alignement du parcours.
         </p>
         {programTitle ? (
@@ -77,7 +77,7 @@ export const CoherencePanel = memo(function CoherencePanel({
           <h3 className="text-sm font-semibold">Arguments à renforcer dans la lettre</h3>
           <p className="text-xs text-muted-foreground">
             Ces points sont peu visibles dans votre profil ou vos projets. La génération s&apos;en
-            servira pour structurer la lettre — sans inventer de faits.
+            servira pour structurer la lettre, sans inventer de faits.
           </p>
           <ul className="divide-y rounded-md border">
             {gaps.map((gap) => (

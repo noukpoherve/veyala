@@ -34,7 +34,7 @@ export function ProfileForm({ initialData }: { initialData: CVData }) {
       }
     },
     () => {
-      setErrorMessage("Certains champs sont invalides — le nom complet est obligatoire.");
+      setErrorMessage("Certains champs sont invalides. Le nom complet est obligatoire.");
       setStatus("error");
     }
   );

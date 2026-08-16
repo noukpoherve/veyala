@@ -1,6 +1,7 @@
 import "server-only";
 import { chat } from "@/lib/llm";
 import { cvForLLM, type CVData } from "@/lib/cv-schema";
+import { GENERATED_COPY_TYPOGRAPHY, stripEmDashes } from "@/lib/typography";
 
 const MAX_JOB_TEXT_PROMPT_CHARS = 6000;
 
@@ -13,7 +14,8 @@ Règles STRICTES :
 - 4 paragraphes, 250 à 350 mots au total : accroche liée au poste et à la situation actuelle du candidat ; expériences les plus pertinentes pour l'offre (avec exemples concrets du CV) ; qualités et méthode de travail visibles dans le CV ; disponibilité et proposition d'entretien.
 - Ton professionnel, direct, sans flagornerie ni formules creuses.
 - Commence par « Madame, Monsieur, » et termine par une formule de politesse sobre (ex. « Cordialement, ») SANS répéter le nom du candidat après.
-- Réponds UNIQUEMENT avec le corps de la lettre (pas d'en-tête, pas de coordonnées, pas d'objet, pas de signature).`;
+- Réponds UNIQUEMENT avec le corps de la lettre (pas d'en-tête, pas de coordonnées, pas d'objet, pas de signature).
+- ${GENERATED_COPY_TYPOGRAPHY}`;
 
 export interface CoverLetterParams {
   cv: CVData;
@@ -40,5 +42,5 @@ export async function writeCoverLetter(params: CoverLetterParams): Promise<strin
   if (body.length < 200) {
     throw new Error("La lettre générée est trop courte. Réessayez.");
   }
-  return body;
+  return stripEmDashes(body);
 }

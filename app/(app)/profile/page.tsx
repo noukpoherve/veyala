@@ -66,7 +66,7 @@ export default async function ProfilePage() {
             </CardTitle>
             <CardDescription>
               Désactive votre compte (archivage). Vos données sont conservées. Pour retrouver
-              l&apos;accès, contactez un administrateur — la suppression définitive (RGPD) est
+              l&apos;accès, contactez un administrateur. La suppression définitive (RGPD) est
               réservée à l&apos;équipe support.
             </CardDescription>
           </CardHeader>

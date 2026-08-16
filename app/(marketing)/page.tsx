@@ -43,12 +43,12 @@ const FaqAccordion = dynamic(
 );
 
 export const metadata: Metadata = {
-  title: "Veyala — Votre CV, adapté à chaque offre, en 30 secondes",
+  title: "Veyala : votre CV, adapté à chaque offre, en 30 secondes",
   description:
     "Collez une offre d'emploi ou une fiche de formation : Veyala génère un CV et une lettre de motivation parfaitement adaptés. Export Word & PDF. Compatible ATS.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Veyala — Votre candidature, augmentée par l'IA",
+    title: "Veyala : votre candidature, augmentée par l'IA",
     description:
       "CV et lettres de motivation adaptés par IA, pour l'emploi et les études. Export Word & PDF, compatible ATS.",
     type: "website",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Veyala — CV adaptés par IA",
+    title: "Veyala : CV adaptés par IA",
     description:
       "Générez un CV ATS + lettre de motivation à partir de votre profil et d'une offre.",
   },
@@ -123,7 +123,7 @@ const FEATURES = [
     icon: Layers,
     chip: "bg-blue-50 text-blue-600",
     title: "Multi-templates premium",
-    text: "Choisissez parmi 20+ templates conçus par des designers — modernes, classiques ou académiques.",
+    text: "Choisissez parmi 20+ templates conçus par des designers : modernes, classiques ou académiques.",
   },
   {
     icon: FileDown,
@@ -141,13 +141,13 @@ const FEATURES = [
     icon: ShieldCheck,
     chip: "bg-emerald-50 text-emerald-600",
     title: "Zéro invention",
-    text: "Veyala valorise vos vraies expériences — sans jamais inventer de poste, de diplôme ou de compétence.",
+    text: "Veyala valorise vos vraies expériences, sans jamais inventer de poste, de diplôme ou de compétence.",
   },
   {
     icon: PenLine,
     chip: "bg-amber-50 text-amber-600",
     title: "Lettre de motivation cohérente",
-    text: "Construite autour de votre CV et de l'offre — tonalité professionnelle, personnalisée, convaincante.",
+    text: "Construite autour de votre CV et de l'offre : tonalité professionnelle, personnalisée, convaincante.",
   },
 ];
 
@@ -405,15 +405,15 @@ export default async function LandingPage() {
 
           <Reveal delay={100}>
             <h1 className="mx-auto mt-8 max-w-4xl font-display text-[clamp(2.5rem,6.5vw,5.125rem)] font-extrabold leading-[1.04] tracking-tight text-slate-900">
-              Votre CV, <span className="shimmer-text">adapté à chaque offre</span>
+              Votre CV, <span className="shimmer-text">adapté à chaque offre</span>,
               <br className="hidden sm:block" />{" "}
-              <span className="text-slate-400">— en 30 secondes.</span>
+              <span className="text-slate-400">en 30 secondes.</span>
             </h1>
           </Reveal>
 
           <Reveal delay={200}>
             <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-slate-500">
-              Collez une offre d&apos;emploi ou une fiche de formation — Veyala génère un CV et une
+              Collez une offre d&apos;emploi ou une fiche de formation : Veyala génère un CV et une
               lettre de motivation parfaitement adaptés. Export Word &amp; PDF. Compatible ATS.
             </p>
           </Reveal>
@@ -557,7 +557,7 @@ export default async function LandingPage() {
                 <span className="text-blue-600">rien de superflu</span>
               </h2>
               <p className="mt-4 text-lg text-slate-500">
-                Conçu pour être efficace dès la première utilisation — sans apprentissage, sans
+                Conçu pour être efficace dès la première utilisation, sans apprentissage, sans
                 friction.
               </p>
             </header>
@@ -805,7 +805,7 @@ export default async function LandingPage() {
           <Reveal>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-sm font-medium text-slate-200 backdrop-blur">
               <span className="size-1.5 animate-pulse rounded-full bg-blue-400" aria-hidden />
-              Commencez dès aujourd&apos;hui — gratuitement
+              Commencez dès aujourd&apos;hui, gratuitement
             </span>
           </Reveal>
           <Reveal delay={100}>
