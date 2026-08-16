@@ -165,7 +165,7 @@ export async function generateCampusFranceDossier(
     if (analysis.cached) {
       emit({
         step: "analyzing_requirements",
-        message: "Critères déjà connus (cache) — 0 token.",
+        message: "Critères déjà connus (cache), 0 token.",
       });
     }
 

@@ -40,12 +40,12 @@ export const SEED_BLOG_POSTS: BlogPost[] = [
     body: [
       {
         type: "p",
-        text: "Un Applicant Tracking System (ATS) est le logiciel que la plupart des entreprises utilisent pour réceptionner, parser et classer les candidatures. Si votre CV n'est pas lisible par la machine — ou s'il ne contient pas les mots-clés de l'offre — il peut être écarté avant qu'un recruteur ne le voie.",
+        text: "Un Applicant Tracking System (ATS) est le logiciel que la plupart des entreprises utilisent pour réceptionner, parser et classer les candidatures. Si votre CV n'est pas lisible par la machine, ou s'il ne contient pas les mots-clés de l'offre, il peut être écarté avant qu'un recruteur ne le voie.",
       },
       {
         type: "callout",
         title: "En bref",
-        text: "Un CV ATS-friendly combine un format simple (Word ou PDF texte), des intitulés de postes alignés sur l'offre, et les compétences exactes demandées dans la fiche de poste — sans keyword stuffing.",
+        text: "Un CV ATS-friendly combine un format simple (Word ou PDF texte), des intitulés de postes alignés sur l'offre, et les compétences exactes demandées dans la fiche de poste, sans keyword stuffing.",
       },
       {
         type: "h2",
@@ -78,7 +78,7 @@ export const SEED_BLOG_POSTS: BlogPost[] = [
           "Reprendre les intitulés exacts des compétences (ex. « gestion de projet Agile » vs seulement « Agile »).",
           "Inclure outils, frameworks et certifications cités dans l'offre.",
           "Aligner le titre du poste visé (ou un titre proche) avec celui de l'annonce.",
-          "Éviter les acronymes seuls si l'offre utilise la forme développée — ou mettre les deux.",
+          "Éviter les acronymes seuls si l'offre utilise la forme développée, ou mettre les deux.",
         ],
       },
       {
@@ -284,7 +284,7 @@ export const SEED_BLOG_POSTS: BlogPost[] = [
     body: [
       {
         type: "p",
-        text: "La lettre de motivation reste demandée pour de nombreuses candidatures en France — entreprises, administrations, écoles. Son rôle : montrer pourquoi vous et pourquoi eux, pas répéter le CV ligne à ligne.",
+        text: "La lettre de motivation reste demandée pour de nombreuses candidatures en France (entreprises, administrations, écoles). Son rôle : montrer pourquoi vous et pourquoi eux, pas répéter le CV ligne à ligne.",
       },
       {
         type: "h2",
@@ -396,7 +396,7 @@ export const SEED_BLOG_POSTS: BlogPost[] = [
     body: [
       {
         type: "p",
-        text: "Un recruteur passe en moyenne moins de 10 secondes sur un CV au premier passage. Les erreurs ci-dessous sont des signaux d'alerte immédiats — pour l'humain comme pour l'ATS.",
+        text: "Un recruteur passe en moyenne moins de 10 secondes sur un CV au premier passage. Les erreurs ci-dessous sont des signaux d'alerte immédiats, pour l'humain comme pour l'ATS.",
       },
       {
         type: "ol",
@@ -442,7 +442,7 @@ export const SEED_BLOG_POSTS: BlogPost[] = [
     description:
       "Utiliser l'IA pour rédiger un CV : gains de temps, personnalisation ATS, risques d'hallucination et règles d'éthique. Comment Veyala reformule sans inventer votre parcours.",
     excerpt:
-      "L'IA accélère la rédaction de CV — à condition de rester maître des faits. Voici le bon usage pour candidater plus vite, sans se tirer une balle dans le pied.",
+      "L'IA accélère la rédaction de CV, à condition de rester maître des faits. Voici le bon usage pour candidater plus vite, sans se tirer une balle dans le pied.",
     category: "ia",
     tags: ["IA", "CV", "ATS", "productivité"],
     keywords: [
@@ -537,7 +537,7 @@ export const SEED_BLOG_POSTS: BlogPost[] = [
     description:
       "Réussir son CV étudiant pour stage, alternance, Parcoursup ou Campus France : projets, soft skills, formations et lettre de motivation adaptée aux dossiers scolaires.",
     excerpt:
-      "Peu d'expérience pro ? Votre CV étudiant peut quand même convaincre — si vous valorisez projets, associations et résultats académiques.",
+      "Peu d'expérience pro ? Votre CV étudiant peut quand même convaincre si vous valorisez projets, associations et résultats académiques.",
     category: "etudes",
     tags: ["étudiant", "stage", "Campus France", "Parcoursup"],
     keywords: [
@@ -676,7 +676,7 @@ export const SEED_BLOG_POSTS: BlogPost[] = [
       {
         type: "callout",
         title: "Règle d'or",
-        text: "Si un terme est dans l'offre et vrai pour vous, il doit apparaître dans votre CV — idéalement près d'une preuve d'usage.",
+        text: "Si un terme est dans l'offre et vrai pour vous, il doit apparaître dans votre CV, idéalement près d'une preuve d'usage.",
       },
       {
         type: "cta",
@@ -714,7 +714,7 @@ export const SEED_BLOG_POSTS: BlogPost[] = [
     body: [
       {
         type: "p",
-        text: "Le volume de candidatures compte — mais le taux de réponse dépend surtout de la pertinence. Voici un cadre simple pour chercher un emploi sans s'épuiser.",
+        text: "Le volume de candidatures compte, mais le taux de réponse dépend surtout de la pertinence. Voici un cadre simple pour chercher un emploi sans s'épuiser.",
       },
       {
         type: "h2",
@@ -758,7 +758,7 @@ export const SEED_BLOG_POSTS: BlogPost[] = [
       },
       {
         type: "p",
-        text: "Si 20 candidatures ciblées = 0 réponse, le problème est le matching ou le positionnement — pas seulement « le marché ».",
+        text: "Si 20 candidatures ciblées = 0 réponse, le problème est le matching ou le positionnement, pas seulement « le marché ».",
       },
       {
         type: "cta",

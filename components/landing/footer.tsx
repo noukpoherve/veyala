@@ -46,7 +46,7 @@ export function LandingFooter() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-12 py-16 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div>
-            <Link href="/" aria-label="Veyala — accueil">
+            <Link href="/" aria-label="Accueil Veyala">
               <VeyalaLogo />
             </Link>
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-slate-500">

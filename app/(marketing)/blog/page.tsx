@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 export const revalidate = 60;
 
-const TITLE = "Blog CV, ATS & emploi — guides pour candidater mieux";
+const TITLE = "Blog CV, ATS et emploi : guides pour candidater mieux";
 const DESCRIPTION =
   "Guides Veyala sur le CV ATS, les mots-clés recrutement, la lettre de motivation, le job hunting et les candidatures étudiants. Conseils concrets pour passer les filtres et décrocher des entretiens.";
 

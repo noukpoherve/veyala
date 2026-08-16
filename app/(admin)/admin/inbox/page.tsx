@@ -84,7 +84,7 @@ export default async function AdminInboxPage({
                         <p className="mt-0.5 truncate text-xs text-muted-foreground">
                           {thread.user.name ?? thread.user.email}
                           {last
-                            ? ` — ${last.fromAdmin ? "Vous : " : ""}${last.body.slice(0, 90)}`
+                            ? `: ${last.fromAdmin ? "Vous : " : ""}${last.body.slice(0, 90)}`
                             : ""}
                         </p>
                       </div>

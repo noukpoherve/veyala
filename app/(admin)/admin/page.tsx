@@ -80,7 +80,7 @@ export default async function AdminStatsPage() {
     ]);
 
   const packRows = packSales.map((sale) => ({
-    label: `${sale.creditsPurchased} CV — ${euros(sale.amountCents)}`,
+    label: `${sale.creditsPurchased} CV, ${euros(sale.amountCents)}`,
     value: sale._count,
     display: `${sale._count} vente${sale._count > 1 ? "s" : ""}`,
   }));

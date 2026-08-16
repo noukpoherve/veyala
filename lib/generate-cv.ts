@@ -247,7 +247,7 @@ export async function generateCV(
     if (analysis.cached) {
       emit({
         step: "analyzing_requirements",
-        message: "Exigences déjà connues (cache) — 0 token.",
+        message: "Exigences déjà connues (cache), 0 token.",
       });
     }
 

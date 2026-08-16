@@ -67,7 +67,7 @@ const SCENES: Scene[] = [
     id: "hook",
     durationMs: 2800,
     label: "Le besoin",
-    caption: "Léa veut un CV vraiment adapté à une offre — pas un modèle générique.",
+    caption: "Léa veut un CV vraiment adapté à une offre, pas un modèle générique.",
   },
   {
     id: "google",
@@ -79,7 +79,7 @@ const SCENES: Scene[] = [
     id: "serp",
     durationMs: 4800,
     label: "Découverte",
-    caption: "Parmi les outils CV / ATS, elle repère Veyala — adapté à chaque offre, en français.",
+    caption: "Parmi les outils CV / ATS, elle repère Veyala : adapté à chaque offre, en français.",
   },
   {
     id: "landing",
@@ -91,7 +91,7 @@ const SCENES: Scene[] = [
     id: "register",
     durationMs: 3200,
     label: "Compte",
-    caption: "Création de compte — 2 crédits offerts, sans carte bancaire.",
+    caption: "Création de compte : 2 crédits offerts, sans carte bancaire.",
   },
   {
     id: "profile",
@@ -519,7 +519,7 @@ function HookScene({ progress }: { progress: number }) {
         className="mt-4 max-w-lg text-sm text-slate-600 sm:text-base"
         style={{ opacity: Math.min(1, Math.max(0, (progress - 0.35) * 2.2)) }}
       >
-        Pas un template générique — un dossier aligné sur les mots-clés ATS de l&apos;annonce.
+        Pas un template générique : un dossier aligné sur les mots-clés ATS de l&apos;annonce.
       </p>
     </div>
   );
@@ -549,42 +549,42 @@ const SERP_RESULTS = [
   {
     id: "veyala",
     domain: "veyala.fr",
-    title: "Veyala — CV adapté à chaque offre, compatible ATS",
+    title: "Veyala : CV adapté à chaque offre, compatible ATS",
     snippet:
       "Importez votre CV, collez une offre : analyse de matching gratuite, puis CV + lettre optimisés ATS. Export Word & PDF.",
   },
   {
     id: "kickresume",
     domain: "kickresume.com",
-    title: "Kickresume — Créateur de CV et lettre par IA",
+    title: "Kickresume : créateur de CV et lettre par IA",
     snippet:
       "Plus de 40 modèles, génération IA et vérificateur ATS. Idéal pour étudiants et profils créatifs.",
   },
   {
     id: "rezi",
     domain: "rezi.ai",
-    title: "Rezi — Optimiseur de CV ATS avec score en temps réel",
+    title: "Rezi : optimiseur de CV ATS avec score en temps réel",
     snippet:
       "Analysez votre CV pour les ATS, extrayez les mots-clés d’une offre et améliorez votre score Rezi.",
   },
   {
     id: "teal",
     domain: "tealhq.com",
-    title: "Teal — CV builder et suivi de candidatures",
+    title: "Teal : CV builder et suivi de candidatures",
     snippet:
       "Créez votre CV, suivez vos candidatures et gérez votre recherche d’emploi depuis un seul tableau de bord.",
   },
   {
     id: "resumeio",
     domain: "resume.io",
-    title: "Resume.io — Modèles de CV professionnels en ligne",
+    title: "Resume.io : modèles de CV professionnels en ligne",
     snippet:
       "Construisez un CV en quelques minutes avec des templates prêts à l’emploi et un export PDF.",
   },
   {
     id: "cvpass",
     domain: "cvpass.fr",
-    title: "CVpass — Scanner ATS et suite carrière (France)",
+    title: "CVpass : scanner ATS et suite carrière (France)",
     snippet: "Score ATS calibré sur le marché français, lettre, LinkedIn et suivi de candidatures.",
   },
 ] as const;
@@ -670,7 +670,7 @@ function LandingScene({ progress }: { progress: number }) {
         className="mt-3 max-w-md text-sm text-slate-600"
         style={{ opacity: Math.min(1, Math.max(0, (progress - 0.25) * 2)) }}
       >
-        Collez une offre — Veyala génère un CV et une lettre parfaitement adaptés.
+        Collez une offre : Veyala génère un CV et une lettre parfaitement adaptés.
       </p>
       <div
         className="mt-6 inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25"
@@ -695,7 +695,7 @@ function RegisterScene({ progress }: { progress: number }) {
       >
         <p className="font-display text-xl font-bold text-slate-900">Créer un compte</p>
         <p className="mt-1 text-xs text-slate-500">
-          2 crédits offerts à l&apos;inscription — sans carte bancaire.
+          2 crédits offerts à l&apos;inscription, sans carte bancaire.
         </p>
         <div className="mt-5 space-y-3">
           <Field label="Email" value="lea.martin@email.com" />
@@ -721,7 +721,7 @@ function ProfileScene({ progress }: { progress: number }) {
         <div>
           <h2 className="font-display text-lg font-bold text-slate-900">Mon CV de base</h2>
           <p className="text-xs text-slate-500">
-            Source de vérité — l&apos;IA reformule, elle n&apos;invente pas.
+            Source de vérité : l&apos;IA reformule, elle n&apos;invente pas.
           </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -738,7 +738,7 @@ function ProfileScene({ progress }: { progress: number }) {
             {imported ? (
               <>
                 <CheckCircle2 className="size-4" aria-hidden />
-                CV analysé — profil rempli
+                CV analysé, profil rempli
               </>
             ) : progress > 0.15 ? (
               <>
@@ -787,7 +787,7 @@ function ProfileScene({ progress }: { progress: number }) {
 }
 
 function ComposeScene({ progress }: { progress: number }) {
-  const offer = `Product Designer — Startup SaaS · Paris / Hybride
+  const offer = `Product Designer, Startup SaaS · Paris / Hybride
 Missions : Design System, recherche utilisateur, prototypage Figma.
 Must-have : Figma, Design System, UX Research. Nice : Agile, Framer.`;
   const shown = offer.slice(0, Math.floor(Math.min(1, progress / 0.55) * offer.length));
@@ -1080,7 +1080,7 @@ function ResultScene({ progress }: { progress: number }) {
             </div>
             <div className="space-y-1.5 rounded-lg border border-slate-100 bg-slate-50 p-3">
               <p className="text-[10px] leading-relaxed text-slate-600">
-                Madame, Monsieur, — forte d&apos;une expérience en Design System et recherche
+                Madame, Monsieur, forte d&apos;une expérience en Design System et recherche
                 utilisateur…
               </p>
               <div className="h-1.5 w-full rounded-full bg-slate-200" />

@@ -124,7 +124,7 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
         </div>
         <PrintPreview
           srcDoc={previewHtml}
-          title={`Aperçu du CV — ${cv.jobTitle}`}
+          title={`Aperçu du CV : ${cv.jobTitle}`}
           className="rounded-xl border shadow-sm"
         />
       </section>
@@ -148,7 +148,7 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
           </div>
           <PrintPreview
             srcDoc={letterHtml}
-            title={`Lettre de motivation — ${cv.jobTitle}`}
+            title={`Lettre de motivation : ${cv.jobTitle}`}
             className="rounded-xl border shadow-sm"
           />
         </section>
