@@ -1,3 +1,26 @@
+# [1.13.0](https://github.com/noukpoherve/veyala/compare/v1.12.0...v1.13.0) (2026-08-16)
+
+
+### Bug Fixes
+
+* **a11y:** final accessibility pass — CV editor tabs, live score (Étape 9) ([101fce6](https://github.com/noukpoherve/veyala/commit/101fce693ad455972ee8494d8f69fb077a3726d3))
+* **cv-editor:** mobile responsiveness of the appearance studio ([2919fee](https://github.com/noukpoherve/veyala/commit/2919fee676d7bddeeff90c0556d4f72790388dd6))
+* **cv:** the 3 Critical bugs from the UX audit ([24698ee](https://github.com/noukpoherve/veyala/commit/24698ee9cae9567ca97ffc8bf7e4f21ab6aad666))
+* **design-system:** marketing surface consistency pass (Étape 5) ([6595cb6](https://github.com/noukpoherve/veyala/commit/6595cb65ab8c50202b8d69b00bcecde0f2396726))
+* **design-system:** Medium findings from the audit (copy, inputs, CTAs) ([f2f8b72](https://github.com/noukpoherve/veyala/commit/f2f8b72689171b42ae6fee0ffa9ba65575fd04d9))
+* **design-system:** responsive/touch-target fixes (Étape 4) ([e94e862](https://github.com/noukpoherve/veyala/commit/e94e862e465e6c949f0611132bd89f80ad66f3f8))
+* **design-system:** success token failed WCAG contrast, especially in dark mode ([0e04742](https://github.com/noukpoherve/veyala/commit/0e047425cdc5a25e8c57bd7497ab6c21cb4e9bf2))
+* **mobile-ux:** tab-bar overlap, touch-drag, keyboard hints (Étape 7) ([68cd0e6](https://github.com/noukpoherve/veyala/commit/68cd0e615d2d0a8f768b526d0436c31962ae8399))
+
+
+### Features
+
+* **design-system:** application shell — sidebar toggle fix, Toaster, Dialog migration ([50f5d6b](https://github.com/noukpoherve/veyala/commit/50f5d6bfbbd5a945cdf9aa3c1a45bd6bad76c28d))
+* **design-system:** build out the UI primitives library ([38dc7c6](https://github.com/noukpoherve/veyala/commit/38dc7c6496dd4f3e3122cc859682a52fdc3c5692))
+* **design-system:** introduce consolidated design tokens ([7e76227](https://github.com/noukpoherve/veyala/commit/7e7622764f715207b8efada1080f93c55abe1b95))
+* **design-system:** missing loading states + PageHeader rollout ([f4e7ce6](https://github.com/noukpoherve/veyala/commit/f4e7ce6be59d3c42d96cd2f0b50738f1eace2f20))
+* **design-system:** roll out PageHeader to admin pages + cv detail ([892c834](https://github.com/noukpoherve/veyala/commit/892c834eb96ed36ba198523a2f8e0c778d19b53b))
+
 # [1.12.0](https://github.com/noukpoherve/veyala/compare/v1.11.0...v1.12.0) (2026-08-15)
 
 
