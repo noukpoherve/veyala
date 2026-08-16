@@ -3,6 +3,7 @@ import { chatJSON } from "@/lib/llm";
 import { cvSchema, cvForLLM, CV_JSON_SHAPE, type CVData } from "@/lib/cv-schema";
 import type { FormationRequirements } from "@/lib/campus-france/program-analysis";
 import { sanitizeSkillsAgainstBase } from "@/lib/match-score";
+import { GENERATED_COPY_TYPOGRAPHY, stripEmDashes, stripEmDashesDeep } from "@/lib/typography";
 
 const MAX_PROGRAM_PROMPT_CHARS = 8000;
 
@@ -22,6 +23,7 @@ Règles STRICTES :
 - "skills" : réordonne pour placer d'abord les compétences utiles à la formation ; n'ajoute un terme que s'il est déjà prouvé dans le CV.
 - "languages", "certifications", "interests", "contact" : recopiés (sauf réordonner une langue exigée déjà listée en premier).
 - Ajoute "detectedTitle" : intitulé de la formation.
+- ${GENERATED_COPY_TYPOGRAPHY}
 - Réponds UNIQUEMENT avec un objet JSON valide, sans backticks ni texte autour, conforme à ce format (+ detectedTitle) :
 ${CV_JSON_SHAPE}`;
 
@@ -120,7 +122,7 @@ export async function tailorAcademicCv(
   };
 
   return {
-    cv: sanitizeSkillsAgainstBase(merged, baseCV),
-    detectedTitle,
+    cv: stripEmDashesDeep(sanitizeSkillsAgainstBase(merged, baseCV)),
+    detectedTitle: stripEmDashes(detectedTitle),
   };
 }

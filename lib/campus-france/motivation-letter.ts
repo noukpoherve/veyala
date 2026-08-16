@@ -2,6 +2,7 @@ import "server-only";
 import { chat } from "@/lib/llm";
 import { cvForLLM, type CVData } from "@/lib/cv-schema";
 import type { FormationRequirements } from "@/lib/campus-france/program-analysis";
+import { GENERATED_COPY_TYPOGRAPHY, stripEmDashes } from "@/lib/typography";
 
 const MAX_PROMPT_CHARS = 6000;
 
@@ -20,7 +21,8 @@ Règles STRICTES :
   5) Clôture sobre (disponibilité pour le dossier, sans demander un entretien d'embauche).
 - Ton sérieux, clair, sans flagornerie ni formules creuses.
 - Commence par « Madame, Monsieur, » et termine par une formule de politesse sobre (ex. « Cordialement, ») SANS répéter le nom du candidat après.
-- Réponds UNIQUEMENT avec le corps de la lettre (pas d'en-tête, pas de coordonnées, pas d'objet, pas de signature).`;
+- Réponds UNIQUEMENT avec le corps de la lettre (pas d'en-tête, pas de coordonnées, pas d'objet, pas de signature).
+- ${GENERATED_COPY_TYPOGRAPHY}`;
 
 export interface MotivationLetterParams {
   cv: CVData;
@@ -77,5 +79,5 @@ export async function writeCampusFranceMotivationLetter(
   if (body.length < 220) {
     throw new Error("La lettre générée est trop courte. Réessayez.");
   }
-  return body;
+  return stripEmDashes(body);
 }

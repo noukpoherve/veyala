@@ -15,7 +15,7 @@ On te donne l'image d'un modèle (template) de CV. Ta mission : en extraire une 
 
 Règles :
 - "layout" : "sidebar-left" si le CV a une colonne latérale distincte, sinon "single-column".
-- "colors.sidebar" : couleurs dominantes de la colonne latérale, du haut vers le bas, format #rrggbb (1 seule si unie, 6 MAXIMUM pour un dégradé).
+- "colors.sidebar" : couleurs dominantes de la colonne latérale, du haut vers le bas, format #rrggbb — 1 seule si unie, 6 MAXIMUM pour un dégradé.
 - "colors.band" : couleur des bandes/titres de sections de la colonne principale.
 - "colors.heading" / "colors.body" : couleurs des titres et du texte courant.
 - "fonts.heading" / "fonts.body" : familles de police les plus proches parmi : "Century Gothic", "Georgia", "Helvetica", "Trebuchet MS", "Arial", "Times New Roman".

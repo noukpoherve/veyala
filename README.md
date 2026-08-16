@@ -1,4 +1,4 @@
-# CVGen : CV optimisés par IA, adaptés à chaque offre
+# CVGen — CV optimisés par IA, adaptés à chaque offre
 
 Plateforme SaaS de génération de CV sur mesure : l'utilisateur importe son CV (source de
 vérité), colle une offre d'emploi, choisit un template et télécharge un CV **Word (.docx) +
@@ -94,7 +94,7 @@ lib/
   credits.ts          Débit/crédit atomique (Serializable, never négatif, refund retry)
   payments.ts         Fulfillment Stripe idempotent
   rate-limit.ts       Sliding window (mémoire locale ou Upstash Redis)
-  storage.ts          local (dev) / S3-R2 / Supabase (local interdit en prod)
+  storage.ts          local (dev) / S3-R2 / Supabase — local interdit en prod
   pdf/                Playwright + @sparticuz/chromium (Vercel-ready)
 prisma/               Schéma + migrations + seed
 ```
@@ -126,13 +126,13 @@ prisma/               Schéma + migrations + seed
 
 1. Projet Supabase (Auth + DB) → renseigner `NEXT_PUBLIC_SUPABASE_*`,
    `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL` (transaction pooler) et `DIRECT_URL`
-   (session pooler) : voir `.env.local.example`.
+   (session pooler) — voir `.env.local.example`.
 2. Importer le repo dans **Vercel** ; variables de `.env.local.example`.
 3. PDF : déjà branché sur `playwright-core` + `@sparticuz/chromium` dans `lib/pdf/index.ts`
    (pas besoin de puppeteer). Prévoir ≥ 2048 MB de mémoire fonction.
 4. Build : `prisma migrate deploy && next build` (`vercel-build` script).
 5. Webhook Stripe prod → `/api/stripe/webhook`.
-6. Stockage : `STORAGE_DRIVER=s3` (R2) ou `supabase` (`local` est refusé en prod/Vercel).
+6. Stockage : `STORAGE_DRIVER=s3` (R2) ou `supabase` — **`local` est refusé en prod/Vercel**.
 7. Rate-limit multi-instance : `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`.
 8. Sentry : `NEXT_PUBLIC_SENTRY_DSN` (runtime) + `SENTRY_ORG` / `SENTRY_PROJECT` /
    `SENTRY_AUTH_TOKEN` (upload des source maps au build Vercel).
