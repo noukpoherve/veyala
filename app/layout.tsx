@@ -22,7 +22,7 @@ export const viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(base),
   title: {
-    default: "Veyala : CV optimisés par IA, adaptés à chaque offre",
+    default: "Veyala — CV optimisés par IA, adaptés à chaque offre",
     template: "%s · Veyala",
   },
   description:
@@ -39,12 +39,12 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     url: base,
     siteName: "Veyala",
-    title: "Veyala : votre candidature, augmentée par l'IA",
+    title: "Veyala — Votre candidature, augmentée par l'IA",
     description: "CV et lettres de motivation adaptés par IA. Export Word & PDF, compatible ATS.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Veyala : CV adaptés par IA",
+    title: "Veyala — CV adaptés par IA",
     description: "Collez une offre, générez un CV ATS + lettre de motivation en quelques secondes.",
   },
   robots: {

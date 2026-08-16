@@ -26,11 +26,11 @@ type AuthEmailCopy = {
 const AUTH_EMAILS: Record<AuthEmailId, AuthEmailCopy> = {
   confirmation: {
     filename: "confirmation.html",
-    subject: "Confirmez votre email | Veyala",
+    subject: "Confirmez votre email — Veyala",
     preheader: "Un clic pour activer votre compte et vos 2 crédits offerts.",
     title: "Bienvenue sur Veyala",
     intro:
-      "Merci d'avoir créé votre compte. Confirmez votre adresse email pour l'activer et recevoir vos 2 crédits offerts, sans carte bancaire.",
+      "Merci d'avoir créé votre compte. Confirmez votre adresse email pour l'activer et recevoir vos 2 crédits offerts — sans carte bancaire.",
     ctaLabel: "Confirmer mon adresse email",
     ctaHref: CONFIRM,
     showRawUrl: true,
@@ -38,7 +38,7 @@ const AUTH_EMAILS: Record<AuthEmailId, AuthEmailCopy> = {
   },
   recovery: {
     filename: "recovery.html",
-    subject: "Réinitialisez votre mot de passe | Veyala",
+    subject: "Réinitialisez votre mot de passe — Veyala",
     preheader: "Un lien sécurisé pour choisir un nouveau mot de passe.",
     title: "Réinitialisation du mot de passe",
     intro:
@@ -62,7 +62,7 @@ const AUTH_EMAILS: Record<AuthEmailId, AuthEmailCopy> = {
   },
   email_change: {
     filename: "email-change.html",
-    subject: "Confirmez votre nouvelle adresse | Veyala",
+    subject: "Confirmez votre nouvelle adresse — Veyala",
     preheader: "Validez ce changement d'email pour sécuriser votre compte.",
     title: "Confirmez votre nouvelle adresse",
     intro:
@@ -74,7 +74,7 @@ const AUTH_EMAILS: Record<AuthEmailId, AuthEmailCopy> = {
   },
   password_changed: {
     filename: "password-changed.html",
-    subject: "Votre mot de passe a été modifié | Veyala",
+    subject: "Votre mot de passe a été modifié — Veyala",
     preheader: "Notification de sécurité : le mot de passe de votre compte a changé.",
     title: "Votre mot de passe a été modifié",
     intro:

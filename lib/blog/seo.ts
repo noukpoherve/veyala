@@ -88,7 +88,7 @@ export function blogIndexJsonLd(posts: BlogPost[]) {
   return {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "Blog Veyala : CV, ATS, emploi et lettres de motivation",
+    name: "Blog Veyala — CV, ATS, emploi & lettres de motivation",
     description:
       "Guides pratiques pour optimiser votre CV ATS, adapter votre candidature à chaque offre d'emploi et rédiger des lettres de motivation efficaces.",
     url: `${base}/blog`,

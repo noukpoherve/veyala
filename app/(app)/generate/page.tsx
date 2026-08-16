@@ -56,7 +56,7 @@ export default async function GeneratePage() {
             </Link>
           }
         >
-          C&apos;est la source de vérité de toutes les générations : aucune invention par l&apos;IA.
+          C&apos;est la source de vérité de toutes les générations — aucune invention par l&apos;IA.
         </Alert>
       ) : null}
 

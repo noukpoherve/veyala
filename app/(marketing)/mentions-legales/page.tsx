@@ -17,7 +17,7 @@ export default function MentionsLegalesPage() {
       <section>
         <h2>Hébergement</h2>
         <p>
-          Le site est hébergé par [hébergeur, ex. Vercel Inc., 440 N Barranca Ave #4133, Covina, CA
+          Le site est hébergé par [hébergeur — ex. Vercel Inc., 440 N Barranca Ave #4133, Covina, CA
           91723, USA]. La base de données est hébergée par [Neon / Supabase].
         </p>
       </section>

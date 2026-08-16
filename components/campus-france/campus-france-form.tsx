@@ -498,7 +498,7 @@ export function CampusFranceForm({
 
           <Card>
             <CardHeader className="space-y-1">
-              <CardTitle className="text-base">Projets proposés, à valider</CardTitle>
+              <CardTitle className="text-base">Projets proposés — à valider</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {projectsProposed
                   ? "Brouillons générés à partir de votre CV et de la formation. Relisez, corrigez si besoin, puis générez."

@@ -35,7 +35,7 @@ export function renderCoverLetterHtml(
 <html lang="fr">
 <head>
 <meta charset="utf-8" />
-<title>Lettre de motivation : ${esc(cv.identity.fullName)}</title>
+<title>Lettre de motivation — ${esc(cv.identity.fullName)}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   @page { size: A4; margin: 0; }

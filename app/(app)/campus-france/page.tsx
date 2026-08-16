@@ -57,7 +57,7 @@ export default async function CampusFrancePage() {
             </Link>
           }
         >
-          C&apos;est la source de vérité du dossier : aucune invention par l&apos;IA.
+          C&apos;est la source de vérité du dossier — aucune invention par l&apos;IA.
         </Alert>
       ) : null}
 

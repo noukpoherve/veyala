@@ -312,7 +312,7 @@ function experienceParagraphs(ctx: Ctx): Paragraph[] {
               font: ctx.font,
             }),
             new TextRun({
-              text: " · ",
+              text: " — ",
               bold: true,
               color: hex(ctx.def.colors.heading),
               size: 18,
@@ -335,7 +335,7 @@ function experienceParagraphs(ctx: Ctx): Paragraph[] {
         })
       );
     } else {
-      out.push(itemTitle(exp.company ? `${exp.title} · ${exp.company}` : exp.title, ctx));
+      out.push(itemTitle(exp.company ? `${exp.title} — ${exp.company}` : exp.title, ctx));
     }
     out.push(metaLine(exp.dates, exp.place, ctx));
     for (const b of exp.bullets) out.push(bulletLine(b, ctx));
@@ -411,7 +411,7 @@ function educationParagraphs(ctx: Ctx): Paragraph[] {
   if (ctx.cv.education.length === 0) return [];
   const out: Paragraph[] = [bandTitle("Formation", ctx)];
   for (const ed of ctx.cv.education) {
-    out.push(itemTitle(ed.school ? `${ed.degree} · ${ed.school}` : ed.degree, ctx));
+    out.push(itemTitle(ed.school ? `${ed.degree} — ${ed.school}` : ed.degree, ctx));
     out.push(metaLine(ed.dates, ed.place, ctx));
     if (ed.details) out.push(bulletLine(ed.details, ctx));
   }
@@ -449,7 +449,7 @@ function certificationsParagraphs(ctx: Ctx): Paragraph[] {
     }
     const meta = [cert.issuer, cert.credentialId ? `ID ${cert.credentialId}` : ""]
       .filter(Boolean)
-      .join(" · ");
+      .join(" — ");
     out.push(metaLine(cert.dates, meta, ctx));
   }
   return out;
@@ -459,7 +459,7 @@ function languagesParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
   if (ctx.cv.languages.length === 0) return [];
   const out: Paragraph[] = [inSidebar ? sideTitle("Langues", ctx) : bandTitle("Langues", ctx)];
   for (const lang of ctx.cv.languages) {
-    const text = lang.level ? `${lang.name} · ${lang.level}` : lang.name;
+    const text = lang.level ? `${lang.name} — ${lang.level}` : lang.name;
     out.push(inSidebar ? sideText(text, ctx, { after: 20 }) : bodyText(text, ctx));
   }
   return out;

@@ -55,7 +55,7 @@ export async function sendSupportReplyEmail(params: { to: string; subject: strin
   await transport().sendMail({
     from: process.env.EMAIL_FROM,
     to: params.to,
-    subject: `Re: ${params.subject} | Support Veyala`,
+    subject: `Re: ${params.subject} — Support Veyala`,
     text,
     html,
   });

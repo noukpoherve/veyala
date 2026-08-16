@@ -33,7 +33,7 @@ export async function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Blog Veyala : CV, ATS et emploi</title>
+    <title>Blog Veyala — CV, ATS &amp; emploi</title>
     <link>${base}/blog</link>
     <description>Guides pratiques pour optimiser votre CV ATS, adapter votre candidature et rédiger des lettres de motivation efficaces.</description>
     <language>fr-fr</language>

@@ -76,7 +76,7 @@ export default async function ResetPasswordPage({
   return (
     <Card className="relative w-full max-w-md rounded-3xl border-slate-100 shadow-xl shadow-blue-900/5">
       <CardHeader className="items-center text-center">
-        <Link href="/" className="mb-2" aria-label="Accueil Veyala">
+        <Link href="/" className="mb-2" aria-label="Veyala — accueil">
           <VeyalaLogo />
         </Link>
         <span className="flex size-14 items-center justify-center rounded-2xl bg-blue-50">

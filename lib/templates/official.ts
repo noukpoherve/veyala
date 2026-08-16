@@ -10,7 +10,7 @@ export interface OfficialTemplate {
 
 /** Signature design: blue → purple → burgundy gradient sidebar, skill bricks, blue bands. */
 const signature: OfficialTemplate = {
-  name: "Signature : dégradé",
+  name: "Signature — dégradé",
   slug: "signature-degrade",
   engine: "HTML",
   definition: {
@@ -41,7 +41,7 @@ const signature: OfficialTemplate = {
 
 /** Light sidebar, blue accents, underlined titles, date pills — "Cadre" style. */
 const cadre: OfficialTemplate = {
-  name: "Cadre : bleu",
+  name: "Cadre — bleu",
   slug: "cadre-bleu",
   engine: "HTML",
   definition: {
@@ -71,7 +71,7 @@ const cadre: OfficialTemplate = {
 
 /** Clean single-column layout, maximum ATS compatibility. */
 const clarte: OfficialTemplate = {
-  name: "Clarté : classique",
+  name: "Clarté — classique",
   slug: "clarte-classique",
   engine: "HTML",
   definition: {
@@ -110,7 +110,7 @@ const clarte: OfficialTemplate = {
 
 /** Two-column layout with a solid deep-navy sidebar. */
 const horizon: OfficialTemplate = {
-  name: "Horizon : bleu nuit",
+  name: "Horizon — bleu nuit",
   slug: "horizon-bleu-nuit",
   engine: "HTML",
   definition: {

@@ -157,7 +157,7 @@ export function BillingCheckout({
         {promoError ? <p className="mt-2 text-sm text-destructive">{promoError}</p> : null}
         {preview ? (
           <p className="mt-2 text-sm text-emerald-700">
-            Code <strong>{preview.code}</strong> ({preview.label}) : le prix / crédits seront
+            Code <strong>{preview.code}</strong> ({preview.label}) — le prix / crédits seront
             ajustés au paiement selon le pack choisi.
           </p>
         ) : null}
@@ -186,7 +186,7 @@ export function BillingCheckout({
                 {highlighted ? <Badge className="mb-1">Le plus populaire</Badge> : null}
                 <CardTitle className="text-xl">{pack.label}</CardTitle>
                 <CardDescription>
-                  {credits} génération{credits > 1 ? "s" : ""},{" "}
+                  {credits} génération{credits > 1 ? "s" : ""} —{" "}
                   {euros(Math.round(price / Math.max(1, credits)))}/CV
                 </CardDescription>
                 <p className="font-display text-3xl font-bold">

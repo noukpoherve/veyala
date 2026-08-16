@@ -90,7 +90,7 @@ export async function createBlogPost(
   if (intent === "publish" && !seo.canPublish) {
     return {
       ok: false,
-      message: `Score SEO ${seo.score}/100 (minimum ${PUBLISH_MIN_SCORE} pour publier).`,
+      message: `Score SEO ${seo.score}/100 — minimum ${PUBLISH_MIN_SCORE} pour publier.`,
       seoScore: seo.score,
     };
   }
@@ -155,7 +155,7 @@ export async function updateBlogPost(
   if (intent === "publish" && !seo.canPublish) {
     return {
       ok: false,
-      message: `Score SEO ${seo.score}/100 (minimum ${PUBLISH_MIN_SCORE} pour publier).`,
+      message: `Score SEO ${seo.score}/100 — minimum ${PUBLISH_MIN_SCORE} pour publier.`,
       seoScore: seo.score,
     };
   }

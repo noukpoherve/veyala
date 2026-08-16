@@ -36,7 +36,7 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
       )}
     >
       <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-4 px-6 py-3 md:grid-cols-[1fr_auto_1fr]">
-        <Link href="/" aria-label="Accueil Veyala" className="justify-self-start">
+        <Link href="/" aria-label="Veyala — accueil" className="justify-self-start">
           <VeyalaLogo />
         </Link>
 

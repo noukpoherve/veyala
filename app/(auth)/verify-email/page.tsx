@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Vérifiez votre email" };
 const MESSAGES: Record<string, { text: string; tone: "error" | "info" }> = {
   resent: { text: "Un nouveau lien vient de vous être envoyé.", tone: "info" },
   cooldown: {
-    text: "Un email vient déjà d'être envoyé. Patientez une minute avant d'en redemander un.",
+    text: "Un email vient déjà d'être envoyé — patientez une minute avant d'en redemander un.",
     tone: "info",
   },
   ratelimited: {
@@ -54,7 +54,7 @@ export default function VerifyEmailPage({
   return (
     <Card className="relative w-full max-w-md rounded-3xl border-slate-100 text-center shadow-xl shadow-blue-900/5">
       <CardHeader className="items-center">
-        <Link href="/" className="mb-2" aria-label="Accueil Veyala">
+        <Link href="/" className="mb-2" aria-label="Veyala — accueil">
           <VeyalaLogo />
         </Link>
         <span className="flex size-14 items-center justify-center rounded-2xl bg-blue-50">

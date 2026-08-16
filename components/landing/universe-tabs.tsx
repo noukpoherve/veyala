@@ -34,7 +34,7 @@ const UNIVERSES: Record<
   etudes: {
     badge: "Études",
     title: "Dossier d'études & mobilité",
-    text: "Collez la fiche de formation ou le vœu, Veyala construit un dossier académique dans les codes de chaque plateforme (Campus France, Parcoursup ou universités canadiennes).",
+    text: "Collez la fiche de formation ou le vœu, Veyala construit un dossier académique dans les codes de chaque plateforme — Campus France, Parcoursup ou universités canadiennes.",
     bullets: [
       "Dossier Campus France structuré selon les attentes officielles",
       "CV académique valorisant formations et projets",

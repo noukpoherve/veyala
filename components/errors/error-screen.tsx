@@ -17,7 +17,7 @@ const COPY: Record<ErrorScreenKind, { code: string; title: string; description: 
     code: "500",
     title: "Un incident technique est survenu",
     description:
-      "Notre équipe a été notifiée. Réessayez dans un instant, ou contactez le support si le problème continue. Nous vous aiderons rapidement.",
+      "Notre équipe a été notifiée. Réessayez dans un instant, ou contactez le support si le problème continue — nous vous aiderons rapidement.",
   },
   unavailable: {
     code: "503",
@@ -82,7 +82,7 @@ export function ErrorScreen({
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,99,235,0.12),_transparent_55%),radial-gradient(ellipse_at_bottom,_rgba(15,23,42,0.04),_transparent_50%)]"
       />
       <div className="relative z-10 mx-auto flex w-full max-w-lg flex-col items-center text-center">
-        <Link href="/" className="mb-10" aria-label="Accueil Veyala">
+        <Link href="/" className="mb-10" aria-label="Veyala — accueil">
           <VeyalaLogo />
         </Link>
 

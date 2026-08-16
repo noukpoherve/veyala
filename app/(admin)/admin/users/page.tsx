@@ -19,7 +19,7 @@ const dateFr = (d: Date) => new Intl.DateTimeFormat("fr-FR", { dateStyle: "mediu
 
 const INVITE_MESSAGES: Record<string, { text: string; tone: "success" | "error" }> = {
   sent: {
-    text: "Invitation envoyée. L'administrateur recevra un lien par email.",
+    text: "Invitation envoyée — l'administrateur recevra un lien par email.",
     tone: "success",
   },
   exists: {

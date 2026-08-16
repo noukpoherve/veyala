@@ -57,7 +57,7 @@ export default async function AdminPromosPage({
     <article className="space-y-6">
       <PageHeader
         title="Codes promo"
-        description="Remises % / montant fixe, ou crédits bonus, appliqués avant Stripe Checkout."
+        description="Remises % / montant fixe, ou crédits bonus — appliqués avant Stripe Checkout."
       />
 
       <Card>

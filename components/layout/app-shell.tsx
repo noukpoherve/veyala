@@ -51,7 +51,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             href="/"
             className="border-b border-border p-4 pr-12 md:pr-4"
-            aria-label="Accueil Veyala"
+            aria-label="Veyala — accueil"
           >
             <VeyalaLogo />
           </Link>
@@ -106,7 +106,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               height: "var(--app-header)",
             }}
           >
-            <Link href="/dashboard" className="min-w-0" aria-label="Tableau de bord Veyala">
+            <Link href="/dashboard" className="min-w-0" aria-label="Veyala — tableau de bord">
               <VeyalaLogo />
             </Link>
             <Badge variant="secondary">

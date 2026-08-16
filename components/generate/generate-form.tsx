@@ -437,7 +437,7 @@ export function GenerateForm({
                   maxLength={120}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Un vrai intitulé de poste, pas de texte aléatoire.
+                  Un vrai intitulé de poste — pas de texte aléatoire.
                 </p>
               </div>
               <div className="space-y-1.5">
@@ -466,7 +466,7 @@ export function GenerateForm({
                   placeholder="Ex. Insister sur React, CV sur une page…"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Instructions en français (ou anglais) lisibles. Le charabia est refusé.
+                  Instructions en français (ou anglais) lisibles — le charabia est refusé.
                 </p>
               </div>
             </CardContent>

@@ -53,7 +53,7 @@ describe("renderTransactionalEmail", () => {
 
 describe("auth emails", () => {
   it("uses French subjects and GoTrue placeholders", () => {
-    expect(authEmailSubject("confirmation")).toBe("Confirmez votre email | Veyala");
+    expect(authEmailSubject("confirmation")).toBe("Confirmez votre email — Veyala");
     const confirmation = renderAuthEmail("confirmation");
     expect(confirmation.html).toContain("{{ .ConfirmationURL }}");
     expect(confirmation.html).toContain("{{ .SiteURL }}/brand/veyala-logo-full.png");

@@ -119,7 +119,7 @@ export function renderTransactionalEmail(email: TransactionalEmail): {
           <tr>
             <td style="padding:28px 12px 8px;text-align:center;font-family:${EMAIL_BRAND.font}">
               <p style="margin:0 0 8px;font-size:12px;line-height:1.6;color:${EMAIL_BRAND.muted}">${escapeHtml(
-                "Veyala : votre candidature, augmentée par l'IA."
+                "Veyala — votre candidature, augmentée par l'IA."
               )}</p>
               <p style="margin:0;font-size:12px;line-height:1.6;color:${EMAIL_BRAND.faint}">
                 <a href="${escapeHtml(`${origin}/cgu`)}" style="color:${EMAIL_BRAND.muted};text-decoration:underline">CGU</a>
@@ -143,7 +143,7 @@ export function renderTransactionalEmail(email: TransactionalEmail): {
     email.bodyText ? `\n${email.bodyText}` : "",
     email.cta ? `\n${email.cta.label} : ${email.cta.href}` : "",
     email.note ? `\n${email.note}` : "",
-    "\n\nVeyala : votre candidature, augmentée par l'IA.",
+    "\n—\nVeyala — votre candidature, augmentée par l'IA.",
     `${origin}/cgu · ${origin}/confidentialite`,
   ];
 

@@ -186,13 +186,13 @@ export function CvEditor({
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <BackLink href={`/cv/${cvId}`}>Retour à l&apos;aperçu</BackLink>
-          <h1 className="font-display text-lg font-bold">Éditeur : {jobTitle}</h1>
+          <h1 className="font-display text-lg font-bold">Éditeur — {jobTitle}</h1>
         </div>
         <div className="flex items-center gap-3">
           {status === "saved" ? (
             <span role="status" className="flex items-center gap-1.5 text-sm text-emerald-600">
               <CheckCircle2 className="size-4" aria-hidden />
-              Enregistré. Fichiers Word et PDF régénérés
+              Enregistré — fichiers Word et PDF régénérés
             </span>
           ) : null}
           <Button variant="gradient" onClick={() => void onSave()} disabled={status === "saving"}>

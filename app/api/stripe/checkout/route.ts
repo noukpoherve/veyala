@@ -76,7 +76,7 @@ export async function POST(req: Request) {
             currency: "eur",
             unit_amount: amountCents,
             product_data: {
-              name: `Veyala : pack ${pack.label}`,
+              name: `Veyala — Pack ${pack.label}`,
               description,
             },
           },
