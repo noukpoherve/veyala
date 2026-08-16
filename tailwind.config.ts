@@ -44,11 +44,30 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        // Panel tier (cards/panels/modals) — the intentional replacement for the
+        // ad-hoc rounded-xl/2xl/3xl mix. Prefer this over a literal Tailwind radius.
+        panel: "var(--radius-panel)",
+      },
+      // Elevation scale — 3 levels, intentionally subtle. Prefer these names over
+      // reaching for shadow-lg/xl/2xl directly so "why this shadow" stays legible.
+      boxShadow: {
+        "elevation-rest": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "elevation-hover": "0 4px 10px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06)",
+        "elevation-floating":
+          "0 12px 24px -6px rgb(0 0 0 / 0.12), 0 4px 8px -4px rgb(0 0 0 / 0.08)",
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
@@ -71,6 +90,18 @@ const config: Config = {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      // Motion scale — formalizes the durations/easings already dominant in the
+      // codebase (duration-300 was already the most common value) rather than
+      // introducing new ones. `.transition-bounce` in globals.css is unaffected.
+      transitionDuration: {
+        fast: "150ms",
+        base: "300ms",
+        slow: "500ms",
+      },
+      transitionTimingFunction: {
+        standard: "cubic-bezier(0.22, 1, 0.36, 1)",
+        bounce: "cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
     },
   },

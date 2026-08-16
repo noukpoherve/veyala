@@ -4,6 +4,7 @@ import { ArrowRight, Rss } from "lucide-react";
 import { PostCard } from "@/components/blog/post-card";
 import { getFeaturedPublishedPosts, getPublishedPosts } from "@/lib/blog/queries";
 import { blogIndexJsonLd } from "@/lib/blog/seo";
+import { Button } from "@/components/ui/button";
 
 export const revalidate = 60;
 
@@ -98,13 +99,12 @@ export default async function BlogIndexPage() {
             écrire une lettre de motivation convaincante et accélérer votre recherche d&apos;emploi.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/25 transition-colors hover:bg-blue-700"
-            >
-              Générer mon CV
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
+            <Button asChild>
+              <Link href="/register">
+                Générer mon CV
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            </Button>
             <a
               href="/blog/feed.xml"
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900"
@@ -153,13 +153,12 @@ export default async function BlogIndexPage() {
               motivation adaptés en moins de 30 secondes.
             </p>
           </div>
-          <Link
-            href="/register"
-            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-blue-600/25 transition-colors hover:bg-blue-700"
-          >
-            Créer mon compte
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
+          <Button asChild className="shrink-0">
+            <Link href="/register">
+              Créer mon compte
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </Button>
         </div>
       </section>
     </main>

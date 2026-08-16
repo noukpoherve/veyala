@@ -10,7 +10,16 @@ const badgeVariants = cva(
         default: "border-transparent bg-primary text-primary-foreground shadow",
         secondary: "border-transparent bg-secondary text-secondary-foreground",
         destructive: "border-transparent bg-destructive text-destructive-foreground shadow",
-        success: "border-transparent bg-emerald-600 text-white shadow",
+        success: "border-transparent bg-success text-success-foreground shadow",
+        warning: "border-transparent bg-warning text-warning-foreground shadow",
+        // Soft/tinted tier — for dense contexts (table cells, inline status)
+        // where a solid fill reads too loud. Same tokens as the solid
+        // variants above, just at low opacity, so it stays in sync with them
+        // (including in dark mode) instead of reaching for a literal
+        // Tailwind color like bg-emerald-100.
+        "success-soft": "border-transparent bg-success/10 text-success",
+        "warning-soft": "border-transparent bg-warning/10 text-warning",
+        "neutral-soft": "border-transparent bg-muted text-muted-foreground",
         outline: "text-foreground",
       },
     },

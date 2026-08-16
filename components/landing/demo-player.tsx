@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { VeyalaMark } from "@/components/landing/logo";
 
 type SceneId =
@@ -395,14 +396,12 @@ function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embed
               Recommencer
             </button>
           </div>
-          <Link
-            href="/register"
-            onClick={onClose}
-            className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/25 transition-colors hover:bg-blue-700"
-          >
-            Créer mon compte
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
+          <Button asChild size="sm">
+            <Link href="/register" onClick={onClose}>
+              Créer mon compte
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </Button>
         </div>
       </div>
     </div>
@@ -732,7 +731,7 @@ function ProfileScene({ progress }: { progress: number }) {
             className={cn(
               "mt-3 flex items-center justify-center gap-2 rounded-xl border border-dashed px-3 py-5 text-sm font-medium transition-colors",
               imported
-                ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                ? "border-success/30 bg-success/10 text-success"
                 : "border-slate-300 bg-slate-50 text-slate-700"
             )}
           >
@@ -969,7 +968,7 @@ function GeneratingScene({ progress }: { progress: number }) {
                     {current ? (
                       <Loader2 className="size-3 animate-spin text-blue-600" aria-hidden />
                     ) : done ? (
-                      <CheckCircle2 className="size-3 text-emerald-500" aria-hidden />
+                      <CheckCircle2 className="size-3 text-success" aria-hidden />
                     ) : (
                       index + 1
                     )}

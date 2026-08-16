@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Briefcase, Check, Download, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type UniverseKey = "emploi" | "etudes";
 
@@ -55,7 +56,7 @@ export function UniverseTabs() {
       <div
         role="tablist"
         aria-label="Choisir un univers"
-        className="mx-auto flex w-fit items-center gap-1 rounded-full bg-blue-50/80 p-1.5"
+        className="mx-auto flex w-fit flex-wrap items-center justify-center gap-1 rounded-full bg-blue-50/80 p-1.5"
       >
         {(
           [
@@ -65,12 +66,14 @@ export function UniverseTabs() {
         ).map((item) => (
           <button
             key={item.key}
+            id={`universe-tab-${item.key}`}
             type="button"
             role="tab"
             aria-selected={tab === item.key}
+            aria-controls={`universe-panel-${item.key}`}
             onClick={() => setTab(item.key)}
             className={cn(
-              "transition-bounce inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold",
+              "transition-bounce inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold sm:px-6 sm:py-2.5",
               tab === item.key
                 ? "bg-white text-slate-900 shadow-md"
                 : "text-slate-400 hover:text-slate-600"
@@ -82,7 +85,13 @@ export function UniverseTabs() {
         ))}
       </div>
 
-      <div key={tab} className="tab-panel mt-14 grid items-center gap-12 lg:grid-cols-2">
+      <div
+        key={tab}
+        id={`universe-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`universe-tab-${tab}`}
+        className="tab-panel mt-14 grid items-center gap-12 lg:grid-cols-2"
+      >
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3.5 py-1 text-xs font-semibold text-white">
             <Icon className="size-3" aria-hidden />
@@ -102,16 +111,19 @@ export function UniverseTabs() {
               </li>
             ))}
           </ul>
-          <Link
-            href="/login"
-            className="group mt-9 inline-flex items-center gap-2 rounded-full bg-blue-600 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-bounce hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl"
+          <Button
+            asChild
+            size="lg"
+            className="group mt-9 h-auto gap-2 px-7 py-3.5 shadow-lg shadow-blue-600/25 hover:shadow-xl"
           >
-            Commencer maintenant
-            <ArrowRight
-              className="size-4 transition-transform group-hover:translate-x-0.5"
-              aria-hidden
-            />
-          </Link>
+            <Link href="/login">
+              Commencer maintenant
+              <ArrowRight
+                className="size-4 transition-transform group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </Link>
+          </Button>
         </div>
 
         <div

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
+import { PageHeader } from "@/components/ui/page-header";
 import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
@@ -32,20 +33,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold">Tableau de bord</h1>
-          <p className="text-sm text-muted-foreground">
-            Votre activité et l&apos;historique de vos CV générés.
-          </p>
-        </div>
-        <Button asChild variant="gradient">
-          <Link href="/generate">
-            <Sparkles />
-            Générer un CV
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Tableau de bord"
+        description="Votre activité et l'historique de vos CV générés."
+        actions={
+          <Button asChild variant="gradient">
+            <Link href="/generate">
+              <Sparkles />
+              Générer un CV
+            </Link>
+          </Button>
+        }
+      />
 
       <ActivityBilan stats={stats} />
 

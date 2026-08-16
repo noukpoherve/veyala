@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FileText, Sparkles, TrendingUp, Coins, Trophy } from "lucide-react";
 import type { DashboardStats } from "@/lib/dashboard-stats";
+import { StatCard } from "@/components/ui/stat-card";
 import { cn } from "@/lib/utils";
 
 export function ActivityBilan({ stats }: { stats: DashboardStats }) {
@@ -59,20 +60,17 @@ export function ActivityBilan({ stats }: { stats: DashboardStats }) {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="rounded-2xl border bg-card p-4 shadow-sm">
-            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-              <kpi.icon className="size-3.5" aria-hidden />
-              {kpi.label}
-            </div>
-            <p className="mt-2 font-display text-2xl font-bold tabular-nums tracking-tight">
-              {kpi.value}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">{kpi.hint}</p>
-          </div>
+          <StatCard
+            key={kpi.label}
+            icon={kpi.icon}
+            label={kpi.label}
+            value={kpi.value}
+            hint={kpi.hint}
+          />
         ))}
       </div>
 
-      <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-5">
+      <div className="rounded-panel border bg-card p-4 shadow-elevation-rest sm:p-5">
         <div className="mb-4 flex items-center gap-2">
           <Sparkles className="size-4 text-primary" aria-hidden />
           <h3 className="text-sm font-semibold">CVs générés par semaine</h3>

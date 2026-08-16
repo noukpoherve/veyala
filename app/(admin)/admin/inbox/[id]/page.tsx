@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { db } from "@/lib/db";
 import { adminReplyToThread, setThreadStatus } from "../actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackLink } from "@/components/ui/back-link";
+import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Conversation" };
@@ -35,35 +36,31 @@ export default async function AdminThreadPage({ params }: { params: { id: string
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
-      <Link
-        href="/admin/inbox"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" aria-hidden />
-        Boîte de réception
-      </Link>
+      <BackLink href="/admin/inbox">Boîte de réception</BackLink>
 
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold">{thread.subject}</h1>
-          <p className="text-sm text-muted-foreground">
+      <PageHeader
+        title={thread.subject}
+        description={
+          <>
             {thread.user.name ? `${thread.user.name} · ` : ""}
             {thread.user.email}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={thread.status === "OPEN" ? "secondary" : "outline"}>
-            {thread.status === "OPEN" ? "En cours" : "Clôturé"}
-          </Badge>
-          <form action={setThreadStatus}>
-            <input type="hidden" name="threadId" value={thread.id} />
-            <input type="hidden" name="status" value={nextStatus} />
-            <Button type="submit" variant="outline" size="sm">
-              {thread.status === "OPEN" ? "Clôturer" : "Rouvrir"}
-            </Button>
-          </form>
-        </div>
-      </header>
+          </>
+        }
+        actions={
+          <>
+            <Badge variant={thread.status === "OPEN" ? "secondary" : "outline"}>
+              {thread.status === "OPEN" ? "En cours" : "Clôturé"}
+            </Badge>
+            <form action={setThreadStatus}>
+              <input type="hidden" name="threadId" value={thread.id} />
+              <input type="hidden" name="status" value={nextStatus} />
+              <Button type="submit" variant="outline" size="sm">
+                {thread.status === "OPEN" ? "Clôturer" : "Rouvrir"}
+              </Button>
+            </form>
+          </>
+        }
+      />
 
       <Card>
         <CardContent className="space-y-3 p-5">

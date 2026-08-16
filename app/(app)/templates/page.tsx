@@ -14,6 +14,7 @@ const TemplateImportForm = dynamic(
 );
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import type { Template, TemplateStatus } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Templates" };
@@ -57,12 +58,10 @@ export default async function TemplatesPage() {
 
   return (
     <article className="mx-auto max-w-4xl space-y-8">
-      <header className="space-y-1">
-        <h1 className="font-display text-2xl font-bold">Templates</h1>
-        <p className="text-sm text-muted-foreground">
-          Choisissez un template public ou proposez le vôtre à partir d&apos;une image de référence.
-        </p>
-      </header>
+      <PageHeader
+        title="Templates"
+        description="Choisissez un template public ou proposez le vôtre à partir d'une image de référence."
+      />
 
       <section aria-labelledby="gallery-title" className="space-y-4">
         <h2 id="gallery-title" className="font-display text-lg font-semibold">

@@ -31,16 +31,16 @@ const KIND_SHORT: Record<MatchItem["kind"], string> = {
   nice: "Nice",
 };
 
+const STATUS_BADGE_VARIANT: Record<MatchStatus, "success-soft" | "warning-soft" | "neutral-soft"> =
+  {
+    covered: "success-soft",
+    partial: "warning-soft",
+    missing: "neutral-soft",
+  };
+
 function StatusCell({ status }: { status: MatchStatus }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-        status === "covered" && "bg-emerald-100 text-emerald-800",
-        status === "partial" && "bg-amber-100 text-amber-900",
-        status === "missing" && "bg-slate-100 text-slate-600"
-      )}
-    >
+    <Badge variant={STATUS_BADGE_VARIANT[status]} className="gap-1 font-medium">
       {status === "covered" ? (
         <CheckCircle2 className="size-3" aria-hidden />
       ) : status === "partial" ? (
@@ -49,7 +49,7 @@ function StatusCell({ status }: { status: MatchStatus }) {
         <MinusCircle className="size-3" aria-hidden />
       )}
       {STATUS_LABEL[status]}
-    </span>
+    </Badge>
   );
 }
 

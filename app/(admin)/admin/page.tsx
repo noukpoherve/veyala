@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
 
 export const metadata: Metadata = { title: "Statistiques · Admin" };
 
@@ -55,18 +56,6 @@ function BarList({
   );
 }
 
-function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card>
-      <CardContent className="p-5">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="font-display text-3xl font-bold">{value}</p>
-        {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
-      </CardContent>
-    </Card>
-  );
-}
-
 export default async function AdminStatsPage() {
   const since = new Date();
   since.setDate(since.getDate() - 30);
@@ -101,16 +90,16 @@ export default async function AdminStatsPage() {
       <h1 className="font-display text-2xl font-bold">Statistiques</h1>
 
       <section aria-label="Indicateurs clés" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Utilisateurs" value={String(userCount)} />
-        <StatTile label="CV générés" value={String(cvCount)} hint={`${cvCount30d} sur 30 jours`} />
-        <StatTile
+        <StatCard label="Utilisateurs" value={userCount} />
+        <StatCard label="CV générés" value={cvCount} hint={`${cvCount30d} sur 30 jours`} />
+        <StatCard
           label="Revenus"
           value={euros(paidPayments._sum.amountCents ?? 0)}
           hint={`${paidPayments._count} paiement${paidPayments._count > 1 ? "s" : ""}`}
         />
-        <StatTile
+        <StatCard
           label="Templates à valider"
-          value={String(pendingTemplates)}
+          value={pendingTemplates}
           hint={pendingTemplates > 0 ? "File d'attente non vide" : "File d'attente vide"}
         />
       </section>

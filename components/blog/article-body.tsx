@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ContentBlock } from "@/lib/blog/types";
+import { Button } from "@/components/ui/button";
 
 export function ArticleBody({ blocks }: { blocks: ContentBlock[] }) {
   return (
@@ -76,12 +77,9 @@ export function ArticleBody({ blocks }: { blocks: ContentBlock[] }) {
             return (
               <div key={key} className="rounded-3xl bg-[#0B1527] px-6 py-7 text-white sm:px-8">
                 <p className="max-w-xl text-[16px] leading-relaxed text-slate-200">{block.text}</p>
-                <Link
-                  href={block.href}
-                  className="mt-5 inline-flex items-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
-                >
-                  {block.label}
-                </Link>
+                <Button asChild className="mt-5 hover:bg-blue-500">
+                  <Link href={block.href}>{block.label}</Link>
+                </Button>
               </div>
             );
           default:

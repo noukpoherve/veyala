@@ -167,7 +167,7 @@ export function BillingCheckout({
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {packs.map((pack, i) => {
           const highlighted = i === highlightedIndex;
           const loading = buyingPackId === pack.id;

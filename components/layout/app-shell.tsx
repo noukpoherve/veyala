@@ -59,7 +59,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           <div className="space-y-3 border-t border-border p-3 max-md:pb-4">
             <section
               aria-label="Utilisation des crédits"
-              className="rounded-2xl border border-border bg-card p-4 shadow-sm"
+              className="rounded-panel border border-border bg-card p-4 shadow-elevation-rest"
             >
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-muted-foreground">Mes crédits</h2>

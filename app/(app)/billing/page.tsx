@@ -9,6 +9,7 @@ import { BillingPaymentSync } from "@/components/billing/billing-payment-sync";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { Pagination } from "@/components/ui/pagination";
+import { PageHeader } from "@/components/ui/page-header";
 import { parsePage, paginationSkip, totalPages, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Crédits & factures" };
@@ -73,16 +74,16 @@ export default async function BillingPage({
 
   return (
     <article className="mx-auto max-w-4xl space-y-8">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold">Crédits & factures</h1>
-          <p className="text-sm text-muted-foreground">1 crédit = 1 génération de CV.</p>
-        </div>
-        <Badge variant="secondary" className="px-3 py-1.5 text-base">
-          <Coins className="mr-1.5 size-4" aria-hidden />
-          {balance} crédit{balance > 1 ? "s" : ""}
-        </Badge>
-      </header>
+      <PageHeader
+        title="Crédits & factures"
+        description="1 crédit = 1 génération de CV."
+        actions={
+          <Badge variant="secondary" className="px-3 py-1.5 text-base">
+            <Coins className="mr-1.5 size-4" aria-hidden />
+            {balance} crédit{balance > 1 ? "s" : ""}
+          </Badge>
+        }
+      />
 
       {searchParams.status === "success" ? <BillingPaymentSync auto /> : null}
       {searchParams.status === "cancelled" ? (
@@ -92,10 +93,10 @@ export default async function BillingPage({
       ) : null}
 
       {pendingExists > 0 && searchParams.status !== "success" ? (
-        <Alert variant="info" title="Checkout non finalisé côté Stripe">
+        <Alert variant="info" title="Un paiement récent est encore en cours de traitement">
           <p className="mb-3">
-            Une session de paiement est encore « En attente » (souvent un checkout ouvert puis
-            abandonné). La synchronisation met le statut à jour ;{" "}
+            Un achat est resté « En attente » (souvent une page de paiement ouverte puis fermée sans
+            aller au bout). La synchronisation met le statut à jour ;{" "}
             <strong>elle ne re-crédite jamais</strong> un achat déjà marqué « Payé ».
           </p>
           <BillingPaymentSync auto={false} />

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VeyalaLogo } from "@/components/landing/logo";
+import { Button } from "@/components/ui/button";
 
 const NAV_LINKS = [
   { href: "/#fonctionnalites", label: "Fonctionnalités" },
@@ -60,16 +61,15 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
               Se connecter
             </Link>
           )}
-          <Link
-            href={primaryHref}
-            className="group inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/25 transition-bounce hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30"
-          >
-            {isAuthenticated ? "Mon espace" : "Générer mon CV"}
-            <ArrowRight
-              className="size-4 transition-transform group-hover:translate-x-0.5"
-              aria-hidden
-            />
-          </Link>
+          <Button asChild className="group">
+            <Link href={primaryHref}>
+              {isAuthenticated ? "Mon espace" : "Générer mon CV"}
+              <ArrowRight
+                className="size-4 transition-transform group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </Link>
+          </Button>
         </div>
 
         <button
@@ -92,10 +92,10 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
           aria-label="Navigation mobile"
           className="border-t border-slate-100 bg-white/95 px-6 py-4 md:hidden"
         >
-          <ul className="space-y-3 text-sm font-medium text-slate-700">
+          <ul className="text-sm font-medium text-slate-700">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>
-                <a href={link.href} className="block py-1" onClick={() => setMenuOpen(false)}>
+                <a href={link.href} className="block py-2.5" onClick={() => setMenuOpen(false)}>
                   {link.label}
                 </a>
               </li>
@@ -106,13 +106,12 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
                   Se connecter
                 </Link>
               )}
-              <Link
-                href={primaryHref}
-                className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-4 py-2 font-semibold text-white"
-              >
-                {isAuthenticated ? "Mon espace" : "Générer mon CV"}
-                <ArrowRight className="size-4" aria-hidden />
-              </Link>
+              <Button asChild size="sm">
+                <Link href={primaryHref}>
+                  {isAuthenticated ? "Mon espace" : "Générer mon CV"}
+                  <ArrowRight className="size-4" aria-hidden />
+                </Link>
+              </Button>
             </li>
           </ul>
         </nav>

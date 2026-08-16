@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Download, FileText, Mail, PenLine } from "lucide-react";
+import { FileText, Mail, PenLine } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
@@ -13,11 +13,15 @@ import {
 import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
 import { parseMatchBreakdown } from "@/lib/match-score";
-import { exportFilename, withDownloadFilename } from "@/lib/export-filename";
+import { exportFilename } from "@/lib/export-filename";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MatchReport } from "@/components/generate/match-report";
+import { PrintPreview } from "@/components/cv/print-preview";
+import { ExportButtons } from "@/components/cv/export-buttons";
+import { BackLink } from "@/components/ui/back-link";
+import { PageHeader } from "@/components/ui/page-header";
 import { RegenerateForm } from "./regenerate-form";
 
 export const metadata: Metadata = { title: "Aperçu du CV" };
@@ -49,52 +53,50 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
   return (
     <article className="mx-auto max-w-4xl space-y-6">
       <nav aria-label="Fil d'Ariane">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          Retour au tableau de bord
-        </Link>
+        <BackLink href="/dashboard">Retour au tableau de bord</BackLink>
       </nav>
 
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="font-display text-2xl font-bold">{cv.jobTitle}</h1>
-          <p className="text-sm text-muted-foreground">
-            Template « {cv.template.name} » ·{" "}
-            {new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "short" }).format(
-              cv.createdAt
-            )}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {cv.universe === "CAMPUS_FRANCE" ? (
-              <Badge variant="secondary">Campus France</Badge>
-            ) : null}
-            <Badge variant="secondary">
-              Source : {cv.jobSource === "texte collé" ? "texte collé" : cv.jobSource}
-            </Badge>
-            {cv.matchScoreBefore != null && cv.matchScoreAfter != null ? (
-              <Badge>
-                {cv.universe === "CAMPUS_FRANCE" ? "Cohérence" : "Matching"} {cv.matchScoreBefore}%
-                → {cv.matchScoreAfter}%
-                {cv.matchScoreAfter - cv.matchScoreBefore >= 0
-                  ? ` (+${cv.matchScoreAfter - cv.matchScoreBefore})`
-                  : ` (${cv.matchScoreAfter - cv.matchScoreBefore})`}
+      <PageHeader
+        title={cv.jobTitle}
+        description={
+          <>
+            <p className="text-sm text-muted-foreground">
+              Template « {cv.template.name} » ·{" "}
+              {new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "short" }).format(
+                cv.createdAt
+              )}
+            </p>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {cv.universe === "CAMPUS_FRANCE" ? (
+                <Badge variant="secondary">Campus France</Badge>
+              ) : null}
+              <Badge variant="secondary">
+                Source : {cv.jobSource === "texte collé" ? "texte collé" : cv.jobSource}
               </Badge>
-            ) : null}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="gradient">
-            <Link href={`/cv/${cv.id}/edit`}>
-              <PenLine />
-              Modifier dans l&apos;éditeur
-            </Link>
-          </Button>
-          {cv.universe === "EMPLOYMENT" ? <RegenerateForm cvId={cv.id} /> : null}
-        </div>
-      </header>
+              {cv.matchScoreBefore != null && cv.matchScoreAfter != null ? (
+                <Badge>
+                  {cv.universe === "CAMPUS_FRANCE" ? "Cohérence" : "Matching"} {cv.matchScoreBefore}
+                  % → {cv.matchScoreAfter}%
+                  {cv.matchScoreAfter - cv.matchScoreBefore >= 0
+                    ? ` (+${cv.matchScoreAfter - cv.matchScoreBefore})`
+                    : ` (${cv.matchScoreAfter - cv.matchScoreBefore})`}
+                </Badge>
+              ) : null}
+            </div>
+          </>
+        }
+        actions={
+          <>
+            <Button asChild variant="gradient">
+              <Link href={`/cv/${cv.id}/edit`}>
+                <PenLine />
+                Modifier dans l&apos;éditeur
+              </Link>
+            </Button>
+            {cv.universe === "EMPLOYMENT" ? <RegenerateForm cvId={cv.id} /> : null}
+          </>
+        }
+      />
 
       {matchBreakdown ? (
         <MatchReport
@@ -113,33 +115,18 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
             <FileText className="size-5 text-primary" aria-hidden />
             {cv.universe === "CAMPUS_FRANCE" ? "CV académique" : "CV optimisé"}
           </h2>
-          <div className="flex gap-2">
-            {cv.docxUrl ? (
-              <Button asChild size="sm">
-                <a href={withDownloadFilename(cv.docxUrl, cvDocxName)} download={cvDocxName}>
-                  <Download />
-                  Word (.docx)
-                </a>
-              </Button>
-            ) : null}
-            {cv.pdfUrl ? (
-              <Button asChild size="sm" variant="outline">
-                <a href={withDownloadFilename(cv.pdfUrl, cvPdfName)} download={cvPdfName}>
-                  <Download />
-                  PDF
-                </a>
-              </Button>
-            ) : null}
-          </div>
-        </div>
-        <div className="overflow-hidden rounded-xl border shadow-sm">
-          <iframe
-            srcDoc={previewHtml}
-            title={`Aperçu du CV — ${cv.jobTitle}`}
-            className="h-[1188px] w-full bg-white"
-            sandbox=""
+          <ExportButtons
+            docxUrl={cv.docxUrl}
+            pdfUrl={cv.pdfUrl}
+            docxName={cvDocxName}
+            pdfName={cvPdfName}
           />
         </div>
+        <PrintPreview
+          srcDoc={previewHtml}
+          title={`Aperçu du CV — ${cv.jobTitle}`}
+          className="rounded-xl border shadow-sm"
+        />
       </section>
 
       {letterHtml ? (
@@ -152,39 +139,18 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
               <Mail className="size-5 text-primary" aria-hidden />
               Lettre de motivation
             </h2>
-            <div className="flex gap-2">
-              {cv.coverLetterDocxUrl ? (
-                <Button asChild size="sm">
-                  <a
-                    href={withDownloadFilename(cv.coverLetterDocxUrl, letterDocxName)}
-                    download={letterDocxName}
-                  >
-                    <Download />
-                    Word (.docx)
-                  </a>
-                </Button>
-              ) : null}
-              {cv.coverLetterPdfUrl ? (
-                <Button asChild size="sm" variant="outline">
-                  <a
-                    href={withDownloadFilename(cv.coverLetterPdfUrl, letterPdfName)}
-                    download={letterPdfName}
-                  >
-                    <Download />
-                    PDF
-                  </a>
-                </Button>
-              ) : null}
-            </div>
-          </div>
-          <div className="overflow-hidden rounded-xl border shadow-sm">
-            <iframe
-              srcDoc={letterHtml}
-              title={`Lettre de motivation — ${cv.jobTitle}`}
-              className="h-[1188px] w-full bg-white"
-              sandbox=""
+            <ExportButtons
+              docxUrl={cv.coverLetterDocxUrl}
+              pdfUrl={cv.coverLetterPdfUrl}
+              docxName={letterDocxName}
+              pdfName={letterPdfName}
             />
           </div>
+          <PrintPreview
+            srcDoc={letterHtml}
+            title={`Lettre de motivation — ${cv.jobTitle}`}
+            className="rounded-xl border shadow-sm"
+          />
         </section>
       ) : (
         <Card>

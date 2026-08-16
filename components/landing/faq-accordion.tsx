@@ -48,7 +48,7 @@ export function FaqAccordion() {
           <div
             key={item.question}
             className={cn(
-              "overflow-hidden rounded-2xl border bg-white transition-shadow duration-300",
+              "overflow-hidden rounded-panel border bg-white transition-shadow duration-300",
               isOpen ? "border-blue-100 shadow-md" : "border-slate-100 shadow-sm"
             )}
           >

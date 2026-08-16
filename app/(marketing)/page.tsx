@@ -26,6 +26,7 @@ import { Reveal } from "@/components/landing/reveal";
 import { Counter } from "@/components/landing/counter";
 import { DemoCta, DemoSection } from "@/components/landing/demo-player";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 // Below-the-fold interactive sections: lazy chunks keep the hero's JS payload small.
 const UniverseTabs = dynamic(
@@ -236,7 +237,7 @@ function HeroVisual() {
       <div className="absolute left-0 top-24 hidden -rotate-6 md:block">
         <div className="animate-float-b w-48 rounded-2xl bg-white/90 p-4 text-left shadow-xl shadow-blue-900/10 ring-1 ring-slate-900/5 backdrop-blur">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="size-4 text-emerald-500" />
+            <CheckCircle2 className="size-4 text-success" />
             <span className="text-xs font-bold text-slate-800">ATS Score</span>
           </div>
           <div className="relative mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
@@ -332,9 +333,9 @@ function HeroVisual() {
               <div className="h-1 w-10/12 rounded-full bg-slate-100" />
             </div>
           </div>
-          <div className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
-            <CheckCircle2 className="size-3 shrink-0 text-emerald-600" />
-            <span className="text-[10px] font-semibold text-emerald-700">
+          <div className="flex items-center gap-1.5 rounded-lg border border-success/30 bg-success/10 px-3 py-2">
+            <CheckCircle2 className="size-3 shrink-0 text-success" />
+            <span className="text-[10px] font-semibold text-success">
               Compatible ATS · Score 94/100
             </span>
           </div>
@@ -419,13 +420,16 @@ export default async function LandingPage() {
 
           <Reveal delay={300}>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-600/25 transition-bounce hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30"
+              <Button
+                asChild
+                size="lg"
+                className="h-auto gap-2 px-7 py-3.5 text-base shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/30"
               >
-                <Sparkles className="size-4" aria-hidden />
-                Générer mon CV gratuitement
-              </Link>
+                <Link href="/login">
+                  <Sparkles className="size-4" aria-hidden />
+                  Générer mon CV gratuitement
+                </Link>
+              </Button>
               <DemoCta />
             </div>
           </Reveal>
@@ -499,7 +503,7 @@ export default async function LandingPage() {
                 key={step.number}
                 as="li"
                 delay={index * 150}
-                className="relative h-full rounded-2xl border border-blue-100/70 bg-gradient-to-b from-blue-50/70 to-white p-7 transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-900/5"
+                className="relative h-full rounded-panel border border-blue-100/70 bg-gradient-to-b from-blue-50/70 to-white p-7 transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-900/5"
               >
                 <div className="flex items-start justify-between">
                   <span
@@ -565,7 +569,7 @@ export default async function LandingPage() {
                 key={feature.title}
                 as="li"
                 delay={(index % 3) * 120}
-                className="h-full rounded-2xl border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5"
+                className="h-full rounded-panel border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5"
               >
                 <span
                   className={`flex size-11 items-center justify-center rounded-xl ${feature.chip}`}
@@ -622,7 +626,7 @@ export default async function LandingPage() {
             </header>
           </Reveal>
 
-          <div className="mx-auto mt-16 grid max-w-5xl items-start gap-6 lg:grid-cols-3">
+          <div className="mx-auto mt-16 grid max-w-5xl items-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {packs.map((pack, index) => {
               const meta = PLAN_META[Math.min(index, PLAN_META.length - 1)] ?? PLAN_META[0]!;
               const perCv = price(Math.round(pack.priceCents / pack.credits));
@@ -725,7 +729,7 @@ export default async function LandingPage() {
           <ul className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {TESTIMONIALS.map((testimonial, index) => (
               <Reveal key={testimonial.name} as="li" delay={index * 100} className="h-full">
-                <figure className="flex h-full flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
+                <figure className="flex h-full flex-col rounded-panel border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
                   <div role="img" className="flex gap-0.5" aria-label="5 étoiles sur 5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
@@ -819,13 +823,16 @@ export default async function LandingPage() {
           </Reveal>
           <Reveal delay={300}>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-600/30 transition-bounce hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-xl"
+              <Button
+                asChild
+                size="lg"
+                className="h-auto gap-2 px-7 py-3.5 text-base shadow-lg shadow-blue-600/30 hover:bg-blue-500 hover:shadow-xl"
               >
-                <Sparkles className="size-4" aria-hidden />
-                Générer mon CV gratuitement
-              </Link>
+                <Link href="/login">
+                  <Sparkles className="size-4" aria-hidden />
+                  Générer mon CV gratuitement
+                </Link>
+              </Button>
               <a
                 href="#templates"
                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-7 py-3.5 text-base font-semibold text-white backdrop-blur transition-bounce hover:-translate-y-0.5 hover:bg-white/10"

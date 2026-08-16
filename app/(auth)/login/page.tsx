@@ -107,7 +107,14 @@ export default async function LoginPage({
         <form className="space-y-3" action={loginWithPassword}>
           <div className="space-y-1.5">
             <Label htmlFor="email">Adresse email</Label>
-            <Input id="email" name="email" type="email" required placeholder="vous@exemple.fr" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="vous@exemple.fr"
+            />
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">

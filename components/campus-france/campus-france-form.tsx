@@ -14,8 +14,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
-import { TemplateSwatch } from "@/components/templates/template-swatch";
+import { TemplateOptionCard } from "@/components/templates/template-option";
 import { CoherencePanel } from "@/components/campus-france/coherence-panel";
+import { PipelineTimeline } from "@/components/generate/pipeline-timeline";
+import { StatCard } from "@/components/ui/stat-card";
 import {
   CV_LANGUAGE_OPTIONS,
   validateCvLanguage,
@@ -340,9 +342,6 @@ export function CampusFranceForm({
     }
   }
 
-  const currentIdx =
-    activeStep && activeStep !== "done" ? PIPELINE_STEPS.findIndex((s) => s.id === activeStep) : -1;
-
   return (
     <div className="space-y-6">
       {phase === "compose" || phase === "review" ? (
@@ -419,26 +418,15 @@ export function CampusFranceForm({
               <fieldset className="grid gap-3 sm:grid-cols-3">
                 <legend className="sr-only">Choix du template</legend>
                 {templates.map((t) => (
-                  <label
+                  <TemplateOptionCard
                     key={t.id}
-                    className={cn(
-                      "cursor-pointer rounded-lg border p-3 transition-colors",
-                      templateId === t.id
-                        ? "border-primary ring-2 ring-primary/30"
-                        : "hover:border-muted-foreground/40"
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="template"
-                      value={t.id}
-                      checked={templateId === t.id}
-                      onChange={() => setTemplateId(t.id)}
-                      className="sr-only"
-                    />
-                    <TemplateSwatch layout={t.layout} colors={t.colors} band={t.band} />
-                    <span className="mt-2 block text-sm font-medium">{t.name}</span>
-                  </label>
+                    id={t.id}
+                    name={t.name}
+                    swatch={{ layout: t.layout, colors: t.colors, band: t.band }}
+                    selected={templateId === t.id}
+                    onSelect={() => setTemplateId(t.id)}
+                    groupName="template"
+                  />
                 ))}
               </fieldset>
             </CardContent>
@@ -633,40 +621,19 @@ export function CampusFranceForm({
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ol className="space-y-2">
-              {PIPELINE_STEPS.map((step, index) => {
-                const done = activeStep === "done" || (currentIdx >= 0 && index < currentIdx);
-                const current = activeStep === step.id;
-                return (
-                  <li
-                    key={step.id}
-                    className={cn(
-                      "flex items-center gap-3 rounded-md px-2 py-1.5 text-sm",
-                      current && "bg-primary/5 font-medium",
-                      !done && !current && "text-muted-foreground/60"
-                    )}
-                  >
-                    <span className="flex size-6 items-center justify-center rounded-full border text-xs">
-                      {current ? <Loader2 className="size-3.5 animate-spin" /> : index + 1}
-                    </span>
-                    {step.label}
-                  </li>
-                );
-              })}
-            </ol>
+            <PipelineTimeline steps={PIPELINE_STEPS} activeStep={activeStep} />
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-md border p-3">
-                <p className="text-xs text-muted-foreground">Cohérence avant</p>
-                <p className="font-display text-2xl font-bold tabular-nums">
-                  {scoreBeforeLive ?? beforeScore}%
-                </p>
-              </div>
-              <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
-                <p className="text-xs text-muted-foreground">Cohérence après</p>
-                <p className="font-display text-2xl font-bold tabular-nums text-primary">
-                  {scoreAfterLive !== null ? `${scoreAfterLive}%` : "…"}
-                </p>
-              </div>
+              <StatCard
+                size="compact"
+                label="Cohérence avant"
+                value={`${scoreBeforeLive ?? beforeScore}%`}
+              />
+              <StatCard
+                size="compact"
+                emphasis
+                label="Cohérence après"
+                value={scoreAfterLive !== null ? `${scoreAfterLive}%` : "…"}
+              />
             </div>
           </CardContent>
         </Card>
