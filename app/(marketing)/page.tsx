@@ -405,7 +405,7 @@ export default async function LandingPage() {
 
           <Reveal delay={100}>
             <h1 className="mx-auto mt-8 max-w-4xl font-display text-[clamp(2.5rem,6.5vw,5.125rem)] font-extrabold leading-[1.04] tracking-tight text-slate-900">
-              Votre CV, <span className="shimmer-text">adapté à chaque offre</span>
+              Votre CV, <span className="shimmer-text">adapté à chaque offre</span>,
               <br className="hidden sm:block" />{" "}
               <span className="text-slate-400">en 30 secondes.</span>
             </h1>
