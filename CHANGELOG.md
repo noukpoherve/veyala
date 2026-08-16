@@ -1,3 +1,12 @@
+## [1.14.1](https://github.com/noukpoherve/veyala/compare/v1.14.0...v1.14.1) (2026-08-16)
+
+
+### Bug Fixes
+
+* **copy:** replace em dashes in site pages and blog catalog ([df6706f](https://github.com/noukpoherve/veyala/commit/df6706f06de44aa486344f3ff65e0cf5eba3d21b))
+* **generation:** strip em dashes from LLM-written CV and letters ([870e972](https://github.com/noukpoherve/veyala/commit/870e9725eb1bdfa6c45d6ed9d774182867b3367f))
+* **landing:** restore hero headline as one natural sentence ([f33eacf](https://github.com/noukpoherve/veyala/commit/f33eacf546893955ae6c52836f16b0f41c1bfb30))
+
 # [1.14.0](https://github.com/noukpoherve/veyala/compare/v1.13.0...v1.14.0) (2026-08-16)
 
 
