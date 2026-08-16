@@ -4,6 +4,7 @@ import { chatJSON } from "@/lib/llm";
 import { cvForLLM, type CVData } from "@/lib/cv-schema";
 import type { FormationRequirements } from "@/lib/campus-france/program-analysis";
 import { PROJECT_MAX, PROJECT_MIN } from "@/lib/campus-france/schema";
+import { GENERATED_COPY_TYPOGRAPHY, stripEmDashes } from "@/lib/typography";
 
 const proposedSchema = z.object({
   studyProject: z.string().min(1),
@@ -26,7 +27,8 @@ Règles STRICTES :
 - studyProject (120–220 mots) : pourquoi CETTE formation, ce qu'il compte y apprendre, lien avec son parcours.
 - professionalProject (100–180 mots) : métier / secteur visé cohérent avec les débouchés ; comment la formation y mène.
 - Ton sérieux, concret, à la 1ère personne (« Je… »).
-- Pas de titres, pas de listes à puces, pas de markdown : deux blocs de prose.`;
+- Pas de titres, pas de listes à puces, pas de markdown : deux blocs de prose.
+- ${GENERATED_COPY_TYPOGRAPHY}`;
 
 function clampProject(text: string): string {
   return text.replace(/```/g, "").trim().slice(0, PROJECT_MAX);
@@ -95,8 +97,8 @@ export function proposeProjectsHeuristic(
   };
 
   return {
-    studyProject: pad(studyProject, "ce projet d'études"),
-    professionalProject: pad(professionalProject, "ce projet professionnel"),
+    studyProject: stripEmDashes(pad(studyProject, "ce projet d'études")),
+    professionalProject: stripEmDashes(pad(professionalProject, "ce projet professionnel")),
   };
 }
 
@@ -158,7 +160,10 @@ export async function proposeCampusFranceProjects(params: {
       throw new Error("Les projets proposés sont trop courts.");
     }
 
-    return { studyProject, professionalProject };
+    return {
+      studyProject: stripEmDashes(studyProject),
+      professionalProject: stripEmDashes(professionalProject),
+    };
   } catch (error) {
     console.error("[campus-france] propose LLM failed, using heuristic", error);
     return proposeProjectsHeuristic(cv, requirements);
