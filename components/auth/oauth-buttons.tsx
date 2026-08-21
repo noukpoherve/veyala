@@ -2,6 +2,8 @@ import { oauthProviderFlags } from "@/lib/auth";
 import { signInWithProvider } from "@/app/(auth)/oauth-actions";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { getLocale } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
 
 function GoogleIcon() {
   return (
@@ -39,12 +41,13 @@ function LinkedInIcon() {
 /** Social sign-in section shown on login/register when providers are enabled. */
 export function OAuthButtons({ callbackUrl = "/dashboard" }: { callbackUrl?: string }) {
   if (!oauthProviderFlags.google && !oauthProviderFlags.linkedin_oidc) return null;
+  const m = getMessages(getLocale());
 
   return (
     <>
       <div className="flex items-center gap-3">
         <Separator className="flex-1" />
-        <span className="text-xs uppercase text-muted-foreground">ou</span>
+        <span className="text-xs uppercase text-muted-foreground">{m.common.or}</span>
         <Separator className="flex-1" />
       </div>
 
@@ -52,7 +55,7 @@ export function OAuthButtons({ callbackUrl = "/dashboard" }: { callbackUrl?: str
         <form action={signInWithProvider.bind(null, "google", callbackUrl)}>
           <Button variant="outline" className="w-full" type="submit">
             <GoogleIcon />
-            Continuer avec Google
+            {m.auth.oauthContinue} {m.auth.oauthGoogle}
           </Button>
         </form>
       ) : null}
@@ -70,7 +73,7 @@ export function OAuthButtons({ callbackUrl = "/dashboard" }: { callbackUrl?: str
         <form action={signInWithProvider.bind(null, "linkedin_oidc", callbackUrl)}>
           <Button variant="outline" className="w-full" type="submit">
             <LinkedInIcon />
-            Continuer avec LinkedIn
+            {m.auth.oauthContinue} {m.auth.oauthLinkedin}
           </Button>
         </form>
       ) : null}

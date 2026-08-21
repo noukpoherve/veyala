@@ -1,75 +1,67 @@
-import Link from "next/link";
-import { Globe } from "lucide-react";
 import { VeyalaLogo } from "@/components/landing/logo";
-
-const FOOTER_COLUMNS = [
-  {
-    title: "Produit",
-    links: [
-      { href: "/#fonctionnalites", label: "Fonctionnalités" },
-      { href: "/#tarifs", label: "Tarifs" },
-      { href: "/#templates", label: "Templates" },
-      { href: "/#etudiants", label: "Étudiants" },
-      { href: "/contact", label: "API" },
-    ],
-  },
-  {
-    title: "Ressources",
-    links: [
-      { href: "/blog", label: "Blog" },
-      { href: "/#comment-ca-marche", label: "Guide CV" },
-      { href: "/#comment-ca-marche", label: "Guide lettre" },
-      { href: "/#faq", label: "FAQ" },
-      { href: "/contact", label: "Contact" },
-    ],
-  },
-  {
-    title: "Légal",
-    links: [
-      { href: "/cgu", label: "CGU" },
-      { href: "/confidentialite", label: "Confidentialité" },
-      { href: "/mentions-legales", label: "Mentions légales" },
-      { href: "/confidentialite", label: "Cookies" },
-    ],
-  },
-];
-
-const SOCIAL_LINKS = [
-  { href: "https://instagram.com", label: "Instagram" },
-  { href: "https://linkedin.com", label: "LinkedIn" },
-  { href: "https://youtube.com", label: "YouTube" },
-];
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { getLocale } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
+import { Link } from "@/i18n/navigation";
 
 export function LandingFooter() {
+  const m = getMessages(getLocale());
+  const columns = [
+    {
+      title: m.marketing.footerProduct,
+      links: [
+        { href: "/#fonctionnalites", label: m.nav.features },
+        { href: "/#tarifs", label: m.nav.pricing },
+        { href: "/#templates", label: m.nav.templates },
+        { href: "/#etudiants", label: m.nav.students },
+        { href: "/contact", label: m.marketing.footerApi },
+      ],
+    },
+    {
+      title: m.marketing.footerResources,
+      links: [
+        { href: "/blog", label: m.nav.blog },
+        { href: "/#comment-ca-marche", label: m.marketing.footerGuideCv },
+        { href: "/#comment-ca-marche", label: m.marketing.footerGuideLetter },
+        { href: "/#faq", label: m.nav.faq },
+        { href: "/contact", label: m.nav.support },
+      ],
+    },
+    {
+      title: m.marketing.footerLegal,
+      links: [
+        { href: "/cgu", label: m.marketing.footerCgu },
+        { href: "/confidentialite", label: m.marketing.footerPrivacy },
+        { href: "/mentions-legales", label: m.marketing.footerMentions },
+        { href: "/confidentialite", label: m.marketing.footerCookies },
+      ],
+    },
+  ];
+
   return (
     <footer className="border-t border-slate-100 bg-white">
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-12 py-16 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div>
-            <Link href="/" aria-label="Accueil Veyala">
+            <Link href="/" aria-label={m.common.homeAria}>
               <VeyalaLogo />
             </Link>
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-slate-500">
-              Votre candidature, augmentée par l&apos;IA. CV et lettres de motivation en 30
-              secondes.
+              {m.marketing.footerTagline}
             </p>
-            <button
-              type="button"
-              className="mt-6 inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
-            >
-              <Globe className="size-4" aria-hidden />
-              Français
-            </button>
+            <div className="mt-6">
+              <LanguageSwitcher variant="footer" />
+            </div>
           </div>
 
-          {FOOTER_COLUMNS.map((column) => (
+          {columns.map((column) => (
             <nav key={column.title} aria-label={column.title}>
               <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-600">
                 {column.title}
               </h2>
               <ul className="mt-5 space-y-3.5">
                 {column.links.map((link) => (
-                  <li key={link.label}>
+                  <li key={`${column.title}-${link.label}`}>
                     <Link
                       href={link.href}
                       className="text-[15px] text-slate-600 transition-colors hover:text-blue-600"
@@ -84,9 +76,15 @@ export function LandingFooter() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 py-6 text-sm text-slate-600">
-          <p>© {new Date().getFullYear()} Veyala. Tous droits réservés.</p>
+          <p>
+            © {new Date().getFullYear()} Veyala. {m.marketing.footerRights}
+          </p>
           <ul className="flex items-center gap-6">
-            {SOCIAL_LINKS.map((social) => (
+            {[
+              { href: "https://instagram.com", label: "Instagram" },
+              { href: "https://linkedin.com", label: "LinkedIn" },
+              { href: "https://youtube.com", label: "YouTube" },
+            ].map((social) => (
               <li key={social.label}>
                 <a
                   href={social.href}

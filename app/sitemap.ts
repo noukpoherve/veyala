@@ -23,20 +23,46 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/mentions-legales", changeFrequency: "yearly", priority: 0.3 },
   ];
 
-  const staticEntries = pages.map(({ path, changeFrequency, priority, lastModified }) => ({
-    url: `${base}${path}`,
-    lastModified: lastModified ?? new Date(),
-    changeFrequency,
-    priority,
-  }));
+  const staticEntries = pages.flatMap(({ path, changeFrequency, priority, lastModified }) => {
+    const fr = `${base}${path || ""}`;
+    const enPath = path ? `/en${path}` : "/en";
+    const en = `${base}${enPath}`;
+    const modified = lastModified ?? new Date();
+    const languages = { "fr-FR": fr, en, "x-default": fr };
+    return [
+      { url: fr, lastModified: modified, changeFrequency, priority, alternates: { languages } },
+      {
+        url: en,
+        lastModified: modified,
+        changeFrequency,
+        priority: Math.max(priority - 0.1, 0.2),
+        alternates: { languages },
+      },
+    ];
+  });
 
   const posts = await getPublishedPosts();
-  const blogEntries = posts.map((post) => ({
-    url: `${base}/blog/${post.slug}`,
-    lastModified: new Date(post.updatedAt),
-    changeFrequency: "monthly" as const,
-    priority: 0.8,
-  }));
+  const blogEntries = posts.flatMap((post) => {
+    const fr = `${base}/blog/${post.slug}`;
+    const en = `${base}/en/blog/${post.slug}`;
+    const lastModified = new Date(post.updatedAt);
+    return [
+      {
+        url: fr,
+        lastModified,
+        changeFrequency: "monthly" as const,
+        priority: 0.8,
+        alternates: { languages: { "fr-FR": fr, en, "x-default": fr } },
+      },
+      {
+        url: en,
+        lastModified,
+        changeFrequency: "monthly" as const,
+        priority: 0.7,
+        alternates: { languages: { "fr-FR": fr, en, "x-default": fr } },
+      },
+    ];
+  });
 
   return [...staticEntries, ...blogEntries];
 }

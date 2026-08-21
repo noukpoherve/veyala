@@ -1,62 +1,64 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { persistUserLocale } from "@/lib/persist-locale";
 import { clientIp, rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { normalizeEmail } from "@/lib/utils";
 import { db } from "@/lib/db";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import { getLocale } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
+import { Link } from "@/i18n/navigation";
+import { redirectLocalized } from "@/i18n/redirect";
+import { localizeHref } from "@/i18n/path";
 
-export const metadata: Metadata = { title: "Connexion" };
-
-const ERROR_MESSAGES: Record<string, string> = {
-  credentials: "Email ou mot de passe incorrect.",
-  ratelimited: "Trop de tentatives de connexion. Réessayez dans quelques minutes.",
-  confirmation: "Le lien de confirmation est invalide ou expiré. Reconnectez-vous.",
-  oauth: "La connexion via ce fournisseur a échoué. Réessayez.",
-  archived: "Votre compte est désactivé. Contactez un administrateur pour le réactiver.",
-  default: "La connexion a échoué. Réessayez.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: getMessages(getLocale()).seo.loginTitle };
+}
 
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: { callbackUrl?: string; error?: string; verified?: string; reset?: string };
 }) {
+  const locale = getLocale();
+  const m = getMessages(locale);
   const session = await auth();
-  if (session?.user) redirect("/dashboard");
+  if (session?.user) redirectLocalized("/dashboard", locale);
 
   const rawCallback = searchParams.callbackUrl ?? "/dashboard";
-  const callbackUrl = rawCallback.startsWith("/") ? rawCallback : "/dashboard";
+  const callbackUrl = rawCallback.startsWith("/")
+    ? localizeHref(rawCallback, locale)
+    : localizeHref("/dashboard", locale);
 
   async function loginWithPassword(formData: FormData) {
     "use server";
+    const loc = getLocale();
     const email = normalizeEmail(formData.get("email"));
     const password = String(formData.get("password") ?? "");
     const { limit, windowMs } = RATE_LIMITS.login;
     if (!(await rateLimit(`login:${clientIp()}:${email}`, limit, windowMs))) {
-      redirect("/login?error=ratelimited");
+      redirectLocalized("/login?error=ratelimited", loc);
     }
 
     const supabase = createSupabaseServerClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       if (error.code === "email_not_confirmed") {
-        redirect(`/verify-email?email=${encodeURIComponent(email)}`);
+        redirectLocalized(`/verify-email?email=${encodeURIComponent(email)}`, loc);
       }
-      // Banned / archived accounts (Supabase ban synced on archive).
       if (error.code === "user_banned" || /banned/i.test(error.message)) {
-        redirect("/login?error=archived");
+        redirectLocalized("/login?error=archived", loc);
       }
-      redirect("/login?error=credentials");
+      redirectLocalized("/login?error=credentials", loc);
     }
 
     const profile = await db.user.findUnique({
@@ -65,65 +67,78 @@ export default async function LoginPage({
     });
     if (profile?.archivedAt) {
       await supabase.auth.signOut();
-      redirect("/login?error=archived");
+      redirectLocalized("/login?error=archived", loc);
     }
 
-    redirect(callbackUrl);
+    await persistUserLocale(supabase, loc);
+    redirectLocalized(callbackUrl, loc);
   }
+
+  const errorCopy =
+    searchParams.error === "archived"
+      ? m.auth.errors.archived
+      : searchParams.error
+        ? (m.auth.errors[searchParams.error as keyof typeof m.auth.errors] ?? m.auth.errors.default)
+        : null;
 
   return (
     <Card className="relative w-full max-w-md rounded-3xl border-slate-100 shadow-xl shadow-blue-900/5">
       <CardHeader className="items-center text-center">
-        <Link href="/" className="mb-2" aria-label="Accueil Veyala">
-          <VeyalaLogo />
-        </Link>
+        <div className="mb-2 flex w-full items-center justify-between">
+          <Link href="/" aria-label={m.common.homeAria}>
+            <VeyalaLogo />
+          </Link>
+          <LanguageSwitcher variant="compact" />
+        </div>
         <CardTitle className="font-display text-2xl font-extrabold tracking-tight">
-          Connexion
+          {m.auth.loginTitle}
         </CardTitle>
-        <CardDescription>Accédez à votre espace pour générer des CV sur mesure.</CardDescription>
+        <CardDescription>{m.auth.loginDescription}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {searchParams.verified ? (
-          <Alert variant="success" title="Email vérifié">
-            Vous pouvez maintenant vous connecter.
+          <Alert variant="success" title={m.auth.verifiedTitle}>
+            {m.auth.verifiedBody}
           </Alert>
         ) : null}
 
         {searchParams.reset ? (
-          <Alert variant="success" title="Mot de passe mis à jour">
-            Reconnectez-vous avec votre nouveau mot de passe.
+          <Alert variant="success" title={m.auth.resetDoneTitle}>
+            {m.auth.resetDoneBody}
           </Alert>
         ) : null}
 
         {searchParams.error ? (
           <Alert
             variant="error"
-            title={searchParams.error === "archived" ? "Compte désactivé" : "Connexion impossible"}
+            title={
+              searchParams.error === "archived" ? m.auth.accountDisabled : m.auth.loginImpossible
+            }
           >
-            {ERROR_MESSAGES[searchParams.error] ?? ERROR_MESSAGES.default}
+            {errorCopy}
           </Alert>
         ) : null}
 
         <form className="space-y-3" action={loginWithPassword}>
           <div className="space-y-1.5">
-            <Label htmlFor="email">Adresse email</Label>
+            <Label htmlFor="email">{m.auth.loginEmail}</Label>
             <Input
               id="email"
               name="email"
               type="email"
               required
               autoComplete="email"
-              placeholder="vous@exemple.fr"
+              placeholder={m.auth.loginEmailPlaceholder}
             />
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password">{m.auth.loginPassword}</Label>
               <Link
                 href="/forgot-password"
                 className="text-xs text-muted-foreground underline hover:text-foreground"
               >
-                Mot de passe oublié ?
+                {m.auth.forgotPassword}
               </Link>
             </div>
             <Input
@@ -132,32 +147,32 @@ export default async function LoginPage({
               type="password"
               required
               autoComplete="current-password"
-              placeholder="Votre mot de passe"
+              placeholder={m.auth.loginPasswordPlaceholder}
             />
           </div>
           <Button type="submit" variant="gradient" className="w-full">
             <LogIn />
-            Se connecter
+            {m.auth.loginCta}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Pas encore de compte ?{" "}
+          {m.auth.noAccount}{" "}
           <Link href="/register" className="font-medium text-blue-600 hover:underline">
-            Créer un compte
+            {m.auth.createAccount}
           </Link>
         </p>
 
         <OAuthButtons callbackUrl={callbackUrl} />
 
         <p className="text-center text-xs text-muted-foreground">
-          En vous connectant, vous acceptez nos{" "}
+          {m.auth.acceptTerms}{" "}
           <Link href="/cgu" className="underline">
-            CGU
+            {m.auth.terms}
           </Link>{" "}
-          et notre{" "}
+          {m.auth.and}{" "}
           <Link href="/confidentialite" className="underline">
-            politique de confidentialité
+            {m.auth.privacy}
           </Link>
           .
         </p>

@@ -9,6 +9,7 @@ import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { logActivity } from "@/lib/activity";
 import { reportError } from "@/lib/sentry";
 import { z } from "zod";
+import { getLocaleFromRequest } from "@/i18n/get-locale";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -35,6 +36,10 @@ export async function POST(req: Request) {
   let params: GenerationJobParams;
   try {
     params = parseGenerationJobParams(await req.json().catch(() => ({})));
+    const locale = getLocaleFromRequest(req);
+    if (!params.language && locale === "en") {
+      params = { ...params, language: "english" };
+    }
   } catch (e) {
     if (e instanceof z.ZodError) {
       return Response.json({ error: e.issues[0]?.message ?? "Requête invalide." }, { status: 400 });

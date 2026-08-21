@@ -1,67 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { ArrowRight, Briefcase, Check, Download, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useMessages } from "@/components/i18n/locale-provider";
+import { Link } from "@/i18n/navigation";
 
 type UniverseKey = "emploi" | "etudes";
 
-const UNIVERSES: Record<
-  UniverseKey,
-  {
-    badge: string;
-    title: string;
-    text: string;
-    bullets: string[];
-    chips: string[];
-  }
-> = {
-  emploi: {
-    badge: "Emploi",
-    title: "Candidature à un emploi",
-    text: "Collez l'offre, Veyala analyse les mots-clés, restructure votre parcours et génère un CV et une lettre qui parlent le langage du recruteur.",
-    bullets: [
-      "Analyse automatique des mots-clés de l'offre",
-      "Reformulation ATS-optimisée de vos expériences",
-      "Lettre de motivation ciblée et professionnelle",
-      "20+ templates recruteurs premium",
-      "Export Word natif & PDF haute qualité",
-    ],
-    chips: ["ATS ✓", "Word", "PDF", "LinkedIn"],
-  },
-  etudes: {
-    badge: "Études",
-    title: "Dossier d'études & mobilité",
-    text: "Collez la fiche de formation ou le vœu, Veyala construit un dossier académique dans les codes de chaque plateforme (Campus France, Parcoursup ou universités canadiennes).",
-    bullets: [
-      "Dossier Campus France structuré selon les attentes officielles",
-      "CV académique valorisant formations et projets",
-      "Lettre de motivation adaptée à chaque vœu Parcoursup",
-      "Formats Canada/Québec respectés à la lettre",
-      "Export Word natif & PDF haute qualité",
-    ],
-    chips: ["Campus France", "Parcoursup", "Canada/Québec", "PDF"],
-  },
-};
-
 export function UniverseTabs() {
+  const m = useMessages();
   const [tab, setTab] = useState<UniverseKey>("emploi");
-  const universe = UNIVERSES[tab];
+  const universes = { emploi: m.marketing.universeJob, etudes: m.marketing.universeStudy };
+  const universe = universes[tab];
   const Icon = tab === "emploi" ? Briefcase : GraduationCap;
 
   return (
     <div>
       <div
         role="tablist"
-        aria-label="Choisir un univers"
+        aria-label={m.marketing.universeTablist}
         className="mx-auto flex w-fit flex-wrap items-center justify-center gap-1 rounded-full bg-blue-50/80 p-1.5"
       >
         {(
           [
-            { key: "emploi", label: "Pour l'emploi", icon: Briefcase },
-            { key: "etudes", label: "Pour les études", icon: GraduationCap },
+            { key: "emploi", label: m.marketing.universeJobTab, icon: Briefcase },
+            { key: "etudes", label: m.marketing.universeStudyTab, icon: GraduationCap },
           ] as const
         ).map((item) => (
           <button
@@ -117,7 +82,7 @@ export function UniverseTabs() {
             className="group mt-9 h-auto gap-2 px-7 py-3.5 shadow-lg shadow-blue-600/25 hover:shadow-xl"
           >
             <Link href="/login">
-              Commencer maintenant
+              {universe.cta}
               <ArrowRight
                 className="size-4 transition-transform group-hover:translate-x-0.5"
                 aria-hidden

@@ -1,27 +1,32 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { type OAuthProvider, oauthProviderFlags } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { siteUrl } from "@/lib/utils";
+import { getLocale } from "@/i18n/get-locale";
+import { redirectLocalized } from "@/i18n/redirect";
+import { authCallbackRedirect } from "@/i18n/auth-urls";
+import { localizeHref } from "@/i18n/path";
 
 /**
  * Starts the Supabase OAuth flow (PKCE): the provider redirects back to
- * /auth/callback which exchanges the code and forwards to `callbackUrl`.
+ * /auth/callback (or /en/auth/callback) which exchanges the code and forwards.
  */
 export async function signInWithProvider(provider: OAuthProvider, callbackUrl: string) {
-  if (!oauthProviderFlags[provider]) redirect("/login?error=oauth");
+  const locale = getLocale();
+  if (!oauthProviderFlags[provider]) redirectLocalized("/login?error=oauth", locale);
   const next =
-    callbackUrl.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/dashboard";
+    callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")
+      ? localizeHref(callbackUrl, locale)
+      : localizeHref("/dashboard", locale);
 
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}` },
+    options: { redirectTo: authCallbackRedirect(locale, next) },
   });
   if (error || !data.url) {
     console.error(`[oauth] ${provider} sign-in failed:`, error);
-    redirect("/login?error=oauth");
+    redirectLocalized("/login?error=oauth", locale);
   }
-  redirect(data.url);
+  redirectLocalized(data.url, locale);
 }

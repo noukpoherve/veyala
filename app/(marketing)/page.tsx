@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import {
   Bot,
   Check,
@@ -27,6 +26,11 @@ import { Counter } from "@/components/landing/counter";
 import { DemoCta, DemoSection } from "@/components/landing/demo-player";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { getLocale } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
+import { Link } from "@/i18n/navigation";
+import { formatCurrency } from "@/i18n/format";
+import { localizePath } from "@/i18n/path";
 
 // Below-the-fold interactive sections: lazy chunks keep the hero's JS payload small.
 const UniverseTabs = dynamic(
@@ -42,51 +46,38 @@ const FaqAccordion = dynamic(
   { loading: () => <Skeleton className="h-[420px] rounded-3xl" /> }
 );
 
-export const metadata: Metadata = {
-  title: "Veyala : votre CV, adapté à chaque offre, en 30 secondes",
-  description:
-    "Collez une offre d'emploi ou une fiche de formation : Veyala génère un CV et une lettre de motivation parfaitement adaptés. Export Word & PDF. Compatible ATS.",
-  alternates: { canonical: "/" },
-  openGraph: {
-    title: "Veyala : votre candidature, augmentée par l'IA",
-    description:
-      "CV et lettres de motivation adaptés par IA, pour l'emploi et les études. Export Word & PDF, compatible ATS.",
-    type: "website",
-    locale: "fr_FR",
-    url: "/",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Veyala : CV adaptés par IA",
-    description:
-      "Générez un CV ATS + lettre de motivation à partir de votre profil et d'une offre.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = getLocale();
+  const m = getMessages(locale);
+  return {
+    title: { absolute: m.seo.landingTitle },
+    description: m.seo.landingDescription,
+    alternates: {
+      canonical: localizePath("/", locale),
+      languages: { "fr-FR": "/", en: "/en", "x-default": "/" },
+    },
+    openGraph: {
+      title: m.seo.ogTitle,
+      description: m.seo.ogDescription,
+      type: "website",
+      locale: locale === "en" ? "en_US" : "fr_FR",
+      url: localizePath("/", locale),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: m.seo.twitterTitle,
+      description: m.seo.twitterDescription,
+    },
+  };
+}
 
-const price = (cents: number) => `${(cents / 100).toFixed(2).replace(".", ",")}€`;
-
-const SCHOOLS = ["Sciences Po", "HEC Paris", "Polytechnique", "ESSEC", "Dauphine"];
+const price = (cents: number, locale: "fr" | "en") => formatCurrency(cents, locale);
 
 const STATS = [
-  {
-    value: 48200,
-    suffix: "+",
-    label: "CV & lettres générés",
-    sub: "et ça augmente chaque jour",
-  },
-  {
-    value: 320,
-    suffix: "+",
-    label: "établissements couverts",
-    sub: "Campus France, Parcoursup, universités",
-  },
-  {
-    value: 73,
-    suffix: "%",
-    label: "de taux de réponse moyen",
-    sub: "déclaré par nos utilisateurs actifs",
-  },
-];
+  { value: 48200, suffix: "+" },
+  { value: 320, suffix: "+" },
+  { value: 73, suffix: "%" },
+] as const;
 
 const STEPS = [
   {
@@ -197,37 +188,6 @@ const FALLBACK_PACKS = [
   { id: "starter", credits: 5, priceCents: 199 },
   { id: "pro", credits: 20, priceCents: 599 },
   { id: "expert", credits: 50, priceCents: 1299 },
-];
-
-const TESTIMONIALS = [
-  {
-    quote:
-      "J'ai généré mon CV Campus France en 2 minutes. L'IA a parfaitement adapté mon parcours aux critères de l'université cible. Lettre impeccable.",
-    initials: "LM",
-    name: "Léa Martin",
-    role: "Master Marketing, Sciences Po Paris",
-  },
-  {
-    quote:
-      "J'envoie une candidature sur 3 offres, et j'ai décroché 2 entretiens la même semaine. Le score ATS à 94% sur ma dernière candidature parle de lui-même.",
-    initials: "TD",
-    name: "Thomas Dubois",
-    role: "Ingénieur junior, Paris",
-  },
-  {
-    quote:
-      "Mon dossier pour l'Université de Montréal était pile dans les codes locaux. Veyala a su adapter le format sans que j'aie rien à reformuler.",
-    initials: "AB",
-    name: "Aïcha Benali",
-    role: "Étudiante Campus France, Canada",
-  },
-  {
-    quote:
-      "Après 10 ans en comptabilité, je me reconvertis dans le dev. Veyala a mis en valeur mes compétences transversales d'une façon que je n'aurais jamais écrite.",
-    initials: "HM",
-    name: "Hugo Moreau",
-    role: "Reconversion professionnelle, Lyon",
-  },
 ];
 
 function HeroVisual() {
@@ -346,6 +306,8 @@ function HeroVisual() {
 }
 
 export default async function LandingPage() {
+  const locale = getLocale();
+  const m = getMessages(locale);
   const dbPacks = await getActivePacks().catch(() => []);
   const packs = (dbPacks.length ? dbPacks : FALLBACK_PACKS).slice(0, 3);
   const base = siteUrl();
@@ -356,8 +318,7 @@ export default async function LandingPage() {
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     url: base,
-    description:
-      "Générez un CV et une lettre de motivation adaptés à chaque offre, optimisés ATS, export Word & PDF.",
+    description: m.marketing.jsonLdDescription,
     offers: {
       "@type": "Offer",
       priceCurrency: "EUR",
@@ -399,22 +360,22 @@ export default async function LandingPage() {
           <Reveal>
             <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/80 px-4 py-1.5 text-sm font-medium text-blue-700 shadow-sm backdrop-blur">
               <span className="size-1.5 animate-pulse rounded-full bg-blue-600" aria-hidden />
-              Votre candidature, augmentée par l&apos;IA
+              {m.marketing.badge}
             </span>
           </Reveal>
 
           <Reveal delay={100}>
             <h1 className="mx-auto mt-8 max-w-4xl font-display text-[clamp(2.5rem,6.5vw,5.125rem)] font-extrabold leading-[1.04] tracking-tight text-slate-900">
-              Votre CV, <span className="shimmer-text">adapté à chaque offre</span>,
+              {m.marketing.heroTitleBefore}
+              <span className="shimmer-text">{m.marketing.heroTitleHighlight}</span>,
               <br className="hidden sm:block" />{" "}
-              <span className="text-slate-400">en 30 secondes.</span>
+              <span className="text-slate-400">{m.marketing.heroTitleAfter}</span>
             </h1>
           </Reveal>
 
           <Reveal delay={200}>
             <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-slate-500">
-              Collez une offre d&apos;emploi ou une fiche de formation : Veyala génère un CV et une
-              lettre de motivation parfaitement adaptés. Export Word &amp; PDF. Compatible ATS.
+              {m.marketing.heroSubtitle}
             </p>
           </Reveal>
 
@@ -427,7 +388,7 @@ export default async function LandingPage() {
               >
                 <Link href="/login">
                   <Sparkles className="size-4" aria-hidden />
-                  Générer mon CV gratuitement
+                  {m.marketing.heroCta}
                 </Link>
               </Button>
               <DemoCta />
@@ -460,13 +421,15 @@ export default async function LandingPage() {
       <section className="border-b border-slate-100 bg-white">
         <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 text-center md:grid-cols-3 md:gap-0 md:divide-x md:divide-slate-100">
           {STATS.map((stat, index) => (
-            <Reveal key={stat.label} delay={index * 120}>
+            <Reveal key={m.marketing.stats[index]!.label} delay={index * 120}>
               <div className="px-6">
                 <p className="font-display text-5xl font-extrabold tracking-tight text-blue-600">
                   <Counter value={stat.value} suffix={stat.suffix} />
                 </p>
-                <p className="mt-2 font-semibold text-slate-900">{stat.label}</p>
-                <p className="mt-1 text-sm text-slate-400">{stat.sub}</p>
+                <p className="mt-2 font-semibold text-slate-900">
+                  {m.marketing.stats[index]!.label}
+                </p>
+                <p className="mt-1 text-sm text-slate-400">{m.marketing.stats[index]!.sub}</p>
               </div>
             </Reveal>
           ))}
@@ -486,39 +449,43 @@ export default async function LandingPage() {
             <header className="mx-auto max-w-2xl text-center">
               <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-slate-700 shadow-sm">
                 <Clock className="size-3.5 text-blue-600" aria-hidden />
-                Moins de 60 secondes
+                {m.marketing.howEyebrow}
               </span>
               <h2 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-                Comment ça marche ?
+                {m.marketing.howTitle}
               </h2>
-              <p className="mt-4 text-lg text-slate-500">
-                Trois étapes simples. Un résultat taillé sur mesure à chaque candidature.
-              </p>
+              <p className="mt-4 text-lg text-slate-500">{m.marketing.howSubtitle}</p>
             </header>
           </Reveal>
 
           <ol className="mt-16 grid gap-6 md:grid-cols-3">
-            {STEPS.map((step, index) => (
-              <Reveal
-                key={step.number}
-                as="li"
-                delay={index * 150}
-                className="relative h-full rounded-panel border border-blue-100/70 bg-gradient-to-b from-blue-50/70 to-white p-7 transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-900/5"
-              >
-                <div className="flex items-start justify-between">
-                  <span
-                    className={`flex size-12 items-center justify-center rounded-xl bg-gradient-to-br ${step.iconBg} shadow-md shadow-blue-600/20`}
-                  >
-                    <step.icon className="size-5 text-white" aria-hidden />
-                  </span>
-                  <span aria-hidden className="font-display text-5xl font-extrabold text-slate-200">
-                    {step.number}
-                  </span>
-                </div>
-                <h3 className="mt-6 text-lg font-bold text-slate-900">{step.title}</h3>
-                <p className="mt-2.5 text-[15px] leading-relaxed text-slate-500">{step.text}</p>
-              </Reveal>
-            ))}
+            {STEPS.map((step, index) => {
+              const copy = m.marketing.steps[index]!;
+              return (
+                <Reveal
+                  key={step.number}
+                  as="li"
+                  delay={index * 150}
+                  className="relative h-full rounded-panel border border-blue-100/70 bg-gradient-to-b from-blue-50/70 to-white p-7 transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-900/5"
+                >
+                  <div className="flex items-start justify-between">
+                    <span
+                      className={`flex size-12 items-center justify-center rounded-xl bg-gradient-to-br ${step.iconBg} shadow-md shadow-blue-600/20`}
+                    >
+                      <step.icon className="size-5 text-white" aria-hidden />
+                    </span>
+                    <span
+                      aria-hidden
+                      className="font-display text-5xl font-extrabold text-slate-200"
+                    >
+                      {step.number}
+                    </span>
+                  </div>
+                  <h3 className="mt-6 text-lg font-bold text-slate-900">{copy.title}</h3>
+                  <p className="mt-2.5 text-[15px] leading-relaxed text-slate-500">{copy.text}</p>
+                </Reveal>
+              );
+            })}
           </ol>
         </div>
       </section>
@@ -529,12 +496,10 @@ export default async function LandingPage() {
           <Reveal>
             <header className="mx-auto mb-14 max-w-2xl text-center">
               <h2 className="font-display text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-                Deux univers, <span className="text-blue-600">une solution</span>
+                {m.marketing.universesTitleBefore}
+                <span className="text-blue-600">{m.marketing.universesTitleHighlight}</span>
               </h2>
-              <p className="mt-4 text-lg text-slate-500">
-                Emploi ou études : Veyala s&apos;adapte à votre projet et aux codes de chaque
-                système.
-              </p>
+              <p className="mt-4 text-lg text-slate-500">{m.marketing.universesSubtitle}</p>
             </header>
           </Reveal>
           <Reveal delay={120}>
@@ -550,36 +515,36 @@ export default async function LandingPage() {
             <header className="mx-auto max-w-2xl text-center">
               <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-slate-700 shadow-sm">
                 <Zap className="size-3.5 text-amber-500" aria-hidden />
-                Fonctionnalités
+                {m.marketing.featuresEyebrow}
               </span>
               <h2 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-                Tout ce qu&apos;il vous faut,{" "}
-                <span className="text-blue-600">rien de superflu</span>
+                {m.marketing.featuresTitleBefore}{" "}
+                <span className="text-blue-600">{m.marketing.featuresTitleHighlight}</span>
               </h2>
-              <p className="mt-4 text-lg text-slate-500">
-                Conçu pour être efficace dès la première utilisation, sans apprentissage, sans
-                friction.
-              </p>
+              <p className="mt-4 text-lg text-slate-500">{m.marketing.featuresSubtitle}</p>
             </header>
           </Reveal>
 
           <ul className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((feature, index) => (
-              <Reveal
-                key={feature.title}
-                as="li"
-                delay={(index % 3) * 120}
-                className="h-full rounded-panel border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5"
-              >
-                <span
-                  className={`flex size-11 items-center justify-center rounded-xl ${feature.chip}`}
+            {FEATURES.map((feature, index) => {
+              const copy = m.marketing.features[index]!;
+              return (
+                <Reveal
+                  key={copy.title}
+                  as="li"
+                  delay={(index % 3) * 120}
+                  className="h-full rounded-panel border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5"
                 >
-                  <feature.icon className="size-5" aria-hidden />
-                </span>
-                <h3 className="mt-5 text-base font-bold text-slate-900">{feature.title}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-slate-500">{feature.text}</p>
-              </Reveal>
-            ))}
+                  <span
+                    className={`flex size-11 items-center justify-center rounded-xl ${feature.chip}`}
+                  >
+                    <feature.icon className="size-5" aria-hidden />
+                  </span>
+                  <h3 className="mt-5 text-base font-bold text-slate-900">{copy.title}</h3>
+                  <p className="mt-2 text-[15px] leading-relaxed text-slate-500">{copy.text}</p>
+                </Reveal>
+              );
+            })}
           </ul>
         </div>
       </section>
@@ -615,44 +580,46 @@ export default async function LandingPage() {
           <Reveal>
             <header className="mx-auto max-w-2xl text-center">
               <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-slate-700 shadow-sm">
-                Tarifs
+                {m.marketing.pricingEyebrow}
               </span>
               <h2 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-                Payez <span className="text-blue-600">ce que vous utilisez</span>
+                {m.marketing.pricingTitleBefore}
+                <span className="text-blue-600">{m.marketing.pricingTitleHighlight}</span>
               </h2>
-              <p className="mt-4 text-lg text-slate-500">
-                Packs de crédits sans abonnement. Achetez quand vous en avez besoin.
-              </p>
+              <p className="mt-4 text-lg text-slate-500">{m.marketing.pricingSubtitle}</p>
             </header>
           </Reveal>
 
           <div className="mx-auto mt-16 grid max-w-5xl items-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {packs.map((pack, index) => {
               const meta = PLAN_META[Math.min(index, PLAN_META.length - 1)] ?? PLAN_META[0]!;
-              const perCv = price(Math.round(pack.priceCents / pack.credits));
+              const plan = m.marketing.plans[Math.min(index, m.marketing.plans.length - 1)]!;
+              const perCv = price(Math.round(pack.priceCents / pack.credits), locale);
               return (
                 <Reveal key={pack.id} delay={index * 130}>
                   {meta.featured ? (
                     <article className="relative rounded-3xl bg-gradient-to-b from-blue-600 to-blue-800 p-8 text-white shadow-2xl shadow-blue-600/30 transition-bounce [transition-duration:380ms] hover:-translate-y-1.5 lg:-mt-7">
                       <span className="absolute right-6 top-6 rounded-full border border-white/30 bg-white/15 px-3.5 py-1 text-[11px] font-bold uppercase tracking-widest">
-                        Populaire
+                        {m.marketing.popular}
                       </span>
                       <h3 className="text-sm font-bold uppercase tracking-widest text-blue-100">
-                        {meta.name}
+                        {plan.name}
                       </h3>
                       <p className="mt-4 font-display text-5xl font-extrabold tracking-tight">
-                        {price(pack.priceCents)}
+                        {price(pack.priceCents, locale)}
                       </p>
-                      <p className="mt-1.5 text-sm text-blue-100">pour {pack.credits} CV</p>
-                      <p className="text-xs text-blue-200/70">{perCv} / CV</p>
+                      <p className="mt-1.5 text-sm text-blue-100">
+                        {m.marketing.forCredits(pack.credits)}
+                      </p>
+                      <p className="text-xs text-blue-200/70">{m.marketing.perCv(perCv)}</p>
                       <Link
                         href="/login"
                         className="mt-7 block rounded-full bg-white py-3.5 text-center text-sm font-bold text-blue-700 shadow-lg transition-bounce hover:-translate-y-0.5 hover:shadow-xl"
                       >
-                        {meta.cta}
+                        {plan.cta}
                       </Link>
                       <ul className="mt-7 space-y-3">
-                        {meta.features(pack.credits).map((feature) => (
+                        {plan.features(pack.credits).map((feature) => (
                           <li key={feature} className="flex items-center gap-2.5 text-sm">
                             <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-white/20">
                               <Check className="size-3" aria-hidden />
@@ -665,21 +632,23 @@ export default async function LandingPage() {
                   ) : (
                     <article className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm transition-bounce [transition-duration:380ms] hover:-translate-y-1.5 hover:shadow-xl hover:shadow-slate-900/5">
                       <h3 className="text-sm font-bold uppercase tracking-widest text-blue-600">
-                        {meta.name}
+                        {plan.name}
                       </h3>
                       <p className="mt-4 font-display text-5xl font-extrabold tracking-tight text-slate-900">
-                        {price(pack.priceCents)}
+                        {price(pack.priceCents, locale)}
                       </p>
-                      <p className="mt-1.5 text-sm text-slate-500">pour {pack.credits} CV</p>
-                      <p className="text-xs text-slate-400">{perCv} / CV</p>
+                      <p className="mt-1.5 text-sm text-slate-500">
+                        {m.marketing.forCredits(pack.credits)}
+                      </p>
+                      <p className="text-xs text-slate-400">{m.marketing.perCv(perCv)}</p>
                       <Link
                         href="/login"
                         className="mt-7 block rounded-full bg-gradient-to-r from-blue-600 to-blue-500 py-3.5 text-center text-sm font-bold text-white shadow-md shadow-blue-600/20 transition-bounce hover:-translate-y-0.5 hover:shadow-lg"
                       >
-                        {meta.cta}
+                        {plan.cta}
                       </Link>
                       <ul className="mt-7 space-y-3">
-                        {meta.features(pack.credits).map((feature) => (
+                        {plan.features(pack.credits).map((feature) => (
                           <li
                             key={feature}
                             className="flex items-center gap-2.5 text-sm text-slate-600"
@@ -699,10 +668,7 @@ export default async function LandingPage() {
           </div>
 
           <Reveal delay={200}>
-            <p className="mt-12 text-center text-sm text-slate-400">
-              Les crédits n&apos;expirent jamais · Paiement sécurisé par Stripe · Pas
-              d&apos;abonnement
-            </p>
+            <p className="mt-12 text-center text-sm text-slate-400">{m.marketing.pricingFoot}</p>
           </Reveal>
         </div>
       </section>
@@ -718,19 +684,18 @@ export default async function LandingPage() {
                 ))}
               </div>
               <h2 className="mt-5 font-display text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-                Ils ont décroché <span className="text-blue-600">leur entretien</span>
+                {m.marketing.testimonialsTitleBefore}
+                <span className="text-blue-600">{m.marketing.testimonialsTitleHighlight}</span>
               </h2>
-              <p className="mt-4 text-lg text-slate-500">
-                Étudiants et jeunes actifs qui font confiance à Veyala.
-              </p>
+              <p className="mt-4 text-lg text-slate-500">{m.marketing.testimonialsSubtitle}</p>
             </header>
           </Reveal>
 
           <ul className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {TESTIMONIALS.map((testimonial, index) => (
+            {m.marketing.testimonials.map((testimonial, index) => (
               <Reveal key={testimonial.name} as="li" delay={index * 100} className="h-full">
                 <figure className="flex h-full flex-col rounded-panel border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
-                  <div role="img" className="flex gap-0.5" aria-label="5 étoiles sur 5">
+                  <div role="img" className="flex gap-0.5" aria-label={m.marketing.starsAria}>
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
@@ -766,11 +731,9 @@ export default async function LandingPage() {
           <Reveal>
             <header className="text-center">
               <h2 className="font-display text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-                Questions fréquentes
+                {m.marketing.faqTitle}
               </h2>
-              <p className="mt-4 text-lg text-slate-500">
-                Tout ce que vous voulez savoir avant de commencer.
-              </p>
+              <p className="mt-4 text-lg text-slate-500">{m.marketing.faqSubtitle}</p>
             </header>
           </Reveal>
           <Reveal delay={120}>
@@ -805,20 +768,19 @@ export default async function LandingPage() {
           <Reveal>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-sm font-medium text-slate-200 backdrop-blur">
               <span className="size-1.5 animate-pulse rounded-full bg-blue-400" aria-hidden />
-              Commencez dès aujourd&apos;hui, gratuitement
+              {m.marketing.ctaEyebrow}
             </span>
           </Reveal>
           <Reveal delay={100}>
             <h2 className="mx-auto mt-8 max-w-4xl font-display text-4xl font-extrabold leading-tight tracking-tight text-white md:text-6xl">
-              Votre prochaine candidature
+              {m.marketing.ctaTitleBefore}
               <br className="hidden md:block" />{" "}
-              <span className="shimmer-text">mérite le meilleur CV.</span>
+              <span className="shimmer-text">{m.marketing.ctaTitleHighlight}</span>
             </h2>
           </Reveal>
           <Reveal delay={200}>
             <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-400">
-              Rejoignez 48 000+ candidats qui ont déjà confié leur candidature à Veyala. Premier CV
-              gratuit, sans carte bancaire.
+              {m.marketing.ctaSubtitle}
             </p>
           </Reveal>
           <Reveal delay={300}>
@@ -830,7 +792,7 @@ export default async function LandingPage() {
               >
                 <Link href="/login">
                   <Sparkles className="size-4" aria-hidden />
-                  Générer mon CV gratuitement
+                  {m.marketing.heroCta}
                 </Link>
               </Button>
               <a
@@ -838,14 +800,12 @@ export default async function LandingPage() {
                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-7 py-3.5 text-base font-semibold text-white backdrop-blur transition-bounce hover:-translate-y-0.5 hover:bg-white/10"
               >
                 <Globe className="size-4" aria-hidden />
-                Voir tous les templates
+                {m.marketing.ctaTemplates}
               </a>
             </div>
           </Reveal>
           <Reveal delay={400}>
-            <p className="mt-8 text-sm text-slate-500">
-              Aucun abonnement requis · Premier CV offert · Données protégées
-            </p>
+            <p className="mt-8 text-sm text-slate-500">{m.marketing.ctaFoot}</p>
           </Reveal>
         </div>
       </section>

@@ -7,6 +7,7 @@ import { PromoValidationError, resolvePromoForCheckout } from "@/lib/promo";
 import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/utils";
 import { reportError } from "@/lib/sentry";
+import { getLocaleFromRequest } from "@/i18n/get-locale";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,7 @@ const bodySchema = z.object({
 /** Creates a Stripe Checkout session for a credit pack (optional promo). */
 export async function POST(req: Request) {
   const session = await auth();
+  const locale = getLocaleFromRequest(req);
   if (!session?.user) {
     return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
   }
@@ -59,9 +61,13 @@ export async function POST(req: Request) {
 
   const origin = siteUrl();
   const description =
-    discountCents > 0 || creditsPurchased !== pack.credits
-      ? `${creditsPurchased} générations de CV${promoLabel ? ` · code ${promoLabel}` : ""}`
-      : `${pack.credits} générations de CV`;
+    locale === "en"
+      ? `${creditsPurchased} resume generation${creditsPurchased === 1 ? "" : "s"}${promoLabel ? ` · code ${promoLabel}` : ""}`
+      : discountCents > 0 || creditsPurchased !== pack.credits
+        ? `${creditsPurchased} générations de CV${promoLabel ? ` · code ${promoLabel}` : ""}`
+        : `${pack.credits} générations de CV`;
+  const productName =
+    locale === "en" ? `Veyala: ${pack.credits}-credit pack` : `Veyala : pack ${pack.label}`;
 
   try {
     const stripe = getStripe();
@@ -76,7 +82,7 @@ export async function POST(req: Request) {
             currency: "eur",
             unit_amount: amountCents,
             product_data: {
-              name: `Veyala : pack ${pack.label}`,
+              name: productName,
               description,
             },
           },
@@ -89,8 +95,9 @@ export async function POST(req: Request) {
         discountCents: String(discountCents),
         creditsPurchased: String(creditsPurchased),
       },
-      success_url: `${origin}/billing?status=success`,
-      cancel_url: `${origin}/billing?status=cancelled`,
+      locale: locale === "en" ? "en" : "fr",
+      success_url: `${origin}${locale === "en" ? "/en" : ""}/billing?status=success`,
+      cancel_url: `${origin}${locale === "en" ? "/en" : ""}/billing?status=cancelled`,
     });
 
     await db.payment.create({

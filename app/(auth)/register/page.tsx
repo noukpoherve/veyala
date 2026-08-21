@@ -1,21 +1,27 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { UserPlus } from "lucide-react";
 import { z } from "zod";
-import { auth, SIGNUP_BONUS_CREDITS } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { clientIp, rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import { normalizeEmail, siteUrl } from "@/lib/utils";
+import { normalizeEmail } from "@/lib/utils";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import { getLocale } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
+import { Link } from "@/i18n/navigation";
+import { redirectLocalized } from "@/i18n/redirect";
+import { authCallbackRedirect } from "@/i18n/auth-urls";
 
-export const metadata: Metadata = { title: "Créer un compte" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: getMessages(getLocale()).seo.registerTitle };
+}
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -23,35 +29,33 @@ const registerSchema = z.object({
   confirm: z.string(),
 });
 
-const ERROR_MESSAGES: Record<string, string> = {
-  invalid: "Email invalide ou mot de passe trop court (8 caractères minimum).",
-  mismatch: "Les deux mots de passe ne correspondent pas.",
-  exists: "Un compte existe déjà avec cet email. Connectez-vous.",
-  ratelimited: "Trop de créations de compte rapprochées. Réessayez plus tard.",
-  unknown: "L'inscription a échoué. Réessayez.",
-};
-
 export default async function RegisterPage({ searchParams }: { searchParams: { error?: string } }) {
+  const locale = getLocale();
+  const m = getMessages(locale);
   const session = await auth();
-  if (session?.user) redirect("/dashboard");
+  if (session?.user) redirectLocalized("/dashboard", locale);
 
   const errorMessage = searchParams.error
-    ? (ERROR_MESSAGES[searchParams.error] ?? ERROR_MESSAGES.unknown)
+    ? (m.auth.registerErrors[searchParams.error as keyof typeof m.auth.registerErrors] ??
+      m.auth.registerErrors.unknown)
     : null;
 
   async function register(formData: FormData) {
     "use server";
+    const loc = getLocale();
     const parsed = registerSchema.safeParse({
       email: formData.get("email"),
       password: formData.get("password"),
       confirm: formData.get("confirm"),
     });
-    if (!parsed.success) redirect("/register?error=invalid");
-    if (parsed.data.password !== parsed.data.confirm) redirect("/register?error=mismatch");
+    if (!parsed.success) redirectLocalized("/register?error=invalid", loc);
+    if (parsed.data.password !== parsed.data.confirm) {
+      redirectLocalized("/register?error=mismatch", loc);
+    }
 
     const { limit, windowMs } = RATE_LIMITS.register;
     if (!(await rateLimit(`register:${clientIp()}`, limit, windowMs))) {
-      redirect("/register?error=ratelimited");
+      redirectLocalized("/register?error=ratelimited", loc);
     }
 
     const email = normalizeEmail(parsed.data.email);
@@ -59,57 +63,60 @@ export default async function RegisterPage({ searchParams }: { searchParams: { e
     const { data, error } = await supabase.auth.signUp({
       email,
       password: parsed.data.password,
-      options: { emailRedirectTo: `${siteUrl()}/auth/callback?next=/dashboard` },
+      options: {
+        emailRedirectTo: authCallbackRedirect(loc, "/dashboard"),
+        data: { locale: loc },
+      },
     });
     if (error) {
       if (error.code === "user_already_exists" || error.code === "email_exists") {
-        redirect("/register?error=exists");
+        redirectLocalized("/register?error=exists", loc);
       }
       console.error("[register] signUp failed:", error);
-      redirect("/register?error=unknown");
+      redirectLocalized("/register?error=unknown", loc);
     }
-    // Existing confirmed accounts come back as an obfuscated user without identities.
-    if (data.user && data.user.identities?.length === 0) redirect("/register?error=exists");
+    if (data.user && data.user.identities?.length === 0) {
+      redirectLocalized("/register?error=exists", loc);
+    }
 
-    // Email confirmation required: the profile row and signup credits are
-    // created by ensureUser() on the first authenticated request.
-    redirect(`/verify-email?email=${encodeURIComponent(email)}`);
+    redirectLocalized(`/verify-email?email=${encodeURIComponent(email)}`, loc);
   }
 
   return (
     <Card className="relative w-full max-w-md rounded-3xl border-slate-100 shadow-xl shadow-blue-900/5">
       <CardHeader className="items-center text-center">
-        <Link href="/" className="mb-2" aria-label="Accueil Veyala">
-          <VeyalaLogo />
-        </Link>
+        <div className="mb-2 flex w-full items-center justify-between">
+          <Link href="/" aria-label={m.common.homeAria}>
+            <VeyalaLogo />
+          </Link>
+          <LanguageSwitcher variant="compact" />
+        </div>
         <CardTitle className="font-display text-2xl font-extrabold tracking-tight">
-          Créer un compte
+          {m.auth.registerTitle}
         </CardTitle>
-        <CardDescription>
-          {SIGNUP_BONUS_CREDITS} crédits offerts à l&apos;inscription, sans carte bancaire.
-        </CardDescription>
+        <CardDescription>{m.auth.registerDescription}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {errorMessage ? (
-          <Alert variant="error" title="Inscription impossible">
+          <Alert variant="error" title={m.auth.registerTitle}>
             {errorMessage}
           </Alert>
         ) : null}
 
         <form className="space-y-3" action={register}>
           <div className="space-y-1.5">
-            <Label htmlFor="email">Adresse email</Label>
+            <Label htmlFor="email">{m.auth.loginEmail}</Label>
             <Input
               id="email"
               name="email"
               type="email"
               required
               autoComplete="email"
-              placeholder="vous@exemple.fr"
+              placeholder={m.auth.loginEmailPlaceholder}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password">Mot de passe</Label>
+            <Label htmlFor="password">{m.auth.loginPassword}</Label>
             <Input
               id="password"
               name="password"
@@ -117,11 +124,11 @@ export default async function RegisterPage({ searchParams }: { searchParams: { e
               required
               minLength={8}
               autoComplete="new-password"
-              placeholder="8 caractères minimum"
+              placeholder={m.auth.loginPasswordPlaceholder}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="confirm">Confirmer le mot de passe</Label>
+            <Label htmlFor="confirm">{m.auth.registerConfirm}</Label>
             <Input
               id="confirm"
               name="confirm"
@@ -129,32 +136,31 @@ export default async function RegisterPage({ searchParams }: { searchParams: { e
               required
               minLength={8}
               autoComplete="new-password"
-              placeholder="Retapez votre mot de passe"
             />
           </div>
           <Button type="submit" variant="gradient" className="w-full">
             <UserPlus />
-            Créer mon compte
+            {m.auth.registerCta}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Déjà un compte ?{" "}
+          {m.auth.hasAccount}{" "}
           <Link href="/login" className="font-medium text-blue-600 hover:underline">
-            Se connecter
+            {m.auth.loginCta}
           </Link>
         </p>
 
         <OAuthButtons />
 
         <p className="text-center text-xs text-muted-foreground">
-          En créant un compte, vous acceptez nos{" "}
+          {m.auth.acceptTerms}{" "}
           <Link href="/cgu" className="underline">
-            CGU
+            {m.auth.terms}
           </Link>{" "}
-          et notre{" "}
+          {m.auth.and}{" "}
           <Link href="/confidentialite" className="underline">
-            politique de confidentialité
+            {m.auth.privacy}
           </Link>
           .
         </p>

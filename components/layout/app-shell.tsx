@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Coins, HelpCircle, Zap } from "lucide-react";
 import { auth, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -10,6 +8,12 @@ import { MobileBottomNav } from "./mobile-bottom-nav";
 import { UserMenu } from "./user-menu";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { Badge } from "@/components/ui/badge";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { getLocale } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
+import { Link } from "@/i18n/navigation";
+import { redirectLocalized } from "@/i18n/redirect";
+import { localizePath } from "@/i18n/path";
 
 function UsageBar({ used, total }: { used: number; total: number }) {
   const ratio = total > 0 ? Math.min(used / total, 1) : 0;
@@ -25,8 +29,10 @@ function UsageBar({ used, total }: { used: number; total: number }) {
 
 /** Shared connected-area shell: left sidebar (nav, usage, user menu) and main content. */
 export async function AppShell({ children }: { children: React.ReactNode }) {
+  const locale = getLocale();
+  const m = getMessages(locale);
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirectLocalized("/login", locale);
 
   const userId = session.user.id;
   const [balance, credited] = await Promise.all([
@@ -41,7 +47,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   async function signOutAction() {
     "use server";
-    await signOut({ redirectTo: "/" });
+    await signOut({ redirectTo: localizePath("/", getLocale()) });
   }
 
   return (
@@ -51,21 +57,21 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             href="/"
             className="border-b border-border p-4 pr-12 md:pr-4"
-            aria-label="Accueil Veyala"
+            aria-label={m.common.homeAria}
           >
             <VeyalaLogo />
           </Link>
           <SidebarNav isAdmin={session.user.role === "ADMIN"} />
           <div className="space-y-3 border-t border-border p-3 max-md:pb-4">
             <section
-              aria-label="Utilisation des crédits"
+              aria-label={m.app.creditsUsageAria}
               className="rounded-panel border border-border bg-card p-4 shadow-elevation-rest"
             >
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-muted-foreground">Mes crédits</h2>
+                <h2 className="text-sm font-bold text-muted-foreground">{m.app.creditsUsage}</h2>
                 <Link
                   href="/billing"
-                  aria-label="Voir le détail des crédits"
+                  aria-label={m.app.creditsDetailAria}
                   className="flex size-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground md:size-auto"
                 >
                   <HelpCircle className="size-4" aria-hidden />
@@ -73,20 +79,17 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               </div>
               <div className="mt-3 space-y-1.5">
                 <p className="text-sm text-foreground">
-                  {usedCredits} crédit{usedCredits > 1 ? "s" : ""} utilisé
-                  {usedCredits > 1 ? "s" : ""} sur {totalCredits}.
+                  {m.app.creditsUsed(usedCredits, totalCredits)}
                 </p>
                 <UsageBar used={usedCredits} total={totalCredits} />
-                <p className="text-xs text-muted-foreground">
-                  {balance} restant{balance > 1 ? "s" : ""} · 1 crédit = 1 CV + lettre
-                </p>
+                <p className="text-xs text-muted-foreground">{m.app.creditsRemaining(balance)}</p>
               </div>
               <Link
                 href="/billing"
                 className="transition-bounce mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/20 hover:-translate-y-0.5 hover:shadow-lg"
               >
                 <Zap className="size-4 fill-amber-400 text-amber-400" aria-hidden />
-                Recharger
+                {m.app.topUp}
               </Link>
             </section>
 
@@ -96,6 +99,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               image={session.user.image ?? null}
               signOutAction={signOutAction}
             />
+            <LanguageSwitcher variant="compact" className="w-full justify-center" />
           </div>
         </CollapsibleSidebar>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -106,7 +110,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               height: "var(--app-header)",
             }}
           >
-            <Link href="/dashboard" className="min-w-0" aria-label="Tableau de bord Veyala">
+            <Link href="/dashboard" className="min-w-0" aria-label={m.app.dashboardAria}>
               <VeyalaLogo />
             </Link>
             <Badge variant="secondary">
