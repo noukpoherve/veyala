@@ -1,31 +1,42 @@
+import type { Locale } from "@/i18n/config";
+
 /**
  * Predefined soft-skills catalog (profile multi-select + matching).
- * Keep labels stable: they are stored on the CV and compared by the scorer.
+ * Canonical `label` (FR) is stored on the CV and compared by the scorer.
+ * `labelEn` is display-only for English UI.
  */
 export const SOFT_SKILLS_CATALOG = [
-  { id: "communication", label: "Communication" },
-  { id: "teamwork", label: "Esprit d'équipe" },
-  { id: "autonomy", label: "Autonomie" },
-  { id: "leadership", label: "Leadership" },
-  { id: "problem-solving", label: "Résolution de problèmes" },
-  { id: "adaptability", label: "Adaptabilité" },
-  { id: "rigor", label: "Rigueur" },
-  { id: "organization", label: "Organisation" },
-  { id: "creativity", label: "Créativité" },
-  { id: "stress", label: "Gestion du stress" },
-  { id: "pedagogy", label: "Pédagogie" },
-  { id: "customer", label: "Relation client" },
-  { id: "initiative", label: "Prise d'initiative" },
-  { id: "analytical", label: "Esprit d'analyse" },
-  { id: "empathy", label: "Empathie" },
-  { id: "time", label: "Gestion du temps" },
-  { id: "negotiation", label: "Négociation" },
-  { id: "curiosity", label: "Curiosité" },
+  { id: "communication", label: "Communication", labelEn: "Communication" },
+  { id: "teamwork", label: "Esprit d'équipe", labelEn: "Teamwork" },
+  { id: "autonomy", label: "Autonomie", labelEn: "Autonomy" },
+  { id: "leadership", label: "Leadership", labelEn: "Leadership" },
+  { id: "problem-solving", label: "Résolution de problèmes", labelEn: "Problem solving" },
+  { id: "adaptability", label: "Adaptabilité", labelEn: "Adaptability" },
+  { id: "rigor", label: "Rigueur", labelEn: "Rigor" },
+  { id: "organization", label: "Organisation", labelEn: "Organization" },
+  { id: "creativity", label: "Créativité", labelEn: "Creativity" },
+  { id: "stress", label: "Gestion du stress", labelEn: "Stress management" },
+  { id: "pedagogy", label: "Pédagogie", labelEn: "Teaching ability" },
+  { id: "customer", label: "Relation client", labelEn: "Customer relations" },
+  { id: "initiative", label: "Prise d'initiative", labelEn: "Initiative" },
+  { id: "analytical", label: "Esprit d'analyse", labelEn: "Analytical thinking" },
+  { id: "empathy", label: "Empathie", labelEn: "Empathy" },
+  { id: "time", label: "Gestion du temps", labelEn: "Time management" },
+  { id: "negotiation", label: "Négociation", labelEn: "Negotiation" },
+  { id: "curiosity", label: "Curiosité", labelEn: "Curiosity" },
 ] as const;
 
 export type SoftSkillId = (typeof SOFT_SKILLS_CATALOG)[number]["id"];
 
 export const SOFT_SKILL_LABELS: readonly string[] = SOFT_SKILLS_CATALOG.map((s) => s.label);
+
+/** Localized display label; storage always uses the French `label`. */
+export function softSkillDisplayLabel(
+  skill: (typeof SOFT_SKILLS_CATALOG)[number],
+  locale: Locale
+): string {
+  return locale === "en" ? skill.labelEn : skill.label;
+}
 
 function stripDiacritics(value: string): string {
   return value
@@ -36,7 +47,10 @@ function stripDiacritics(value: string): string {
 }
 
 const LABEL_BY_NORMALIZED = new Map(
-  SOFT_SKILLS_CATALOG.map((s) => [stripDiacritics(s.label), s.label] as const)
+  SOFT_SKILLS_CATALOG.flatMap((s) => [
+    [stripDiacritics(s.label), s.label] as const,
+    [stripDiacritics(s.labelEn), s.label] as const,
+  ])
 );
 
 /** Map free-text soft skill from an offer to a catalog label when possible. */
