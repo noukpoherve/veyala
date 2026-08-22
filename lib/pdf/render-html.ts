@@ -1,12 +1,16 @@
 import type { CVData, CVSkillGroup } from "@/lib/cv-schema";
 import { inlineLinksToHtml, normalizeHttpUrl } from "@/lib/inline-links";
 import type { SectionId, TemplateDefinition } from "@/lib/templates/definition";
+import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
 
 /**
  * Renders a CV as a self-contained A4 HTML document, driven by a template
  * definition. Used both for the on-screen preview (iframe) and the PDF
  * export (Playwright print). Real selectable text, clickable links, ATS-safe.
  */
+
+type CvCopy = ReturnType<typeof getMessages>["cv"];
 
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -29,7 +33,7 @@ function isLightSidebar(def: TemplateDefinition): boolean {
   return luminance(def.colors.sidebar[0]!) > 0.6;
 }
 
-function contactSection(cv: CVData, inSidebar: boolean): string {
+function contactSection(cv: CVData, inSidebar: boolean, copy: CvCopy): string {
   const { email, phone, location, links, details } = cv.contact;
   const items = [
     phone && `<li>${esc(phone)}</li>`,
@@ -42,7 +46,7 @@ function contactSection(cv: CVData, inSidebar: boolean): string {
   ].filter(Boolean);
   if (items.length === 0) return "";
   return `<section class="contact">
-    ${inSidebar ? `<h2>Informations</h2>` : ""}
+    ${inSidebar ? `<h2>${esc(copy.information)}</h2>` : ""}
     <ul>${items.join("")}</ul>
   </section>`;
 }
@@ -60,17 +64,17 @@ function skillGroupHtml(group: CVSkillGroup, style: TemplateDefinition["skillsSt
   }
 }
 
-function skillsSection(cv: CVData, def: TemplateDefinition): string {
+function skillsSection(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
   if (cv.skills.length === 0) return "";
   return `<section class="skills">
-    <h2>Compétences</h2>
+    <h2>${esc(copy.skills)}</h2>
     ${cv.skills.map((g) => skillGroupHtml(g, def.skillsStyle)).join("")}
   </section>`;
 }
 
-function summarySection(cv: CVData): string {
+function summarySection(cv: CVData, copy: CvCopy): string {
   if (!cv.summary) return "";
-  return `<section class="summary"><h2>Profil</h2><p>${esc(cv.summary)}</p></section>`;
+  return `<section class="summary"><h2>${esc(copy.summary)}</h2><p>${esc(cv.summary)}</p></section>`;
 }
 
 function jobHead(title: string, dates: string, def: TemplateDefinition): string {
@@ -80,7 +84,7 @@ function jobHead(title: string, dates: string, def: TemplateDefinition): string 
   return `<h3>${title}</h3>`;
 }
 
-function experienceSection(cv: CVData, def: TemplateDefinition): string {
+function experienceSection(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
   if (cv.experiences.length === 0) return "";
   const items = cv.experiences
     .map((e) => {
@@ -107,14 +111,14 @@ function experienceSection(cv: CVData, def: TemplateDefinition): string {
       ${inlineMeta}
       ${e.bullets.length ? `<ul>${e.bullets.map((b) => `<li>${inlineLinksToHtml(b, esc)}</li>`).join("")}</ul>` : ""}
       ${refs}
-      ${e.stack.length ? `<p class="stack"><strong>Stack :</strong> <em>${e.stack.map(esc).join(", ")}</em></p>` : ""}
+      ${e.stack.length ? `<p class="stack"><strong>${esc(copy.stack)} :</strong> <em>${e.stack.map(esc).join(", ")}</em></p>` : ""}
     </article>`;
     })
     .join("");
-  return `<section class="experience"><h2>Expériences professionnelles</h2>${items}</section>`;
+  return `<section class="experience"><h2>${esc(copy.experience)}</h2>${items}</section>`;
 }
 
-function educationSection(cv: CVData, def: TemplateDefinition): string {
+function educationSection(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
   if (cv.education.length === 0) return "";
   const items = cv.education
     .map((e) => {
@@ -129,10 +133,10 @@ function educationSection(cv: CVData, def: TemplateDefinition): string {
     </article>`;
     })
     .join("");
-  return `<section class="education"><h2>Formation</h2>${items}</section>`;
+  return `<section class="education"><h2>${esc(copy.education)}</h2>${items}</section>`;
 }
 
-function certificationsSection(cv: CVData, def: TemplateDefinition): string {
+function certificationsSection(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
   const list = cv.certifications ?? [];
   if (list.length === 0) return "";
   const items = list
@@ -155,19 +159,19 @@ function certificationsSection(cv: CVData, def: TemplateDefinition): string {
     </article>`;
     })
     .join("");
-  return `<section class="certifications"><h2>Certifications</h2>${items}</section>`;
+  return `<section class="certifications"><h2>${esc(copy.certifications)}</h2>${items}</section>`;
 }
 
-function languagesSection(cv: CVData): string {
+function languagesSection(cv: CVData, copy: CvCopy): string {
   if (cv.languages.length === 0) return "";
-  return `<section class="languages"><h2>Langues</h2>
+  return `<section class="languages"><h2>${esc(copy.languages)}</h2>
     <ul>${cv.languages.map((l) => `<li>${esc(l.name)}${l.level ? ` — ${esc(l.level)}` : ""}</li>`).join("")}</ul>
   </section>`;
 }
 
-function interestsSection(cv: CVData): string {
+function interestsSection(cv: CVData, copy: CvCopy): string {
   if (cv.interests.length === 0) return "";
-  return `<section class="interests"><h2>Centres d'intérêt</h2>
+  return `<section class="interests"><h2>${esc(copy.interests)}</h2>
     <p>${cv.interests.map(esc).join(" · ")}</p>
   </section>`;
 }
@@ -176,25 +180,26 @@ function renderSection(
   id: SectionId,
   cv: CVData,
   def: TemplateDefinition,
-  inSidebar: boolean
+  inSidebar: boolean,
+  copy: CvCopy
 ): string {
   switch (id) {
     case "contact":
-      return contactSection(cv, inSidebar);
+      return contactSection(cv, inSidebar, copy);
     case "summary":
-      return summarySection(cv);
+      return summarySection(cv, copy);
     case "experience":
-      return experienceSection(cv, def);
+      return experienceSection(cv, def, copy);
     case "education":
-      return educationSection(cv, def);
+      return educationSection(cv, def, copy);
     case "certifications":
-      return certificationsSection(cv, def);
+      return certificationsSection(cv, def, copy);
     case "skills":
-      return skillsSection(cv, def);
+      return skillsSection(cv, def, copy);
     case "languages":
-      return languagesSection(cv);
+      return languagesSection(cv, copy);
     case "interests":
-      return interestsSection(cv);
+      return interestsSection(cv, copy);
   }
 }
 
@@ -228,10 +233,10 @@ function nameHtml(cv: CVData, def: TemplateDefinition, accentLastWord: boolean):
   return `<h1>${esc(words.join(" "))}<br /><span style="color:${def.colors.band}">${esc(last)}</span></h1>`;
 }
 
-function headerHtml(cv: CVData, def: TemplateDefinition): string {
+function headerHtml(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
   const photo =
     def.photo && cv.identity.photoUrl
-      ? `<img class="photo" src="${esc(cv.identity.photoUrl)}" alt="Photo de ${esc(cv.identity.fullName)}" />`
+      ? `<img class="photo" src="${esc(cv.identity.photoUrl)}" alt="${esc(copy.photoAlt(cv.identity.fullName))}" />`
       : "";
   return `<header class="identity">
     <div>
@@ -295,14 +300,14 @@ function baseCss(def: TemplateDefinition): string {
   `;
 }
 
-function sidebarLayout(cv: CVData, def: TemplateDefinition): string {
+function sidebarLayout(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
   const c = def.colors;
   const light = isLightSidebar(def);
-  const sidebar = def.sidebarSections.map((s) => renderSection(s, cv, def, true)).join("");
-  const main = def.mainSections.map((s) => renderSection(s, cv, def, false)).join("");
+  const sidebar = def.sidebarSections.map((s) => renderSection(s, cv, def, true, copy)).join("");
+  const main = def.mainSections.map((s) => renderSection(s, cv, def, false, copy)).join("");
   const photo =
     def.photo && cv.identity.photoUrl
-      ? `<img class="photo" src="${esc(cv.identity.photoUrl)}" alt="Photo de ${esc(cv.identity.fullName)}" />`
+      ? `<img class="photo" src="${esc(cv.identity.photoUrl)}" alt="${esc(copy.photoAlt(cv.identity.fullName))}" />`
       : "";
   const nameInSidebar = def.namePlacement === "sidebar";
 
@@ -362,8 +367,8 @@ function sidebarLayout(cv: CVData, def: TemplateDefinition): string {
   </main>`;
 }
 
-function singleColumnLayout(cv: CVData, def: TemplateDefinition): string {
-  const main = def.mainSections.map((s) => renderSection(s, cv, def, false)).join("");
+function singleColumnLayout(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
+  const main = def.mainSections.map((s) => renderSection(s, cv, def, false, copy)).join("");
   const brickCss = brickItemCss(def, { lightSidebar: true, inSidebar: false });
   return `<style>
     ${baseCss(def)}
@@ -373,22 +378,25 @@ function singleColumnLayout(cv: CVData, def: TemplateDefinition): string {
     .contact ul { display: flex; flex-wrap: wrap; gap: 1mm 5mm; }
     .bricks li { ${brickCss} }
   </style>
-  ${headerHtml(cv, def)}
+  ${headerHtml(cv, def, copy)}
   <main>${main}</main>`;
 }
 
 /** Full standalone HTML document for a CV + template definition. */
-export function renderCVHtml(cv: CVData, def: TemplateDefinition): string {
+export function renderCVHtml(cv: CVData, def: TemplateDefinition, locale: Locale = "fr"): string {
+  const copy = getMessages(locale).cv;
   const content =
-    def.layout === "sidebar-left" ? sidebarLayout(cv, def) : singleColumnLayout(cv, def);
+    def.layout === "sidebar-left"
+      ? sidebarLayout(cv, def, copy)
+      : singleColumnLayout(cv, def, copy);
   const logo = def.logo
     ? `<img class="cv-logo" src="${esc(def.logo)}" alt="" aria-hidden="true" />`
     : "";
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${locale}">
 <head>
 <meta charset="utf-8" />
-<title>CV — ${esc(cv.identity.fullName)}</title>
+<title>${esc(copy.documentTitle(cv.identity.fullName))}</title>
 <style>
   body { position: relative; }
   .cv-logo {

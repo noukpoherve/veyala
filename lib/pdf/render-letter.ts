@@ -1,5 +1,8 @@
 import type { CVData } from "@/lib/cv-schema";
 import type { TemplateDefinition } from "@/lib/templates/definition";
+import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
+import { intlLocale } from "@/i18n/format";
 
 /**
  * Cover letter as a standalone A4 HTML document. Pure function shared by the
@@ -12,9 +15,11 @@ const esc = (s: string): string =>
 export function renderCoverLetterHtml(
   cv: CVData,
   letter: { body: string; jobTitle: string },
-  def: TemplateDefinition
+  def: TemplateDefinition,
+  locale: Locale = "fr"
 ): string {
   const c = def.colors;
+  const copy = getMessages(locale).cv;
   const contactParts = [
     cv.contact.email,
     cv.contact.phone,
@@ -29,13 +34,15 @@ export function renderCoverLetterHtml(
     .map((p) => `<p>${esc(p)}</p>`)
     .join("");
 
-  const today = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(new Date());
+  const today = new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "long" }).format(
+    new Date()
+  );
 
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${locale}">
 <head>
 <meta charset="utf-8" />
-<title>Lettre de motivation — ${esc(cv.identity.fullName)}</title>
+<title>${esc(copy.letterDocumentTitle(cv.identity.fullName))}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   @page { size: A4; margin: 0; }
@@ -63,8 +70,8 @@ export function renderCoverLetterHtml(
     <h1>${esc(cv.identity.fullName)}</h1>
     <p class="contact">${contactParts.map(esc).join(" · ")}</p>
   </header>
-  <p class="date">Le ${today}</p>
-  <p class="subject">Objet : candidature au poste de ${esc(letter.jobTitle)}</p>
+  <p class="date">${esc(copy.letterDate(today))}</p>
+  <p class="subject">${esc(copy.letterSubject(letter.jobTitle))}</p>
   <main>${paragraphs}</main>
   <p class="signature">${esc(cv.identity.fullName)}</p>
 </body>

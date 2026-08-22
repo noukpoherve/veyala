@@ -3,6 +3,8 @@ import type {
   BlogPost as PrismaBlogPost,
   BlogPostStatus,
 } from "@prisma/client";
+import type { Locale } from "@/i18n/config";
+import { formatDate } from "@/i18n/format";
 import type { BlogCategory, BlogFaq, BlogPost, ContentBlock } from "@/lib/blog/types";
 
 const CATEGORY_TO_PRISMA: Record<BlogCategory, PrismaBlogCategory> = {
@@ -85,12 +87,8 @@ function parseFaq(value: unknown): BlogFaq[] | undefined {
   return value as BlogFaq[];
 }
 
-export function formatPostDate(isoDate: string): string {
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(isoDate));
+export function formatPostDate(isoDate: string, locale: Locale = "fr"): string {
+  return formatDate(isoDate, locale);
 }
 
 export function slugifyTitle(title: string): string {

@@ -1,9 +1,15 @@
 import type { BlogPost } from "@/lib/blog/types";
+import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
+import { localizePath } from "@/i18n/path";
 import { siteUrl } from "@/lib/utils";
 
-export function blogPostingJsonLd(post: BlogPost) {
-  const base = siteUrl();
-  const url = `${base}/blog/${post.slug}`;
+function absolute(path: string, locale: Locale): string {
+  return `${siteUrl()}${localizePath(path, locale)}`;
+}
+
+export function blogPostingJsonLd(post: BlogPost, locale: Locale = "fr") {
+  const url = absolute(`/blog/${post.slug}`, locale);
 
   return {
     "@context": "https://schema.org",
@@ -12,29 +18,29 @@ export function blogPostingJsonLd(post: BlogPost) {
     description: post.description,
     datePublished: post.publishedAt,
     dateModified: post.updatedAt,
-    inLanguage: "fr-FR",
+    inLanguage: locale === "en" ? "en-US" : "fr-FR",
     keywords: post.keywords.join(", "),
     articleSection: post.category,
     wordCount: estimateWordCount(post),
     author: {
       "@type": "Organization",
       name: post.author.name,
-      url: base,
+      url: siteUrl(),
     },
     publisher: {
       "@type": "Organization",
       name: "Veyala",
-      url: base,
+      url: siteUrl(),
       logo: {
         "@type": "ImageObject",
-        url: `${base}/brand/veyala-mark.png`,
+        url: `${siteUrl()}/brand/veyala-mark.png`,
       },
     },
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": url,
     },
-    image: [`${base}/blog/${post.slug}/opengraph-image`],
+    image: [`${absolute(`/blog/${post.slug}`, locale)}/opengraph-image`],
     url,
   };
 }
@@ -55,8 +61,8 @@ export function blogFaqJsonLd(post: BlogPost) {
   };
 }
 
-export function blogBreadcrumbJsonLd(post: BlogPost) {
-  const base = siteUrl();
+export function blogBreadcrumbJsonLd(post: BlogPost, locale: Locale = "fr") {
+  const m = getMessages(locale);
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -64,35 +70,35 @@ export function blogBreadcrumbJsonLd(post: BlogPost) {
       {
         "@type": "ListItem",
         position: 1,
-        name: "Accueil",
-        item: base,
+        name: m.content.blog.home,
+        item: absolute("/", locale),
       },
       {
         "@type": "ListItem",
         position: 2,
-        name: "Blog",
-        item: `${base}/blog`,
+        name: m.blog.title,
+        item: absolute("/blog", locale),
       },
       {
         "@type": "ListItem",
         position: 3,
         name: post.title,
-        item: `${base}/blog/${post.slug}`,
+        item: absolute(`/blog/${post.slug}`, locale),
       },
     ],
   };
 }
 
-export function blogIndexJsonLd(posts: BlogPost[]) {
+export function blogIndexJsonLd(posts: BlogPost[], locale: Locale = "fr") {
+  const t = getMessages(locale).content.blog;
   const base = siteUrl();
   return {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "Blog Veyala : CV, ATS, emploi et lettres de motivation",
-    description:
-      "Guides pratiques pour optimiser votre CV ATS, adapter votre candidature à chaque offre d'emploi et rédiger des lettres de motivation efficaces.",
-    url: `${base}/blog`,
-    inLanguage: "fr-FR",
+    name: t.feedTitle,
+    description: t.feedDescription,
+    url: absolute("/blog", locale),
+    inLanguage: t.feedLanguage,
     publisher: {
       "@type": "Organization",
       name: "Veyala",
@@ -101,7 +107,7 @@ export function blogIndexJsonLd(posts: BlogPost[]) {
     blogPost: posts.map((post) => ({
       "@type": "BlogPosting",
       headline: post.title,
-      url: `${base}/blog/${post.slug}`,
+      url: absolute(`/blog/${post.slug}`, locale),
       datePublished: post.publishedAt,
       dateModified: post.updatedAt,
       description: post.description,

@@ -1,5 +1,5 @@
 import { oauthProviderFlags } from "@/lib/auth";
-import { signInWithProvider } from "@/app/(auth)/oauth-actions";
+import { signInWithProvider } from "@/app/[locale]/(auth)/oauth-actions";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getLocale } from "@/i18n/get-locale";

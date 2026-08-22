@@ -14,10 +14,10 @@ import {
 } from "@/lib/templates/definition";
 import { renderCVHtml } from "@/lib/pdf/render-html";
 import { renderCoverLetterHtml } from "@/lib/pdf/render-letter";
-import { saveCvEdits } from "@/app/(app)/cv/[id]/edit/actions";
+import { saveCvEdits } from "@/app/[locale]/(app)/cv/[id]/edit/actions";
 import { exportFilename } from "@/lib/export-filename";
 import { cn } from "@/lib/utils";
-import { USER_ERRORS } from "@/lib/user-facing-error";
+import { useLocale, useMessages } from "@/components/i18n/locale-provider";
 import { CvFields } from "@/components/cv/cv-fields";
 import { CustomizationStudio } from "@/components/cv/customization-studio";
 import { PrintPreview } from "@/components/cv/print-preview";
@@ -57,6 +57,9 @@ export function CvEditor({
   initialDocxUrl?: string | null;
   templates: EditorTemplate[];
 }) {
+  const m = useMessages();
+  const locale = useLocale();
+  const t = m.forms.editor;
   const form = useForm<CVData>({ defaultValues: initialData });
   const [letter, setLetter] = useState(initialLetter);
   const [templateId, setTemplateId] = useState(initialTemplateId);
@@ -146,13 +149,16 @@ export function CvEditor({
   const parsedData = useMemo(() => JSON.parse(deferred) as CVData, [deferred]);
   // The CV is rendered on its own (not just when its tab is active) so the
   // customisation studio can always show it large and live.
-  const cvHtml = useMemo(() => renderCVHtml(parsedData, definition), [parsedData, definition]);
+  const cvHtml = useMemo(
+    () => renderCVHtml(parsedData, definition, locale),
+    [parsedData, definition, locale]
+  );
   const previewHtml = useMemo(
     () =>
       tab === "cv"
         ? cvHtml
-        : renderCoverLetterHtml(parsedData, { body: deferredLetter, jobTitle }, definition),
-    [tab, cvHtml, parsedData, deferredLetter, definition, jobTitle]
+        : renderCoverLetterHtml(parsedData, { body: deferredLetter, jobTitle }, definition, locale),
+    [tab, cvHtml, parsedData, deferredLetter, definition, jobTitle, locale]
   );
 
   async function onSave() {
@@ -171,7 +177,7 @@ export function CvEditor({
       setStatus("saved");
       setTimeout(() => setStatus("idle"), 2500);
     } else {
-      setErrorMessage(result.error || USER_ERRORS.saveCv);
+      setErrorMessage(result.error || m.errors.saveCv);
       setStatus("error");
     }
   }
@@ -179,25 +185,25 @@ export function CvEditor({
   return (
     <div className="space-y-4">
       {status === "error" ? (
-        <Alert variant="error" title="Enregistrement impossible">
+        <Alert variant="error" title={t.saveFailedTitle}>
           {errorMessage}
         </Alert>
       ) : null}
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <BackLink href={`/cv/${cvId}`}>Retour à l&apos;aperçu</BackLink>
-          <h1 className="font-display text-lg font-bold">Éditeur : {jobTitle}</h1>
+          <BackLink href={`/cv/${cvId}`}>{t.backToPreview}</BackLink>
+          <h1 className="font-display text-lg font-bold">{t.title(jobTitle)}</h1>
         </div>
         <div className="flex items-center gap-3">
           {status === "saved" ? (
             <span role="status" className="flex items-center gap-1.5 text-sm text-emerald-600">
               <CheckCircle2 className="size-4" aria-hidden />
-              Enregistré. Fichiers Word et PDF régénérés
+              {t.savedNotice}
             </span>
           ) : null}
           <Button variant="gradient" onClick={() => void onSave()} disabled={status === "saving"}>
             {status === "saving" ? <Loader2 className="animate-spin" /> : <Save />}
-            Enregistrer
+            {m.common.save}
           </Button>
           <ExportButtons
             docxUrl={downloads.docxUrl}
@@ -211,7 +217,7 @@ export function CvEditor({
 
       <div
         role="tablist"
-        aria-label="Vue de l'éditeur"
+        aria-label={t.viewSwitcher}
         className="inline-flex rounded-md border p-0.5 lg:hidden"
       >
         <button
@@ -226,7 +232,7 @@ export function CvEditor({
           )}
           onClick={() => setMobileView("form")}
         >
-          Formulaire
+          {t.formTab}
         </button>
         <button
           id="cv-editor-tab-preview"
@@ -242,7 +248,7 @@ export function CvEditor({
           )}
           onClick={() => setMobileView("preview")}
         >
-          Aperçu
+          {t.previewTab}
         </button>
       </div>
 
@@ -259,7 +265,7 @@ export function CvEditor({
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Mail className="size-4 text-primary" aria-hidden />
-                Lettre de motivation
+                {m.app.coverLetter}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -267,8 +273,8 @@ export function CvEditor({
                 rows={14}
                 value={letter}
                 onChange={(e) => setLetter(e.target.value)}
-                placeholder="Madame, Monsieur,&#10;&#10;…"
-                aria-label="Texte de la lettre de motivation"
+                placeholder={t.letterPlaceholder}
+                aria-label={t.letterAria}
               />
             </CardContent>
           </Card>
@@ -288,7 +294,7 @@ export function CvEditor({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div
                 role="tablist"
-                aria-label="Document affiché"
+                aria-label={t.documentSwitcher}
                 className="inline-flex rounded-md border p-0.5"
               >
                 <button
@@ -304,7 +310,7 @@ export function CvEditor({
                   onClick={() => setTab("cv")}
                 >
                   <FileText className="size-4" aria-hidden />
-                  CV
+                  {t.cvTab}
                 </button>
                 <button
                   id="cv-editor-tab-letter"
@@ -321,13 +327,13 @@ export function CvEditor({
                   onClick={() => setTab("letter")}
                 >
                   <Mail className="size-4" aria-hidden />
-                  Lettre
+                  {t.letterTab}
                 </button>
               </div>
 
               <Button variant="outline" size="sm" onClick={() => setStudioOpen(true)}>
                 <Palette className="size-4" aria-hidden />
-                Personnaliser l&apos;apparence
+                {t.customizeCta}
               </Button>
             </div>
 
@@ -338,7 +344,7 @@ export function CvEditor({
             >
               <PrintPreview
                 srcDoc={previewHtml}
-                title={tab === "cv" ? "Aperçu du CV" : "Aperçu de la lettre"}
+                title={tab === "cv" ? t.cvPreview : t.letterPreview}
                 className="rounded-xl border shadow-sm"
               />
             </div>

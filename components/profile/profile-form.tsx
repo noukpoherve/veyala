@@ -5,13 +5,15 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2 } from "lucide-react";
 import { cvSchema, type CVData } from "@/lib/cv-schema";
-import { USER_ERRORS } from "@/lib/user-facing-error";
-import { saveProfile } from "@/app/(app)/profile/actions";
+import { saveProfile } from "@/app/[locale]/(app)/profile/actions";
 import { CvFields } from "@/components/cv/cv-fields";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { useMessages } from "@/components/i18n/locale-provider";
 
 export function ProfileForm({ initialData }: { initialData: CVData }) {
+  const messages = useMessages();
+  const m = messages.pages.profileForm;
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -29,12 +31,12 @@ export function ProfileForm({ initialData }: { initialData: CVData }) {
         setStatus("saved");
         setTimeout(() => setStatus("idle"), 2500);
       } else {
-        setErrorMessage(result.error || USER_ERRORS.profile);
+        setErrorMessage(result.error || messages.errors.profile);
         setStatus("error");
       }
     },
     () => {
-      setErrorMessage("Certains champs sont invalides. Le nom complet est obligatoire.");
+      setErrorMessage(m.invalid);
       setStatus("error");
     }
   );
@@ -44,7 +46,7 @@ export function ProfileForm({ initialData }: { initialData: CVData }) {
       <CvFields form={form} />
 
       {status === "error" ? (
-        <Alert variant="error" title="Enregistrement impossible">
+        <Alert variant="error" title={m.errorTitle}>
           {errorMessage}
         </Alert>
       ) : null}
@@ -60,12 +62,12 @@ export function ProfileForm({ initialData }: { initialData: CVData }) {
        */}
       <div className="sticky bottom-[calc(var(--app-tabbar)+0.75rem)] z-10 -mx-4 flex flex-wrap items-center gap-3 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:bottom-4 md:mx-0 md:rounded-xl md:border md:shadow-elevation-hover">
         <Button type="submit" variant="gradient" loading={status === "saving"}>
-          Enregistrer mon CV de base
+          {m.submit}
         </Button>
         {status === "saved" ? (
           <span className="flex items-center gap-1.5 text-sm text-success">
             <CheckCircle2 className="size-4" />
-            Enregistré
+            {messages.common.saved}
           </span>
         ) : null}
       </div>

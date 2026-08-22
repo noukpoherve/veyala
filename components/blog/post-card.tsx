@@ -1,8 +1,23 @@
-import Link from "next/link";
 import { ArrowUpRight, Clock } from "lucide-react";
-import { CATEGORY_LABELS, type BlogPost } from "@/lib/blog/types";
-import { formatPostDate } from "@/lib/blog/mapper";
+import type { BlogCategory, BlogPost } from "@/lib/blog/types";
+import { formatDate } from "@/i18n/format";
+import { getLocale } from "@/i18n/get-locale";
+import { getMessages, type Messages } from "@/i18n/messages";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
+
+const CATEGORY_KEYS: Record<BlogCategory, keyof Messages["blog"]["categories"]> = {
+  cv: "CV",
+  ats: "ATS",
+  lettre: "LETTRE",
+  emploi: "EMPLOI",
+  etudes: "ETUDES",
+  ia: "IA",
+};
+
+export function blogCategoryLabel(m: Messages, category: BlogCategory): string {
+  return m.blog.categories[CATEGORY_KEYS[category]];
+}
 
 type PostCardProps = {
   post: BlogPost;
@@ -10,6 +25,9 @@ type PostCardProps = {
 };
 
 export function PostCard({ post, featured = false }: PostCardProps) {
+  const locale = getLocale();
+  const m = getMessages(locale);
+
   return (
     <article
       className={cn(
@@ -27,7 +45,7 @@ export function PostCard({ post, featured = false }: PostCardProps) {
         <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_20%_20%,white,transparent_35%),radial-gradient(circle_at_80%_70%,#93c5fd,transparent_40%)]" />
         <div className="absolute bottom-4 left-4 right-4">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-100">
-            {CATEGORY_LABELS[post.category]}
+            {blogCategoryLabel(m, post.category)}
           </p>
           {featured ? (
             <p className="mt-2 line-clamp-3 font-display text-2xl font-bold leading-tight text-white">
@@ -39,11 +57,11 @@ export function PostCard({ post, featured = false }: PostCardProps) {
 
       <div className={cn("flex flex-1 flex-col p-6", featured && "md:p-8")}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500">
-          <time dateTime={post.publishedAt}>{formatPostDate(post.publishedAt)}</time>
+          <time dateTime={post.publishedAt}>{formatDate(post.publishedAt, locale)}</time>
           <span aria-hidden>·</span>
           <span className="inline-flex items-center gap-1">
             <Clock className="size-3.5" aria-hidden />
-            {post.readingTimeMin} min
+            {m.content.blog.minutesShort(post.readingTimeMin)}
           </span>
         </div>
 
@@ -75,7 +93,7 @@ export function PostCard({ post, featured = false }: PostCardProps) {
             ))}
           </ul>
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600">
-            Lire
+            {m.blog.readMore}
             <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </span>
         </div>

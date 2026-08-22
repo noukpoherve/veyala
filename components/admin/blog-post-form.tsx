@@ -2,10 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import type { BlogActionState } from "@/app/(admin)/admin/blog/actions";
-import { createBlogPost, updateBlogPost } from "@/app/(admin)/admin/blog/actions";
+import type { BlogActionState } from "@/app/[locale]/(admin)/admin/blog/actions";
+import { createBlogPost, updateBlogPost } from "@/app/[locale]/(admin)/admin/blog/actions";
 import type { AdminBlogPost } from "@/lib/blog/mapper";
 import { slugifyTitle } from "@/lib/blog/mapper";
 import { PUBLISH_MIN_SCORE, scoreSeoFromForm } from "@/lib/blog/seo-score";
@@ -15,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMessages } from "@/components/i18n/locale-provider";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 type BlogPostFormProps = {
@@ -25,6 +26,9 @@ type BlogPostFormProps = {
 const initialState: BlogActionState = { ok: false, message: "" };
 
 export function BlogPostForm({ mode, post }: BlogPostFormProps) {
+  const m = useMessages();
+  const t = m.adminUi.blogForm;
+  const categories = m.adminUi.blog.categories;
   const action = mode === "create" ? createBlogPost : updateBlogPost;
   const [state, formAction] = useFormState(action, initialState);
 
@@ -78,14 +82,11 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Contenu</CardTitle>
-            <CardDescription>
-              Markdown simplifié : ## H2, ### H3, listes, citations (&gt;), callouts (!!!), CTA
-              (@@cta|/register|Label).
-            </CardDescription>
+            <CardTitle className="text-base">{t.contentTitle}</CardTitle>
+            <CardDescription>{t.contentHelp}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Field label="Titre" error={state.fieldErrors?.title?.[0]}>
+            <Field label={t.title} error={state.fieldErrors?.title?.[0]}>
               <Input
                 name="title"
                 value={title}
@@ -97,7 +98,7 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
                 required
               />
             </Field>
-            <Field label="Slug URL" error={state.fieldErrors?.slug?.[0]}>
+            <Field label={t.slug} error={state.fieldErrors?.slug?.[0]}>
               <Input
                 name="slug"
                 value={slug}
@@ -108,7 +109,7 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
                 required
               />
             </Field>
-            <Field label="Extrait (cartes / partage)" error={state.fieldErrors?.excerpt?.[0]}>
+            <Field label={t.excerpt} error={state.fieldErrors?.excerpt?.[0]}>
               <Textarea
                 name="excerpt"
                 value={excerpt}
@@ -117,7 +118,7 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
                 required
               />
             </Field>
-            <Field label="Corps de l'article" error={state.fieldErrors?.bodyMarkdown?.[0]}>
+            <Field label={t.body} error={state.fieldErrors?.bodyMarkdown?.[0]}>
               <Textarea
                 name="bodyMarkdown"
                 value={bodyMarkdown}
@@ -132,15 +133,15 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">FAQ (optionnel)</CardTitle>
-            <CardDescription>2+ questions activent le schema FAQPage.</CardDescription>
+            <CardTitle className="text-base">{t.faqTitle}</CardTitle>
+            <CardDescription>{t.faqHelp}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {faq.map((item, index) => (
               <div key={`faq-${index}`} className="space-y-2 rounded-lg border p-3">
                 <Input
                   value={item.question}
-                  placeholder="Question"
+                  placeholder={t.questionPlaceholder}
                   onChange={(event) => {
                     const next = [...faq];
                     next[index] = { ...item, question: event.target.value };
@@ -149,7 +150,7 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
                 />
                 <Textarea
                   value={item.answer}
-                  placeholder="Réponse"
+                  placeholder={t.answerPlaceholder}
                   rows={3}
                   onChange={(event) => {
                     const next = [...faq];
@@ -163,7 +164,7 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
                   size="sm"
                   onClick={() => setFaq(faq.filter((_, i) => i !== index))}
                 >
-                  Supprimer
+                  {m.common.delete}
                 </Button>
               </div>
             ))}
@@ -173,7 +174,7 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
               size="sm"
               onClick={() => setFaq([...faq, { question: "", answer: "" }])}
             >
-              Ajouter une question
+              {t.addQuestion}
             </Button>
           </CardContent>
         </Card>
@@ -182,10 +183,8 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
       <aside className="space-y-6 lg:sticky lg:top-4 lg:self-start">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">SEO</CardTitle>
-            <CardDescription>
-              Score {seo.score}/100 · seuil publication {PUBLISH_MIN_SCORE}
-            </CardDescription>
+            <CardTitle className="text-base">{t.seoTitle}</CardTitle>
+            <CardDescription>{t.seoScore(seo.score, PUBLISH_MIN_SCORE)}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -218,7 +217,7 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
               ))}
             </ul>
 
-            <Field label="Meta description" error={state.fieldErrors?.description?.[0]}>
+            <Field label={t.metaDescription} error={state.fieldErrors?.description?.[0]}>
               <Textarea
                 name="description"
                 value={description}
@@ -226,19 +225,21 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
                 rows={4}
                 required
               />
-              <p className="mt-1 text-[11px] text-muted-foreground">{description.length} car.</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t.charCount(description.length)}
+              </p>
             </Field>
-            <Field label="Mot-clé principal">
+            <Field label={t.focusKeyword}>
               <Input
                 name="focusKeyword"
                 value={focusKeyword}
                 onChange={(event) => setFocusKeyword(event.target.value)}
               />
             </Field>
-            <Field label="Tags (virgules)">
+            <Field label={t.tags}>
               <Input name="tags" value={tags} onChange={(event) => setTags(event.target.value)} />
             </Field>
-            <Field label="Mots-clés SEO (virgules)">
+            <Field label={t.keywords}>
               <Input
                 name="keywords"
                 value={keywords}
@@ -250,10 +251,10 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Publication</CardTitle>
+            <CardTitle className="text-base">{t.publishTitle}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Field label="Catégorie">
+            <Field label={t.category}>
               <select
                 name="category"
                 value={category}
@@ -262,22 +263,22 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
               >
                 {(Object.keys(CATEGORY_LABELS) as BlogCategory[]).map((key) => (
                   <option key={key} value={key}>
-                    {CATEGORY_LABELS[key]}
+                    {categories[key]}
                   </option>
                 ))}
               </select>
             </Field>
-            <Field label="Accent (#hex)">
+            <Field label={t.accent}>
               <Input name="accent" defaultValue={post?.accent ?? "#2563EB"} />
             </Field>
-            <Field label="Auteur">
-              <Input name="authorName" defaultValue={post?.author.name ?? "Équipe Veyala"} />
-            </Field>
-            <Field label="Rôle auteur">
+            <Field label={t.author}>
               <Input
-                name="authorRole"
-                defaultValue={post?.author.role ?? "Experts CV, ATS & candidature"}
+                name="authorName"
+                defaultValue={post?.author.name ?? m.pages.support.fromTeam}
               />
+            </Field>
+            <Field label={t.authorRole}>
+              <Input name="authorRole" defaultValue={post?.author.role ?? t.defaultAuthorRole} />
             </Field>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -286,7 +287,7 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
                 defaultChecked={post?.featured}
                 className="size-4 rounded border"
               />
-              Article à la une
+              {t.featured}
             </label>
 
             <div className="flex flex-col gap-2 pt-2">
@@ -295,9 +296,7 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
                 isPublished={post?.status === "PUBLISHED"}
               />
               {!seo.canPublish ? (
-                <p className="text-xs text-amber-700">
-                  Publication bloquée tant que le score SEO est sous {PUBLISH_MIN_SCORE}.
-                </p>
+                <p className="text-xs text-amber-700">{t.publishBlocked(PUBLISH_MIN_SCORE)}</p>
               ) : null}
               {post?.status === "PUBLISHED" ? (
                 <Link
@@ -305,7 +304,7 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
                   target="_blank"
                   className="inline-flex items-center justify-center gap-1.5 text-sm font-medium text-blue-700 hover:underline"
                 >
-                  Voir l&apos;article
+                  {t.viewPost}
                   <ExternalLink className="size-3.5" aria-hidden />
                 </Link>
               ) : null}
@@ -324,11 +323,12 @@ function SubmitButtons({
   canPublish: boolean;
   isPublished?: boolean;
 }) {
+  const t = useMessages().adminUi.blogForm;
   const { pending } = useFormStatus();
   return (
     <>
       <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending}>
-        Enregistrer brouillon
+        {t.saveDraft}
       </Button>
       <Button
         type="submit"
@@ -336,9 +336,9 @@ function SubmitButtons({
         value="publish"
         variant="gradient"
         disabled={pending || !canPublish}
-        title={canPublish ? "Publier" : `Score SEO insuffisant (min ${PUBLISH_MIN_SCORE})`}
+        title={canPublish ? t.publish : t.publishBlockedTitle(PUBLISH_MIN_SCORE)}
       >
-        {isPublished ? "Mettre à jour & garder publié" : "Publier"}
+        {isPublished ? t.updateKeepPublished : t.publish}
       </Button>
     </>
   );
