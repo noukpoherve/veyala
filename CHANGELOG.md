@@ -1,3 +1,21 @@
+# [1.15.0](https://github.com/noukpoherve/veyala/compare/v1.14.1...v1.15.0) (2026-08-22)
+
+
+### Bug Fixes
+
+* **i18n:** add missing [locale] root layout and error pages ([b253e41](https://github.com/noukpoherve/veyala/commit/b253e41f1ef722f2148715eb3c0ea652fe33a3ad))
+* **i18n:** align locale tree with dependent modules for typecheck ([12664af](https://github.com/noukpoherve/veyala/commit/12664af579ffd0ae25100be82aa28e353ea39405))
+* **i18n:** EN auth callbacks, safe redirects, and locale-preserving actions ([d92713d](https://github.com/noukpoherve/veyala/commit/d92713d5cd63deecdb43c698c5e6509379deafdf))
+* **i18n:** include user-facing-error and soft-skills in UI wiring PR ([eaab4a7](https://github.com/noukpoherve/veyala/commit/eaab4a77930d21ca90c3582e5ea6a1ffa2c7c955))
+* **i18n:** localize API errors and export labels ([1b362d4](https://github.com/noukpoherve/veyala/commit/1b362d4c77f0844b98487f5aa9c1756606d29f83))
+
+
+### Features
+
+* **i18n:** add English as an additive /en locale ([98c241a](https://github.com/noukpoherve/veyala/commit/98c241a5d6ae1f60a4cd7dd3ff83245aef411419))
+* **i18n:** move App Router under [locale] and expand catalogs ([09fe614](https://github.com/noukpoherve/veyala/commit/09fe614ffa16c1cd43a5132c1b86602494fd43c9))
+* **i18n:** wire English catalogs across product UI ([6a72a0f](https://github.com/noukpoherve/veyala/commit/6a72a0f32560a5c053a013f2cbc9e31df5eaf8b6))
+
 ## [1.14.1](https://github.com/noukpoherve/veyala/compare/v1.14.0...v1.14.1) (2026-08-16)
 
 
