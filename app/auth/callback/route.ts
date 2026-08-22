@@ -5,22 +5,20 @@ import { db } from "@/lib/db";
 import { normalizeEmail } from "@/lib/utils";
 import { getLocaleFromRequest } from "@/i18n/get-locale";
 import { localizeHref } from "@/i18n/path";
-import { localeFromPathname } from "@/i18n/path";
+import { sanitizeCallbackUrl } from "@/i18n/safe-path";
 
 /**
  * PKCE callback for every Supabase auth email link (signup confirmation,
  * password recovery, admin invitation): exchanges the one-time code for a
  * session, then forwards to `next` (sanitized to a local path).
+ *
+ * Public EN URL is `/en/auth/callback`; middleware rewrites to this handler.
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const locale = getLocaleFromRequest(req);
   const code = url.searchParams.get("code");
-  const rawNext = url.searchParams.get("next") ?? "/dashboard";
-  const next =
-    rawNext.startsWith("/") && !rawNext.startsWith("//")
-      ? localizeHref(rawNext, localeFromPathname(rawNext) === "en" ? "en" : locale)
-      : localizeHref("/dashboard", locale);
+  const next = sanitizeCallbackUrl(url.searchParams.get("next"), locale);
 
   if (code) {
     const supabase = createSupabaseServerClient();
