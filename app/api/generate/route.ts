@@ -10,6 +10,8 @@ import { logActivity } from "@/lib/activity";
 import { reportError } from "@/lib/sentry";
 import { z } from "zod";
 import { getLocaleFromRequest } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
+import { localizeServerError } from "@/lib/user-facing-error";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -19,32 +21,33 @@ export const maxDuration = 60;
  * The client starts `/run` and polls `/api/generate/[jobId]` for stepper progress.
  */
 export async function POST(req: Request) {
+  const locale = getLocaleFromRequest(req);
+  const m = getMessages(locale);
   const session = await auth();
   if (!session?.user) {
-    return Response.json({ error: "Authentification requise." }, { status: 401 });
+    return Response.json({ error: m.errors.authRequired }, { status: 401 });
   }
   const userId = session.user.id;
 
   const { limit, windowMs } = RATE_LIMITS.generate;
   if (!(await rateLimit(`generate:${userId}`, limit, windowMs))) {
-    return Response.json(
-      { error: "Trop de générations rapprochées. Réessayez dans quelques minutes." },
-      { status: 429 }
-    );
+    return Response.json({ error: m.api.generate.rateLimited }, { status: 429 });
   }
 
   let params: GenerationJobParams;
   try {
     params = parseGenerationJobParams(await req.json().catch(() => ({})));
-    const locale = getLocaleFromRequest(req);
     if (!params.language && locale === "en") {
       params = { ...params, language: "english" };
     }
   } catch (e) {
     if (e instanceof z.ZodError) {
-      return Response.json({ error: e.issues[0]?.message ?? "Requête invalide." }, { status: 400 });
+      return Response.json(
+        { error: e.issues[0]?.message ?? m.api.invalidRequest },
+        { status: 400 }
+      );
     }
-    return Response.json({ error: "Requête invalide." }, { status: 400 });
+    return Response.json({ error: m.api.invalidRequest }, { status: 400 });
   }
 
   try {
@@ -58,12 +61,18 @@ export async function POST(req: Request) {
     return Response.json({ jobId: job.id, status: job.status });
   } catch (e) {
     if (e instanceof GenerationError) {
-      return Response.json({ error: e.message }, { status: e.status });
+      return Response.json(
+        { error: localizeServerError(e.message, e.status, locale, m.api.generate.enqueueFailed) },
+        { status: e.status }
+      );
     }
     if (e instanceof z.ZodError) {
-      return Response.json({ error: e.issues[0]?.message ?? "Requête invalide." }, { status: 400 });
+      return Response.json(
+        { error: e.issues[0]?.message ?? m.api.invalidRequest },
+        { status: 400 }
+      );
     }
     reportError(e, "generate/enqueue");
-    return Response.json({ error: "Impossible de démarrer la génération." }, { status: 500 });
+    return Response.json({ error: m.api.generate.enqueueFailed }, { status: 500 });
   }
 }

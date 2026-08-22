@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { chat, resolveLLMConfig, LLMError } from "@/lib/llm";
+import { getLocaleFromRequest } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
 
 export const runtime = "nodejs";
 
@@ -11,14 +13,15 @@ const bodySchema = z.object({
 
 /** LLM layer test endpoint — admin only. */
 export async function POST(req: Request) {
+  const m = getMessages(getLocaleFromRequest(req));
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Accès réservé aux administrateurs." }, { status: 403 });
+    return NextResponse.json({ error: m.api.llmTest.adminOnly }, { status: 403 });
   }
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
-    return NextResponse.json({ error: "Corps de requête invalide." }, { status: 400 });
+    return NextResponse.json({ error: m.api.llmTest.invalidBody }, { status: 400 });
   }
 
   try {
@@ -39,7 +42,7 @@ export async function POST(req: Request) {
   } catch (e) {
     const status = e instanceof LLMError && e.status === 429 ? 429 : 502;
     return NextResponse.json(
-      { ok: false, error: e instanceof Error ? e.message : "Erreur inconnue." },
+      { ok: false, error: e instanceof Error ? e.message : m.api.llmTest.failed },
       { status }
     );
   }

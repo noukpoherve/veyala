@@ -15,6 +15,7 @@ import { getOrCreateFormationAnalysis } from "@/lib/campus-france/program-analys
 import { scoreCampusFranceCoherence } from "@/lib/campus-france/coherence-score";
 import { writeCampusFranceMotivationLetter } from "@/lib/campus-france/motivation-letter";
 import { tailorAcademicCv } from "@/lib/campus-france/tailor-academic-cv";
+import { isEnglishGeneration } from "@/lib/generation-locale";
 
 export interface CampusFranceGenerateParams {
   userId: string;
@@ -221,6 +222,7 @@ export async function generateCampusFranceDossier(
       letterBody,
       jobTitle: detectedTitle,
       definition: resolveDefinition(definition, { photoUrl: cv.identity.photoUrl }),
+      locale: isEnglishGeneration(params.language) ? "en" : "fr",
     });
 
     emit({ step: "scoring_after", message: "Recalcul de la cohérence…" });

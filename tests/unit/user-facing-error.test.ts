@@ -5,7 +5,9 @@ import {
   resolveApiError,
   toUserMessage,
   USER_ERRORS,
+  localizeServerError,
 } from "@/lib/user-facing-error";
+import { catalogs } from "@/i18n/messages";
 
 describe("user-facing-error", () => {
   it("accepts French API messages", () => {
@@ -19,10 +21,11 @@ describe("user-facing-error", () => {
     expect(isUserSafeMessage("Unable to create checkout session")).toBe(false);
   });
 
-  it("maps HTTP statuses to actionable French copy", () => {
+  it("maps HTTP statuses to actionable copy per locale", () => {
     expect(messageForHttpStatus(401)).toBe(USER_ERRORS.session);
     expect(messageForHttpStatus(429)).toBe(USER_ERRORS.rateLimited);
     expect(messageForHttpStatus(402)).toMatch(/crédits/i);
+    expect(messageForHttpStatus(402, "en")).toMatch(/credits/i);
   });
 
   it("resolveApiError prefers safe body over status", () => {
@@ -32,11 +35,23 @@ describe("user-facing-error", () => {
     expect(resolveApiError(503, { error: "stripe timeout" }, USER_ERRORS.payment)).toBe(
       messageForHttpStatus(503)
     );
+    expect(
+      resolveApiError(402, { error: "Solde de crédits insuffisant." }, USER_ERRORS.unknown, "en")
+    ).toBe(catalogs.en.errors.insufficientCredits);
   });
 
   it("toUserMessage handles network TypeError", () => {
     expect(toUserMessage(new TypeError("Failed to fetch"), USER_ERRORS.unknown)).toBe(
       USER_ERRORS.network
     );
+    expect(toUserMessage(new TypeError("Failed to fetch"), catalogs.en.errors.unknown, "en")).toBe(
+      catalogs.en.errors.network
+    );
+  });
+
+  it("localizeServerError keeps FR copy for French visitors", () => {
+    expect(
+      localizeServerError("L'offre est trop courte pour une adaptation fiable.", 422, "fr")
+    ).toBe("L'offre est trop courte pour une adaptation fiable.");
   });
 });

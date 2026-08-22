@@ -3,6 +3,8 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PromoValidationError, resolvePromoForCheckout } from "@/lib/promo";
+import { getLocaleFromRequest } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
 
 export const runtime = "nodejs";
 
@@ -13,19 +15,21 @@ const bodySchema = z.object({
 
 /** Preview a promo against a pack without starting Checkout. */
 export async function POST(req: Request) {
+  const locale = getLocaleFromRequest(req);
+  const m = getMessages(locale);
   const session = await auth();
   if (!session?.user) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: m.errors.authRequired }, { status: 401 });
   }
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
-    return NextResponse.json({ error: "Données invalides." }, { status: 400 });
+    return NextResponse.json({ error: m.api.promo.invalidData }, { status: 400 });
   }
 
   const pack = await db.pack.findUnique({ where: { id: parsed.data.packId } });
   if (!pack?.active) {
-    return NextResponse.json({ error: "Ce pack n'est plus disponible." }, { status: 404 });
+    return NextResponse.json({ error: m.api.stripe.packUnavailable }, { status: 404 });
   }
 
   try {
@@ -45,7 +49,9 @@ export async function POST(req: Request) {
       originalCredits: pack.credits,
     });
   } catch (e) {
-    const message = e instanceof PromoValidationError ? e.message : "Code promo invalide.";
+    // Promo rejections are written in French: only pass them to French readers.
+    const message =
+      locale === "fr" && e instanceof PromoValidationError ? e.message : m.api.promo.invalidCode;
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

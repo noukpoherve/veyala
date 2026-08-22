@@ -8,6 +8,7 @@ import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/utils";
 import { reportError } from "@/lib/sentry";
 import { getLocaleFromRequest } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
 
 export const runtime = "nodejs";
 
@@ -20,18 +21,19 @@ const bodySchema = z.object({
 export async function POST(req: Request) {
   const session = await auth();
   const locale = getLocaleFromRequest(req);
+  const m = getMessages(locale);
   if (!session?.user) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: m.errors.authRequired }, { status: 401 });
   }
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
-    return NextResponse.json({ error: "Pack invalide." }, { status: 400 });
+    return NextResponse.json({ error: m.api.stripe.invalidPack }, { status: 400 });
   }
 
   const pack = await db.pack.findUnique({ where: { id: parsed.data.packId } });
   if (!pack?.active) {
-    return NextResponse.json({ error: "Ce pack n'est plus disponible." }, { status: 404 });
+    return NextResponse.json({ error: m.api.stripe.packUnavailable }, { status: 404 });
   }
 
   let amountCents = pack.priceCents;
@@ -54,20 +56,19 @@ export async function POST(req: Request) {
       promoCodeId = quote.promo.id;
       promoLabel = quote.promo.code;
     } catch (e) {
-      const message = e instanceof PromoValidationError ? e.message : "Code promo invalide.";
+      // Promo rejections are written in French: only pass them to French readers.
+      const message =
+        locale === "fr" && e instanceof PromoValidationError ? e.message : m.api.promo.invalidCode;
       return NextResponse.json({ error: message }, { status: 400 });
     }
   }
 
   const origin = siteUrl();
   const description =
-    locale === "en"
-      ? `${creditsPurchased} resume generation${creditsPurchased === 1 ? "" : "s"}${promoLabel ? ` · code ${promoLabel}` : ""}`
-      : discountCents > 0 || creditsPurchased !== pack.credits
-        ? `${creditsPurchased} générations de CV${promoLabel ? ` · code ${promoLabel}` : ""}`
-        : `${pack.credits} générations de CV`;
-  const productName =
-    locale === "en" ? `Veyala: ${pack.credits}-credit pack` : `Veyala : pack ${pack.label}`;
+    discountCents > 0 || creditsPurchased !== pack.credits
+      ? m.api.stripe.lineItemDescription(creditsPurchased, promoLabel)
+      : m.api.stripe.lineItemDescription(pack.credits);
+  const productName = m.api.stripe.productName(pack.label, pack.credits);
 
   try {
     const stripe = getStripe();
@@ -130,12 +131,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: checkout.url });
   } catch (e) {
     reportError(e, "stripe/checkout");
-    return NextResponse.json(
-      {
-        error:
-          "Le paiement n'a pas pu démarrer. Vérifiez la configuration Stripe ou réessayez plus tard.",
-      },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: m.api.stripe.checkoutFailed }, { status: 503 });
   }
 }
