@@ -35,6 +35,33 @@ export const errors = {
     "Une erreur inattendue a interrompu cette action. Réessayez, ou contactez le support avec le contexte de ce que vous faisiez.",
   ref: "Réf.",
   errorKind: "Erreur",
+  orPrefix: "Ou",
+  backToAdmin: "Retour admin",
+  appNotFoundTitle: "Ressource introuvable",
+  appNotFoundBody:
+    "Ce CV ou cette page n'existe pas, ou vous n'y avez pas accès. Revenez au tableau de bord, ou contactez le support si besoin.",
+  reasons: {
+    regenerate: {
+      title: "La régénération n'a pas abouti",
+      body: "Votre crédit a été remboursé si un débit avait eu lieu. Réessayez depuis votre CV, ou contactez le support si cela se reproduit.",
+      back: "Retour au CV",
+    },
+    analyze: {
+      title: "L'analyse n'a pas abouti",
+      body: "Le service est peut-être momentanément indisponible. Réessayez dans un instant, ou contactez le support si le problème continue.",
+      back: "Retour à la génération",
+    },
+    generate: {
+      title: "La génération n'a pas abouti",
+      body: "Votre crédit a été remboursé si un débit avait eu lieu. Vous pouvez relancer une génération, ou écrire au support.",
+      back: "Retour à la génération",
+    },
+    payment: {
+      title: "Paiement indisponible",
+      body: "Nous n'avons pas pu ouvrir la session de paiement. Réessayez plus tard, ou contactez le support pour être accompagné.",
+      back: "Retour aux crédits",
+    },
+  },
 } as const;
 
 export const emails = {
@@ -113,4 +140,10 @@ export const cv = {
   languages: "Langues",
   interests: "Centres d'intérêt",
   information: "Informations",
+  stack: "Stack",
+  documentTitle: (name: string) => `CV — ${name}`,
+  letterDocumentTitle: (name: string) => `Lettre de motivation — ${name}`,
+  letterDate: (date: string) => `Le ${date}`,
+  letterSubject: (jobTitle: string) => `Objet : candidature au poste de ${jobTitle}`,
+  photoAlt: (name: string) => `Photo de ${name}`,
 } as const;

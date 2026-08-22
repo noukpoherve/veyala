@@ -28,3 +28,11 @@ export function formatDate(value: Date | string, locale: Locale = DEFAULT_LOCALE
     day: "numeric",
   }).format(date);
 }
+
+export function formatDateTime(value: Date | string, locale: Locale = DEFAULT_LOCALE): string {
+  const date = value instanceof Date ? value : new Date(value);
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    dateStyle: "long",
+    timeStyle: "short",
+  }).format(date);
+}

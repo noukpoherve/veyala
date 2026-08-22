@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import { siteUrl } from "@/lib/utils";
-import { Toaster } from "@/components/ui/toaster";
-import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { getLocale } from "@/i18n/get-locale";
 import { getMessages } from "@/i18n/messages";
 import { localizePath } from "@/i18n/path";
@@ -86,12 +84,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-screen font-sans">
-        <LocaleProvider locale={locale}>
-          {children}
-          <Toaster />
-        </LocaleProvider>
-      </body>
+      <body className="min-h-screen font-sans">{children}</body>
     </html>
   );
 }

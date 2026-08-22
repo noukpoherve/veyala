@@ -34,6 +34,33 @@ export const errors = {
     "An unexpected error stopped this action. Try again, or contact support with what you were doing.",
   ref: "Ref.",
   errorKind: "Error",
+  orPrefix: "Or",
+  backToAdmin: "Back to admin",
+  appNotFoundTitle: "We couldn't find that",
+  appNotFoundBody:
+    "This resume or page doesn't exist, or you don't have access to it. Head back to your dashboard, or contact support if you need a hand.",
+  reasons: {
+    regenerate: {
+      title: "That regeneration didn't finish",
+      body: "Your credit was refunded if it had been charged. Try again from your resume, or contact support if it keeps happening.",
+      back: "Back to resume",
+    },
+    analyze: {
+      title: "That analysis didn't finish",
+      body: "The service may be briefly unavailable. Try again in a moment, or contact support if the problem continues.",
+      back: "Back to the generator",
+    },
+    generate: {
+      title: "That generation didn't finish",
+      body: "Your credit was refunded if it had been charged. You can start a new generation, or write to support.",
+      back: "Back to the generator",
+    },
+    payment: {
+      title: "Checkout unavailable",
+      body: "We couldn't open the checkout session. Try again later, or contact support and we'll help you through it.",
+      back: "Back to credits",
+    },
+  },
 } as const;
 
 export const emails = {
@@ -111,4 +138,10 @@ export const cv = {
   languages: "Languages",
   interests: "Interests",
   information: "Details",
+  stack: "Stack",
+  documentTitle: (name: string) => `Resume — ${name}`,
+  letterDocumentTitle: (name: string) => `Cover letter — ${name}`,
+  letterDate: (date: string) => date,
+  letterSubject: (jobTitle: string) => `Re: application for ${jobTitle}`,
+  photoAlt: (name: string) => `Photo of ${name}`,
 } as const;

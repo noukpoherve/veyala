@@ -3,11 +3,24 @@
 import { useEffect } from "react";
 import { Inter, Bricolage_Grotesque } from "next/font/google";
 import { ErrorScreen } from "@/components/errors/error-screen";
+import { LocaleProvider } from "@/components/i18n/locale-provider";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
+import { catalogs } from "@/i18n/messages";
+import { localeFromPathname } from "@/i18n/path";
 import { reportError } from "@/lib/sentry";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const bricolage = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-display" });
+
+/**
+ * This boundary replaces the root layout, so no locale provider or request
+ * header is available: read the language straight from the public URL.
+ */
+function currentLocale(): Locale {
+  if (typeof window === "undefined") return DEFAULT_LOCALE;
+  return localeFromPathname(window.location.pathname);
+}
 
 /**
  * Root layout failures — must define its own <html>/<body>.
@@ -20,21 +33,27 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const locale = currentLocale();
+  const m = catalogs[locale];
+
   useEffect(() => {
     reportError(error, "global-error");
   }, [error]);
 
   return (
-    <html lang="fr" className={`${inter.variable} ${bricolage.variable}`}>
+    <html lang={locale} className={`${inter.variable} ${bricolage.variable}`}>
       <body className="min-h-screen bg-background font-sans text-foreground">
-        <ErrorScreen
-          kind="server"
-          detail={error.digest}
-          onRetry={reset}
-          primaryHref="/"
-          primaryLabel="Retour à l'accueil"
-          supportHref="/contact"
-        />
+        <LocaleProvider locale={locale}>
+          <ErrorScreen
+            messages={m}
+            kind="server"
+            detail={error.digest}
+            onRetry={reset}
+            primaryHref="/"
+            primaryLabel={m.common.backHome}
+            supportHref="/contact"
+          />
+        </LocaleProvider>
       </body>
     </html>
   );

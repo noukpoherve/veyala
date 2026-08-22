@@ -25,17 +25,32 @@ export function getLocale(): Locale {
   return parseLocale(fromCookie);
 }
 
-/** Locale for Route Handlers and the Send Email Hook (no rewrite header). */
+/**
+ * Locale for Route Handlers. Prefer the cookie (set from the URL by middleware).
+ * Never trust a client-supplied `x-veyala-locale` alone on `/api` (matcher
+ * skips API). Middleware-rewritten non-API routes may carry the header.
+ */
 export function getLocaleFromRequest(req: Request): Locale {
-  const fromHeader = req.headers.get(LOCALE_HEADER);
-  if (fromHeader) return parseLocale(fromHeader);
   const fromCookie = cookieValue(req.headers.get("cookie"), LOCALE_COOKIE);
   if (fromCookie) return parseLocale(fromCookie);
+
   try {
-    return localeFromPathname(new URL(req.url).pathname);
+    const url = new URL(req.url);
+    const fromPath = localeFromPathname(url.pathname);
+    if (fromPath === "en") return "en";
+    const next = url.searchParams.get("next");
+    if (next && localeFromPathname(next) === "en") return "en";
+
+    // Middleware injects this on rewritten requests (e.g. `/en/auth` → `/auth`).
+    // Ignore on `/api` so clients cannot spoof locale for auth-sensitive copy.
+    if (!url.pathname.startsWith("/api")) {
+      const fromHeader = req.headers.get(LOCALE_HEADER);
+      if (fromHeader) return parseLocale(fromHeader);
+    }
   } catch {
-    return DEFAULT_LOCALE;
+    /* fall through */
   }
+  return DEFAULT_LOCALE;
 }
 
 /** Locale encoded in a public URL (email redirect_to, callback next, …). */
