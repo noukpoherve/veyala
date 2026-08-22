@@ -1,7 +1,10 @@
+"use client";
+
 import { Download } from "lucide-react";
 import { withDownloadFilename } from "@/lib/export-filename";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useMessages } from "@/components/i18n/locale-provider";
 
 /**
  * Word + PDF download pair — 3 near-identical copies before this (CV and
@@ -25,13 +28,11 @@ export function ExportButtons({
   dirty?: boolean;
   size?: "sm" | "default";
 }) {
+  const t = useMessages().pages.exportButtons;
   if (!docxUrl && !pdfUrl) return null;
 
   return (
-    <div
-      className="flex items-center gap-2"
-      title={dirty ? "Enregistrez pour télécharger votre dernière version." : undefined}
-    >
+    <div className="flex items-center gap-2" title={dirty ? t.dirtyHint : undefined}>
       {docxUrl ? (
         <Button asChild size={size} aria-disabled={dirty}>
           <a
@@ -40,7 +41,7 @@ export function ExportButtons({
             className={cn(dirty && "pointer-events-none opacity-50")}
           >
             <Download className="size-4" aria-hidden />
-            Word (.docx)
+            {t.word}
           </a>
         </Button>
       ) : null}
@@ -52,7 +53,7 @@ export function ExportButtons({
             className={cn(dirty && "pointer-events-none opacity-50")}
           >
             <Download className="size-4" aria-hidden />
-            PDF
+            {t.pdf}
           </a>
         </Button>
       ) : null}

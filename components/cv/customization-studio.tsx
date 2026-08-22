@@ -15,6 +15,7 @@ import type {
 } from "@/lib/templates/definition";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useMessages } from "@/components/i18n/locale-provider";
 
 /**
  * Full-screen "appearance studio": an in-place overlay (no route change, same
@@ -24,9 +25,12 @@ import { cn } from "@/lib/utils";
  * returns to the editor with the changes already applied.
  */
 
-const CATEGORY_LABELS: Record<EditorTemplate["definition"]["layout"], string> = {
-  "sidebar-left": "Avec barre latérale",
-  "single-column": "Colonne unique",
+const CATEGORY_KEYS: Record<
+  EditorTemplate["definition"]["layout"],
+  "sidebarLeft" | "singleColumn"
+> = {
+  "sidebar-left": "sidebarLeft",
+  "single-column": "singleColumn",
 };
 
 export function CustomizationStudio({
@@ -114,19 +118,20 @@ export function CustomizationStudio({
   const [mobileSection, setMobileSection] = useState<"templates" | "preview" | "customize">(
     "customize"
   );
+  const studio = useMessages().forms.studio;
 
   const groups = useMemo<[string, EditorTemplate[]][]>(() => {
     const q = query.trim().toLowerCase();
     const byLayout = new Map<string, EditorTemplate[]>();
     for (const t of templates) {
-      const label = CATEGORY_LABELS[t.definition.layout] ?? "Autres";
+      const label = studio.layouts[CATEGORY_KEYS[t.definition.layout]] ?? studio.layouts.other;
       if (q && !t.name.toLowerCase().includes(q) && !label.toLowerCase().includes(q)) continue;
       const list = byLayout.get(label);
       if (list) list.push(t);
       else byLayout.set(label, [t]);
     }
     return Array.from(byLayout.entries());
-  }, [templates, query]);
+  }, [templates, query, studio.layouts]);
 
   const matchCount = groups.reduce((n, [, list]) => n + list.length, 0);
 
@@ -146,18 +151,18 @@ export function CustomizationStudio({
             <DialogPrimitive.Title asChild>
               <h2 className="flex items-center gap-2 font-display text-base font-bold">
                 <Wand2 className="size-4 text-primary" aria-hidden />
-                Personnalisation
+                {studio.title}
               </h2>
             </DialogPrimitive.Title>
             <div className="flex items-center gap-3">
               <span className="hidden text-xs text-muted-foreground sm:inline">
-                Modifications appliquées en direct
+                {studio.liveNotice}
               </span>
               <Button variant="gradient" size="sm" onClick={onClose}>
                 <Check className="size-4" aria-hidden />
-                Terminé
+                {studio.done}
               </Button>
-              <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fermer l'atelier">
+              <Button variant="ghost" size="icon" onClick={onClose} aria-label={studio.closeAria}>
                 <X className="size-5" aria-hidden />
               </Button>
             </div>
@@ -165,14 +170,14 @@ export function CustomizationStudio({
 
           <div
             role="tablist"
-            aria-label="Section de l'atelier"
+            aria-label={studio.sectionSwitcher}
             className="flex gap-1 border-b p-2 lg:hidden"
           >
             {(
               [
-                { key: "templates", label: "Modèles" },
-                { key: "preview", label: "Aperçu" },
-                { key: "customize", label: "Personnaliser" },
+                { key: "templates", label: studio.templatesTab },
+                { key: "preview", label: studio.previewTab },
+                { key: "customize", label: studio.customizeTab },
               ] as const
             ).map((item) => (
               <button
@@ -216,8 +221,8 @@ export function CustomizationStudio({
                     type="search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Rechercher un modèle…"
-                    aria-label="Rechercher un modèle"
+                    placeholder={studio.searchPlaceholder}
+                    aria-label={studio.searchAria}
                     className="h-9 w-full rounded-lg border bg-background pl-8 pr-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                 </div>
@@ -225,7 +230,7 @@ export function CustomizationStudio({
               <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
                 {matchCount === 0 ? (
                   <p className="px-1 py-6 text-center text-sm text-muted-foreground">
-                    Aucun modèle pour « {query} ».
+                    {studio.noMatch(query)}
                   </p>
                 ) : (
                   groups.map(([label, list]) => (
@@ -291,7 +296,7 @@ export function CustomizationStudio({
               <div className="h-full w-full max-w-[54rem] overflow-hidden rounded-xl border bg-white shadow-lg">
                 <iframe
                   srcDoc={cvHtml}
-                  title="Aperçu du CV"
+                  title={studio.cvPreview}
                   className="size-full bg-white"
                   sandbox=""
                 />
@@ -334,7 +339,7 @@ export function CustomizationStudio({
               />
               <div className="rounded-xl border bg-card p-3.5">
                 <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Sections
+                  {studio.sectionsTitle}
                 </h3>
                 <SectionLayoutControls
                   layout={layout}

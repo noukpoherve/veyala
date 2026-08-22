@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useMessages } from "@/components/i18n/locale-provider";
 import { Link } from "@/i18n/navigation";
+import { stripLocalePrefix } from "@/i18n/path";
 
 const NavLink = memo(function NavLink({
   href,
@@ -55,7 +56,7 @@ const NavLink = memo(function NavLink({
 });
 
 export function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
-  const pathname = usePathname();
+  const pathname = stripLocalePrefix(usePathname() || "/");
   const m = useMessages();
   const onAdminPage = pathname === "/admin" || pathname.startsWith("/admin/");
   const [adminOpen, setAdminOpen] = useState(onAdminPage);

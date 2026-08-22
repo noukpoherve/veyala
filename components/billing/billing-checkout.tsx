@@ -1,12 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Loader2, ShoppingCart, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLocale, useMessages } from "@/components/i18n/locale-provider";
+import { useLocalizedRouter } from "@/i18n/navigation";
+import { formatCurrency } from "@/i18n/format";
 
 type Pack = {
   id: string;
@@ -14,9 +16,6 @@ type Pack = {
   priceCents: number;
   credits: number;
 };
-
-const euros = (cents: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(cents / 100);
 
 type Preview = {
   code: string;
@@ -36,7 +35,11 @@ export function BillingCheckout({
   packs: Pack[];
   highlightedIndex: number;
 }) {
-  const router = useRouter();
+  const locale = useLocale();
+  const messages = useMessages();
+  const m = messages.pages.checkout;
+  const euros = (cents: number) => formatCurrency(cents, locale);
+  const router = useLocalizedRouter();
   const [promoInput, setPromoInput] = useState("");
   const [appliedCode, setAppliedCode] = useState("");
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -67,13 +70,13 @@ export function BillingCheckout({
       if (!res.ok || !body?.ok) {
         setPreview(null);
         setAppliedCode("");
-        setPromoError(body?.error || "Code promo invalide.");
+        setPromoError(body?.error || m.invalidCode);
         return;
       }
       setPreview(body);
       setAppliedCode(body.code);
     } catch {
-      setPromoError("Impossible de vérifier le code pour le moment.");
+      setPromoError(m.checkFailed);
     } finally {
       setPromoLoading(false);
     }
@@ -118,14 +121,14 @@ export function BillingCheckout({
       <div className="rounded-lg border bg-card p-4">
         <label htmlFor="promo-code" className="mb-2 flex items-center gap-2 text-sm font-medium">
           <Tag className="size-4" aria-hidden />
-          Code promo
+          {m.promoLabel}
         </label>
         <div className="flex flex-wrap gap-2">
           <Input
             id="promo-code"
             value={promoInput}
             onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-            placeholder="Ex. BIENVENUE20"
+            placeholder={m.promoPlaceholder}
             className="max-w-xs uppercase"
             autoComplete="off"
           />
@@ -136,7 +139,7 @@ export function BillingCheckout({
             onClick={() => previewPackId && void applyPromo(previewPackId)}
           >
             {promoLoading ? <Loader2 className="animate-spin" /> : null}
-            Appliquer
+            {m.apply}
           </Button>
           {appliedCode ? (
             <Button
@@ -150,21 +153,18 @@ export function BillingCheckout({
                 setPromoError("");
               }}
             >
-              Retirer
+              {messages.common.remove}
             </Button>
           ) : null}
         </div>
         {promoError ? <p className="mt-2 text-sm text-destructive">{promoError}</p> : null}
         {preview ? (
           <p className="mt-2 text-sm text-emerald-700">
-            Code <strong>{preview.code}</strong> ({preview.label}) : le prix / crédits seront
-            ajustés au paiement selon le pack choisi.
+            {m.promoAppliedPrefix} <strong>{preview.code}</strong>{" "}
+            {m.promoAppliedSuffix(preview.label)}
           </p>
         ) : null}
-        <p className="mt-1 text-xs text-muted-foreground">
-          Astuce : appliquez le code puis choisissez un pack. La remise est recalculée pour le pack
-          acheté.
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{m.tip}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -183,11 +183,10 @@ export function BillingCheckout({
           return (
             <Card key={pack.id} className={highlighted ? "border-primary shadow-md" : ""}>
               <CardHeader className="items-center text-center">
-                {highlighted ? <Badge className="mb-1">Le plus populaire</Badge> : null}
+                {highlighted ? <Badge className="mb-1">{m.popular}</Badge> : null}
                 <CardTitle className="text-xl">{pack.label}</CardTitle>
                 <CardDescription>
-                  {credits} génération{credits > 1 ? "s" : ""},{" "}
-                  {euros(Math.round(price / Math.max(1, credits)))}/CV
+                  {m.packDescription(credits, euros(Math.round(price / Math.max(1, credits))))}
                 </CardDescription>
                 <p className="font-display text-3xl font-bold">
                   {euros(price)}
@@ -207,7 +206,7 @@ export function BillingCheckout({
                     className="w-full text-xs"
                     onClick={() => void applyPromo(pack.id)}
                   >
-                    Recalculer le code pour ce pack
+                    {m.recalculate}
                   </Button>
                 ) : null}
                 <Button
@@ -218,7 +217,7 @@ export function BillingCheckout({
                   onClick={() => void buy(pack.id)}
                 >
                   {loading ? <Loader2 className="animate-spin" /> : <ShoppingCart />}
-                  Acheter
+                  {m.buy}
                 </Button>
               </CardContent>
             </Card>

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
+import { useMessages } from "@/components/i18n/locale-provider";
 
 const STORAGE_KEY = "veyala:sidebar";
 
@@ -50,6 +51,7 @@ export function useSidebarUi() {
 export function CollapsibleSidebar({ children }: { children: ReactNode }) {
   const { mobileOpen, setMobileOpen, navId } = useSidebarUi();
   const [desktopOpen, setDesktopOpen] = useState(true);
+  const m = useMessages();
 
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY) === "closed") setDesktopOpen(false);
@@ -76,7 +78,7 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
   return (
     <>
       <aside
-        aria-label="Navigation"
+        aria-label={m.pages.sidebar.navAria}
         aria-hidden={!desktopOpen || undefined}
         {...(!desktopOpen ? { inert: true } : {})}
         className={cn(
@@ -96,7 +98,7 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={toggleDesktop}
-          aria-label="Masquer la navigation"
+          aria-label={m.pages.sidebar.hide}
           aria-expanded="true"
           className="absolute right-0 top-4 z-10 flex size-9 translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-blue-600 shadow-elevation-hover hover:bg-accent"
         >
@@ -107,7 +109,7 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
       <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
         <DrawerContent
           id={navId}
-          aria-label="Menu"
+          aria-label={m.pages.sidebar.menuAria}
           side="left"
           className={cn(
             "inset-y-auto top-[var(--app-header)] h-auto max-w-none border-r-0 p-0 md:hidden",
@@ -122,7 +124,7 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={toggleDesktop}
-          aria-label="Afficher la navigation"
+          aria-label={m.pages.sidebar.show}
           aria-expanded="false"
           className="fixed left-4 top-4 z-40 hidden size-9 items-center justify-center rounded-full border border-border bg-card text-blue-600 shadow-elevation-hover hover:bg-accent md:flex"
         >

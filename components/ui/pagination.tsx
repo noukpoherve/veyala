@@ -1,7 +1,9 @@
-import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { pageHref, type PageQuery } from "@/lib/pagination";
+import { Link } from "@/i18n/navigation";
+import { getLocale } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
 
 type PaginationProps = {
   pathname: string;
@@ -24,11 +26,11 @@ export function Pagination({
   pageParam = "page",
   className,
 }: PaginationProps) {
+  const m = getMessages(getLocale()).common;
+
   if (totalPages <= 1) {
     return totalItems != null ? (
-      <p className={cn("text-sm text-muted-foreground", className)}>
-        {totalItems} résultat{totalItems > 1 ? "s" : ""}
-      </p>
+      <p className={cn("text-sm text-muted-foreground", className)}>{m.resultsCount(totalItems)}</p>
     ) : null;
   }
 
@@ -38,11 +40,11 @@ export function Pagination({
   return (
     <nav
       className={cn("flex flex-wrap items-center justify-between gap-3", className)}
-      aria-label="Pagination"
+      aria-label={m.pagination}
     >
       <p className="text-sm text-muted-foreground">
-        Page {page} / {totalPages}
-        {totalItems != null ? ` · ${totalItems} résultat${totalItems > 1 ? "s" : ""}` : ""}
+        {m.pageOf(page, totalPages)}
+        {totalItems != null ? ` · ${m.resultsCount(totalItems)}` : ""}
       </p>
       <div className="flex items-center gap-2">
         {prev ? (
@@ -51,12 +53,12 @@ export function Pagination({
             className="inline-flex h-9 items-center gap-1 rounded-md border px-3 text-sm font-medium hover:bg-muted"
           >
             <ChevronLeft className="size-4" aria-hidden />
-            Précédent
+            {m.previous}
           </Link>
         ) : (
           <span className="inline-flex h-9 items-center gap-1 rounded-md border px-3 text-sm text-muted-foreground opacity-50">
             <ChevronLeft className="size-4" aria-hidden />
-            Précédent
+            {m.previous}
           </span>
         )}
         {next ? (
@@ -64,12 +66,12 @@ export function Pagination({
             href={next}
             className="inline-flex h-9 items-center gap-1 rounded-md border px-3 text-sm font-medium hover:bg-muted"
           >
-            Suivant
+            {m.next}
             <ChevronRight className="size-4" aria-hidden />
           </Link>
         ) : (
           <span className="inline-flex h-9 items-center gap-1 rounded-md border px-3 text-sm text-muted-foreground opacity-50">
-            Suivant
+            {m.next}
             <ChevronRight className="size-4" aria-hidden />
           </span>
         )}

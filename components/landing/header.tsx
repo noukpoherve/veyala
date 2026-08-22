@@ -6,11 +6,13 @@ import { cn } from "@/lib/utils";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
-import { useMessages } from "@/components/i18n/locale-provider";
+import { useLocale, useMessages } from "@/components/i18n/locale-provider";
 import { Link } from "@/i18n/navigation";
+import { localizeHref } from "@/i18n/path";
 
 export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean }) {
   const m = useMessages();
+  const locale = useLocale();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -28,7 +30,7 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
     { href: "/#etudiants", label: m.nav.students },
     { href: "/blog", label: m.nav.blog },
     { href: "/#faq", label: m.nav.faq },
-  ];
+  ].map((link) => ({ ...link, href: localizeHref(link.href, locale) }));
 
   return (
     <header
@@ -59,16 +61,16 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
           {isAuthenticated ? null : (
             <Link
               href="/login"
-              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+              className="whitespace-nowrap text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
               {m.nav.login}
             </Link>
           )}
-          <Button asChild className="group">
+          <Button asChild className="group whitespace-nowrap">
             <Link href={primaryHref}>
               {isAuthenticated ? m.nav.myWorkspace : m.nav.generateCv}
               <ArrowRight
-                className="size-4 transition-transform group-hover:translate-x-0.5"
+                className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5"
                 aria-hidden
               />
             </Link>
@@ -106,14 +108,14 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
             <li className="flex flex-wrap items-center gap-3 pt-2">
               <LanguageSwitcher />
               {isAuthenticated ? null : (
-                <Link href="/login" className="text-slate-600">
+                <Link href="/login" className="whitespace-nowrap text-slate-600">
                   {m.nav.login}
                 </Link>
               )}
-              <Button asChild size="sm">
+              <Button asChild size="sm" className="whitespace-nowrap">
                 <Link href={primaryHref}>
                   {isAuthenticated ? m.nav.myWorkspace : m.nav.generateCv}
-                  <ArrowRight className="size-4" aria-hidden />
+                  <ArrowRight className="size-4 shrink-0" aria-hidden />
                 </Link>
               </Button>
             </li>

@@ -1,7 +1,8 @@
-import Link from "next/link";
 import type { ContentBlock } from "@/lib/blog/types";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 
+/** Blocks come from the database and are author-written: never translated here. */
 export function ArticleBody({ blocks }: { blocks: ContentBlock[] }) {
   return (
     <div className="space-y-5 text-[17px] leading-relaxed text-slate-700">

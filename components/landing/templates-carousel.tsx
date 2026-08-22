@@ -3,6 +3,8 @@
 import { memo, useEffect, useRef, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useMessages } from "@/components/i18n/locale-provider";
+import type { Messages } from "@/i18n/messages";
 
 type Template = {
   name: string;
@@ -11,29 +13,36 @@ type Template = {
   gradient: string;
 };
 
-const TEMPLATES: Template[] = [
-  {
-    name: "Modern Blue",
-    tag: "Populaire",
-    layout: "header",
-    gradient: "from-blue-600 to-blue-500",
-  },
-  { name: "Classic Noir", layout: "header", gradient: "from-slate-800 to-slate-600" },
-  { name: "Sky Pro", tag: "Nouveau", layout: "sidebar", gradient: "from-sky-400 to-blue-600" },
-  {
-    name: "Académique",
-    tag: "Campus France",
-    layout: "header",
-    gradient: "from-blue-900 to-slate-900",
-  },
-  {
-    name: "International",
-    tag: "Canada/Québec",
-    layout: "header",
-    gradient: "from-sky-400 to-sky-500",
-  },
-  { name: "Compact Executive", layout: "sidebar", gradient: "from-indigo-900 to-blue-800" },
-];
+function templates(m: Messages["marketing"]): Template[] {
+  return [
+    {
+      name: "Modern Blue",
+      tag: m.templateTagPopular,
+      layout: "header",
+      gradient: "from-blue-600 to-blue-500",
+    },
+    { name: "Classic Noir", layout: "header", gradient: "from-slate-800 to-slate-600" },
+    {
+      name: "Sky Pro",
+      tag: m.templateTagNew,
+      layout: "sidebar",
+      gradient: "from-sky-400 to-blue-600",
+    },
+    {
+      name: m.templateNameAcademic,
+      tag: "Campus France",
+      layout: "header",
+      gradient: "from-blue-900 to-slate-900",
+    },
+    {
+      name: "International",
+      tag: "Canada/Québec",
+      layout: "header",
+      gradient: "from-sky-400 to-sky-500",
+    },
+    { name: "Compact Executive", layout: "sidebar", gradient: "from-indigo-900 to-blue-800" },
+  ];
+}
 
 // Memoized: cards are static, no need to re-render them with the carousel.
 const TemplateCard = memo(function TemplateCard({ template }: { template: Template }) {
@@ -88,6 +97,8 @@ const TemplateCard = memo(function TemplateCard({ template }: { template: Templa
 });
 
 export function TemplatesCarousel({ heading }: { heading: ReactNode }) {
+  const m = useMessages().marketing;
+  const cards = templates(m);
   const trackRef = useRef<HTMLDivElement>(null);
   const paused = useRef(false);
 
@@ -117,7 +128,7 @@ export function TemplatesCarousel({ heading }: { heading: ReactNode }) {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            aria-label="Templates précédents"
+            aria-label={m.carouselPrev}
             onClick={() => scrollByCards(-1)}
             className="flex size-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-bounce hover:-translate-y-0.5 hover:shadow-md"
           >
@@ -125,7 +136,7 @@ export function TemplatesCarousel({ heading }: { heading: ReactNode }) {
           </button>
           <button
             type="button"
-            aria-label="Templates suivants"
+            aria-label={m.carouselNext}
             onClick={() => scrollByCards(1)}
             className="flex size-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-600/25 transition-bounce hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg"
           >
@@ -145,7 +156,7 @@ export function TemplatesCarousel({ heading }: { heading: ReactNode }) {
         }}
         className="no-scrollbar mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2"
       >
-        {[...TEMPLATES, ...TEMPLATES].map((template, index) => (
+        {[...cards, ...cards].map((template, index) => (
           <TemplateCard key={`${template.name}-${index}`} template={template} />
         ))}
       </div>

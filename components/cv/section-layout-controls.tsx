@@ -20,12 +20,13 @@ import { CSS } from "@dnd-kit/utilities";
 import { Eye, EyeOff, GripVertical, RotateCcw } from "lucide-react";
 import {
   SECTION_IDS,
-  SECTION_LABELS,
+  sectionLabels,
   type SectionId,
   type TemplateDefinition,
   uniqueSectionIds,
 } from "@/lib/templates/definition";
 import { cn } from "@/lib/utils";
+import { useLocale, useMessages } from "@/components/i18n/locale-provider";
 
 /**
  * Atelier control: reorder and show/hide CV sections. Sidebar layouts use two
@@ -46,12 +47,16 @@ function VisibleRow({
   showColumnSelect,
   onToggle,
   onMoveColumn,
+  labels,
+  layoutCopy,
 }: {
   id: SectionId;
   column: "sidebar" | "main";
   showColumnSelect: boolean;
   onToggle: () => void;
   onMoveColumn?: (to: "sidebar" | "main") => void;
+  labels: Record<SectionId, string>;
+  layoutCopy: ReturnType<typeof useMessages>["forms"]["layout"];
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -68,22 +73,22 @@ function VisibleRow({
       <button
         type="button"
         className="flex size-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label={`Réordonner ${SECTION_LABELS[id]}`}
+        aria-label={layoutCopy.reorderAria(labels[id])}
         {...attributes}
         {...listeners}
       >
         <GripVertical className="size-4" aria-hidden />
       </button>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{SECTION_LABELS[id]}</span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{labels[id]}</span>
       {showColumnSelect && onMoveColumn ? (
         <select
-          aria-label={`Colonne pour ${SECTION_LABELS[id]}`}
+          aria-label={layoutCopy.columnAria(labels[id])}
           className="h-7 max-w-[5.5rem] rounded-md border bg-background px-1 text-[11px]"
           value={column}
           onChange={(e) => onMoveColumn(e.target.value as "sidebar" | "main")}
         >
-          <option value="sidebar">Latérale</option>
-          <option value="main">Principale</option>
+          <option value="sidebar">{layoutCopy.columnSidebar}</option>
+          <option value="main">{layoutCopy.columnMain}</option>
         </select>
       ) : null}
       <button
@@ -91,7 +96,7 @@ function VisibleRow({
         onClick={onToggle}
         className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         aria-pressed
-        aria-label={`Masquer ${SECTION_LABELS[id]}`}
+        aria-label={layoutCopy.hideAria(labels[id])}
       >
         <Eye className="size-4" aria-hidden />
       </button>
@@ -99,17 +104,27 @@ function VisibleRow({
   );
 }
 
-function HiddenRow({ id, onToggle }: { id: SectionId; onToggle: () => void }) {
+function HiddenRow({
+  id,
+  onToggle,
+  labels,
+  layoutCopy,
+}: {
+  id: SectionId;
+  onToggle: () => void;
+  labels: Record<SectionId, string>;
+  layoutCopy: ReturnType<typeof useMessages>["forms"]["layout"];
+}) {
   return (
     <li className="flex items-center gap-1.5 rounded-lg border bg-card px-1.5 py-1.5 opacity-55">
       <span className="size-8 shrink-0" aria-hidden />
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{SECTION_LABELS[id]}</span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{labels[id]}</span>
       <button
         type="button"
         onClick={onToggle}
         className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         aria-pressed={false}
-        aria-label={`Afficher ${SECTION_LABELS[id]}`}
+        aria-label={layoutCopy.showAria(labels[id])}
       >
         <EyeOff className="size-4" aria-hidden />
       </button>
@@ -125,6 +140,8 @@ function ColumnList({
   onToggle,
   onMoveColumn,
   showColumnSelect,
+  labels,
+  layoutCopy,
 }: {
   title: string;
   ids: SectionId[];
@@ -133,6 +150,8 @@ function ColumnList({
   onToggle: (id: SectionId) => void;
   onMoveColumn?: (id: SectionId, to: "sidebar" | "main") => void;
   showColumnSelect: boolean;
+  labels: Record<SectionId, string>;
+  layoutCopy: ReturnType<typeof useMessages>["forms"]["layout"];
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -153,7 +172,7 @@ function ColumnList({
         {title}
       </legend>
       {ids.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Aucune section ici.</p>
+        <p className="text-xs text-muted-foreground">{layoutCopy.emptyColumn}</p>
       ) : (
         <DndContext
           sensors={sensors}
@@ -171,6 +190,8 @@ function ColumnList({
                   showColumnSelect={showColumnSelect}
                   onToggle={() => onToggle(id)}
                   onMoveColumn={onMoveColumn ? (to) => onMoveColumn(id, to) : undefined}
+                  labels={labels}
+                  layoutCopy={layoutCopy}
                 />
               ))}
             </ul>
@@ -199,6 +220,8 @@ export function SectionLayoutControls({
   onReset: () => void;
 }) {
   const isSidebar = layout === "sidebar-left";
+  const labels = sectionLabels(useLocale());
+  const layoutCopy = useMessages().forms.layout;
   const visible = new Set([...sidebarSections, ...mainSections]);
   const hidden = SECTION_IDS.filter((id) => !visible.has(id));
 
@@ -264,47 +287,57 @@ export function SectionLayoutControls({
   return (
     <div className="space-y-3.5">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">Glissez pour réordonner, œil pour masquer.</p>
+        <p className="text-xs text-muted-foreground">{layoutCopy.hint}</p>
         <button
           type="button"
           onClick={onReset}
           className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <RotateCcw className="size-3.5" aria-hidden />
-          Ordre du modèle
+          {layoutCopy.resetToTemplate}
         </button>
       </div>
 
       {isSidebar ? (
         <ColumnList
-          title="Barre latérale"
+          title={layoutCopy.sidebarColumn}
           ids={sidebarSections}
           column="sidebar"
           onReorder={(f, t) => reorder("sidebar", f, t)}
           onToggle={toggle}
           onMoveColumn={moveColumn}
           showColumnSelect
+          labels={labels}
+          layoutCopy={layoutCopy}
         />
       ) : null}
 
       <ColumnList
-        title={isSidebar ? "Colonne principale" : "Sections"}
+        title={isSidebar ? layoutCopy.mainColumn : layoutCopy.singleColumn}
         ids={mainSections}
         column="main"
         onReorder={(f, t) => reorder("main", f, t)}
         onToggle={toggle}
         onMoveColumn={isSidebar ? moveColumn : undefined}
         showColumnSelect={isSidebar}
+        labels={labels}
+        layoutCopy={layoutCopy}
       />
 
       {hidden.length > 0 ? (
         <fieldset className="space-y-2">
           <legend className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Masquées
+            {layoutCopy.hiddenColumn}
           </legend>
           <ul className="space-y-1.5">
             {hidden.map((id) => (
-              <HiddenRow key={id} id={id} onToggle={() => toggle(id)} />
+              <HiddenRow
+                key={id}
+                id={id}
+                onToggle={() => toggle(id)}
+                labels={labels}
+                layoutCopy={layoutCopy}
+              />
             ))}
           </ul>
         </fieldset>

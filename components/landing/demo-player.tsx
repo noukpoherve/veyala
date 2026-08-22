@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import {
   ArrowRight,
   CheckCircle2,
@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { VeyalaMark } from "@/components/landing/logo";
+import { useMessages } from "@/components/i18n/locale-provider";
 
 type SceneId =
   | "hook"
@@ -41,97 +42,23 @@ type SceneId =
 type Scene = {
   id: SceneId;
   durationMs: number;
-  caption: string;
-  label: string;
 };
 
-const PIPELINE_STEPS = [
-  "Lecture de l'offre",
-  "Analyse des exigences",
-  "Matching initial",
-  "Adaptation ATS du CV",
-  "Lettre de motivation",
-  "Exports PDF / Word",
-  "Matching optimisé",
-] as const;
-
-const GAPS = [
-  { term: "Design System", kind: "Indispensable" },
-  { term: "Figma", kind: "Outil / stack" },
-  { term: "Recherche utilisateur", kind: "Indispensable" },
-  { term: "Agile", kind: "Atout" },
-] as const;
-
+/** Scene copy (label + caption) lives in the `content.demo.scenes` catalog, same order. */
 const SCENES: Scene[] = [
-  {
-    id: "hook",
-    durationMs: 2800,
-    label: "Le besoin",
-    caption: "Léa veut un CV vraiment adapté à une offre, pas un modèle générique.",
-  },
-  {
-    id: "google",
-    durationMs: 3600,
-    label: "Recherche Google",
-    caption: "Elle cherche comment optimiser un CV pour les filtres ATS.",
-  },
-  {
-    id: "serp",
-    durationMs: 4800,
-    label: "Découverte",
-    caption: "Parmi les outils CV / ATS, elle repère Veyala : adapté à chaque offre, en français.",
-  },
-  {
-    id: "landing",
-    durationMs: 3000,
-    label: "Landing",
-    caption: "Sur veyala.fr, elle clique sur « Générer mon CV gratuitement ».",
-  },
-  {
-    id: "register",
-    durationMs: 3200,
-    label: "Compte",
-    caption: "Création de compte : 2 crédits offerts, sans carte bancaire.",
-  },
-  {
-    id: "profile",
-    durationMs: 4200,
-    label: "CV de base",
-    caption: "Étape clé : importer son CV de base (PDF/DOCX). L’IA reformule, elle n’invente rien.",
-  },
-  {
-    id: "compose",
-    durationMs: 4800,
-    label: "L’offre",
-    caption: "Sur Générer un CV : elle colle l’offre, choisit un template, puis analyse.",
-  },
-  {
-    id: "review",
-    durationMs: 4800,
-    label: "Matching",
-    caption: "Analyse gratuite : score actuel vs projeté. Elle coche ce qu’elle assume.",
-  },
-  {
-    id: "generating",
-    durationMs: 5200,
-    label: "Génération",
-    caption: "1 crédit : adaptation ATS du CV, lettre, exports Word/PDF, matching après.",
-  },
-  {
-    id: "result",
-    durationMs: 4800,
-    label: "Résultat",
-    caption: "Matching 58 % → 91 %. CV + lettre prêts à télécharger ou modifier.",
-  },
-  {
-    id: "outro",
-    durationMs: 4200,
-    label: "À vous",
-    caption: "Même parcours produit : importer → analyser → générer → exporter.",
-  },
+  { id: "hook", durationMs: 2800 },
+  { id: "google", durationMs: 3600 },
+  { id: "serp", durationMs: 4800 },
+  { id: "landing", durationMs: 3000 },
+  { id: "register", durationMs: 3200 },
+  { id: "profile", durationMs: 4200 },
+  { id: "compose", durationMs: 4800 },
+  { id: "review", durationMs: 4800 },
+  { id: "generating", durationMs: 5200 },
+  { id: "result", durationMs: 4800 },
+  { id: "outro", durationMs: 4200 },
 ];
 
-const SEARCH_QUERY = "optimiser CV ATS pour une offre d'emploi";
 const TOTAL_MS = SCENES.reduce((sum, scene) => sum + scene.durationMs, 0);
 const DEMO_DURATION_LABEL = (() => {
   const totalSec = Math.round(TOTAL_MS / 1000);
@@ -142,6 +69,8 @@ const DEMO_DURATION_LABEL = (() => {
 
 /** Hero CTA — scrolls to the on-page demo section (Scape-style). */
 export function DemoCta({ className }: { className?: string }) {
+  const m = useMessages();
+
   return (
     <a
       href="#demo"
@@ -153,7 +82,7 @@ export function DemoCta({ className }: { className?: string }) {
       <span className="flex size-6 items-center justify-center rounded-full bg-slate-100">
         <Play className="size-3 fill-slate-700 text-slate-700" aria-hidden />
       </span>
-      Voir une démo
+      {m.marketing.demoCta}
       {/* <span className="text-sm font-medium text-slate-400">{DEMO_DURATION_LABEL}</span> */}
     </a>
   );
@@ -161,10 +90,12 @@ export function DemoCta({ className }: { className?: string }) {
 
 /** Landing section hosting the product walkthrough video-like player. */
 export function DemoSection() {
+  const m = useMessages();
+
   return (
     <section
       id="demo"
-      aria-label="Démo produit Veyala"
+      aria-label={m.content.demo.sectionAria}
       className="scroll-mt-20 border-b border-slate-100 bg-slate-50/80"
     >
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-24">
@@ -177,6 +108,7 @@ export function DemoSection() {
 }
 
 function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embedded?: boolean }) {
+  const m = useMessages();
   const titleId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const [sceneIndex, setSceneIndex] = useState(0);
@@ -187,7 +119,9 @@ function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embed
   const elapsedBeforePause = useRef(0);
   const frameRef = useRef<number | null>(null);
 
-  const scene = SCENES[Math.min(sceneIndex, SCENES.length - 1)] as Scene;
+  const safeIndex = Math.min(sceneIndex, SCENES.length - 1);
+  const scene = SCENES[safeIndex] as Scene;
+  const sceneCopy = m.content.demo.scenes[safeIndex] ?? m.content.demo.scenes[0];
   const finished = progress >= 0.999 && sceneIndex === SCENES.length - 1;
 
   const seekToElapsed = useCallback((elapsedMs: number) => {
@@ -309,10 +243,10 @@ function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embed
         <div className="flex min-w-0 items-center gap-3">
           <VeyalaMark className="size-8 shrink-0" />
           <p id={titleId} className="sr-only">
-            Démo produit Veyala
+            {m.content.demo.sectionAria}
           </p>
           <p className="truncate text-xs text-slate-500">
-            {scene.label} · {Math.round(progress * 100)}%
+            {sceneCopy.label} · {Math.round(progress * 100)}%
           </p>
         </div>
         {!embedded && onClose ? (
@@ -320,7 +254,7 @@ function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embed
             type="button"
             onClick={onClose}
             className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-900"
-            aria-label="Fermer la démo"
+            aria-label={m.content.demo.close}
           >
             <X className="size-5" aria-hidden />
           </button>
@@ -341,12 +275,14 @@ function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embed
             <span className="flex size-16 items-center justify-center rounded-full bg-white text-slate-900 shadow-xl">
               <Play className="size-7 fill-slate-900" aria-hidden />
             </span>
-            <span className="text-sm font-semibold">Lancer la démo · {DEMO_DURATION_LABEL}</span>
+            <span className="text-sm font-semibold">
+              {m.content.demo.start(DEMO_DURATION_LABEL)}
+            </span>
           </button>
         ) : null}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/85 via-slate-900/45 to-transparent px-4 pb-4 pt-16 sm:px-6 sm:pb-5">
           <p className="max-w-3xl text-sm font-medium leading-relaxed text-white sm:text-base">
-            {scene.caption}
+            {sceneCopy.caption}
           </p>
         </div>
       </div>
@@ -374,17 +310,17 @@ function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embed
               {finished ? (
                 <>
                   <RotateCcw className="size-4" aria-hidden />
-                  Relancer
+                  {m.content.demo.replay}
                 </>
               ) : playing ? (
                 <>
                   <Pause className="size-4" aria-hidden />
-                  Pause
+                  {m.content.demo.pause}
                 </>
               ) : (
                 <>
                   <Play className="size-4 fill-white" aria-hidden />
-                  Lecture
+                  {m.content.demo.play}
                 </>
               )}
             </button>
@@ -393,12 +329,12 @@ function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embed
               onClick={restart}
               className="rounded-full px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
             >
-              Recommencer
+              {m.content.demo.restart}
             </button>
           </div>
           <Button asChild size="sm">
             <Link href="/register" onClick={onClose}>
-              Créer mon compte
+              {m.auth.registerCta}
               <ArrowRight className="size-4" aria-hidden />
             </Link>
           </Button>
@@ -414,7 +350,7 @@ function DemoPlayer({ onClose, embedded = false }: { onClose?: () => void; embed
       <button
         type="button"
         className="absolute inset-0 bg-[#020617]/80 backdrop-blur-md"
-        aria-label="Fermer la démo"
+        aria-label={m.content.demo.close}
         onClick={onClose}
       />
       {player}
@@ -450,12 +386,13 @@ function AppFrame({
   children: React.ReactNode;
   credits?: number;
 }) {
+  const m = useMessages();
   const items = [
-    { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-    { id: "generate", label: "Générer un CV", icon: Sparkles },
-    { id: "profile", label: "Mon CV de base", icon: UserRound },
-    { id: "templates", label: "Templates", icon: Palette },
-    { id: "billing", label: "Crédits & factures", icon: Wallet },
+    { id: "dashboard", label: m.nav.dashboard, icon: LayoutDashboard },
+    { id: "generate", label: m.nav.generate, icon: Sparkles },
+    { id: "profile", label: m.nav.baseCv, icon: UserRound },
+    { id: "templates", label: m.nav.templates, icon: Palette },
+    { id: "billing", label: m.nav.billing, icon: Wallet },
   ] as const;
 
   return (
@@ -485,13 +422,11 @@ function AppFrame({
         </nav>
         <div className="border-t border-slate-200 p-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
-            <p className="text-[10px] font-bold text-slate-500">Mes crédits</p>
+            <p className="text-[10px] font-bold text-slate-500">{m.app.creditsUsage}</p>
             <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-100">
               <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-blue-600 to-blue-400" />
             </div>
-            <p className="mt-1 text-[10px] text-slate-500">
-              {credits} restants · 1 crédit = 1 CV + lettre
-            </p>
+            <p className="mt-1 text-[10px] text-slate-500">{m.app.creditsRemaining(credits)}</p>
           </div>
         </div>
       </aside>
@@ -501,32 +436,37 @@ function AppFrame({
 }
 
 function HookScene({ progress }: { progress: number }) {
+  const t = useMessages().content.demo.hook;
+
   return (
     <div className="flex h-full flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-blue-50 px-6 text-center">
       <p
         className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700"
         style={{ opacity: Math.min(1, progress * 3) }}
       >
-        Parcours réel Veyala
+        {t.eyebrow}
       </p>
       <h2
         className="mt-4 max-w-2xl font-display text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl"
         style={{ opacity: Math.min(1, Math.max(0, (progress - 0.1) * 2.5)) }}
       >
-        Un CV parfait pour <span className="text-blue-600">cette</span> offre
+        {t.titleBefore}
+        <span className="text-blue-600">{t.titleHighlight}</span>
+        {t.titleAfter}
       </h2>
       <p
         className="mt-4 max-w-lg text-sm text-slate-600 sm:text-base"
         style={{ opacity: Math.min(1, Math.max(0, (progress - 0.35) * 2.2)) }}
       >
-        Pas un template générique : un dossier aligné sur les mots-clés ATS de l&apos;annonce.
+        {t.text}
       </p>
     </div>
   );
 }
 
 function GoogleScene({ progress }: { progress: number }) {
-  const typed = SEARCH_QUERY.slice(0, Math.floor(progress * SEARCH_QUERY.length));
+  const query = useMessages().content.demo.searchQuery;
+  const typed = query.slice(0, Math.floor(progress * query.length));
   return (
     <div className="flex h-full items-center justify-center bg-[#f8f9fa] px-4">
       <div className="w-full max-w-2xl">
@@ -545,51 +485,18 @@ function GoogleScene({ progress }: { progress: number }) {
   );
 }
 
+/** Titles and snippets live in `content.demo.serp`, in this order. */
 const SERP_RESULTS = [
-  {
-    id: "veyala",
-    domain: "veyala.fr",
-    title: "Veyala : CV adapté à chaque offre, compatible ATS",
-    snippet:
-      "Importez votre CV, collez une offre : analyse de matching gratuite, puis CV + lettre optimisés ATS. Export Word & PDF.",
-  },
-  {
-    id: "kickresume",
-    domain: "kickresume.com",
-    title: "Kickresume : créateur de CV et lettre par IA",
-    snippet:
-      "Plus de 40 modèles, génération IA et vérificateur ATS. Idéal pour étudiants et profils créatifs.",
-  },
-  {
-    id: "rezi",
-    domain: "rezi.ai",
-    title: "Rezi : optimiseur de CV ATS avec score en temps réel",
-    snippet:
-      "Analysez votre CV pour les ATS, extrayez les mots-clés d’une offre et améliorez votre score Rezi.",
-  },
-  {
-    id: "teal",
-    domain: "tealhq.com",
-    title: "Teal : CV builder et suivi de candidatures",
-    snippet:
-      "Créez votre CV, suivez vos candidatures et gérez votre recherche d’emploi depuis un seul tableau de bord.",
-  },
-  {
-    id: "resumeio",
-    domain: "resume.io",
-    title: "Resume.io : modèles de CV professionnels en ligne",
-    snippet:
-      "Construisez un CV en quelques minutes avec des templates prêts à l’emploi et un export PDF.",
-  },
-  {
-    id: "cvpass",
-    domain: "cvpass.fr",
-    title: "CVpass : scanner ATS et suite carrière (France)",
-    snippet: "Score ATS calibré sur le marché français, lettre, LinkedIn et suivi de candidatures.",
-  },
+  { id: "veyala", domain: "veyala.fr" },
+  { id: "kickresume", domain: "kickresume.com" },
+  { id: "rezi", domain: "rezi.ai" },
+  { id: "teal", domain: "tealhq.com" },
+  { id: "resumeio", domain: "resume.io" },
+  { id: "cvpass", domain: "cvpass.fr" },
 ] as const;
 
 function SerpScene({ progress }: { progress: number }) {
+  const t = useMessages().content.demo;
   const highlight = progress > 0.35;
 
   return (
@@ -597,13 +504,12 @@ function SerpScene({ progress }: { progress: number }) {
       <div className="mx-auto max-w-2xl">
         <div className="mb-3 flex items-center gap-3 rounded-full border border-slate-200 px-4 py-2.5 shadow-sm">
           <SearchGlyph />
-          <p className="truncate text-sm text-slate-700">{SEARCH_QUERY}</p>
+          <p className="truncate text-sm text-slate-700">{t.searchQuery}</p>
         </div>
-        <p className="mb-3 text-[11px] text-slate-500">
-          Environ 2&nbsp;840&nbsp;000 résultats (0,38&nbsp;s)
-        </p>
+        <p className="mb-3 text-[11px] text-slate-500">{t.resultsCount}</p>
         <div className="space-y-4">
-          {SERP_RESULTS.map((result) => {
+          {SERP_RESULTS.map((result, index) => {
+            const copy = t.serp[index] ?? t.serp[0];
             const isVeyala = result.id === "veyala";
             const showHighlight = isVeyala && highlight;
             return (
@@ -637,10 +543,10 @@ function SerpScene({ progress }: { progress: number }) {
                     isVeyala ? "text-[#1a0dab]" : "text-[#1a0dab]/90"
                   )}
                 >
-                  {result.title}
+                  {copy.title}
                 </p>
                 <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-slate-600 sm:text-sm">
-                  {result.snippet}
+                  {copy.snippet}
                 </p>
               </div>
             );
@@ -652,6 +558,8 @@ function SerpScene({ progress }: { progress: number }) {
 }
 
 function LandingScene({ progress }: { progress: number }) {
+  const m = useMessages();
+
   return (
     <div className="bg-aurora flex h-full flex-col items-center justify-center px-6 text-center">
       <p
@@ -664,13 +572,14 @@ function LandingScene({ progress }: { progress: number }) {
         className="mt-5 max-w-2xl font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-[2.5rem] sm:leading-tight"
         style={{ opacity: Math.min(1, Math.max(0, (progress - 0.08) * 2.4)) }}
       >
-        Votre CV, <span className="text-blue-600">adapté à chaque offre</span>
+        {m.marketing.heroTitleBefore}
+        <span className="text-blue-600">{m.marketing.heroTitleHighlight}</span>
       </h2>
       <p
         className="mt-3 max-w-md text-sm text-slate-600"
         style={{ opacity: Math.min(1, Math.max(0, (progress - 0.25) * 2)) }}
       >
-        Collez une offre : Veyala génère un CV et une lettre parfaitement adaptés.
+        {m.content.demo.landing.subtitle}
       </p>
       <div
         className="mt-6 inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25"
@@ -680,33 +589,33 @@ function LandingScene({ progress }: { progress: number }) {
         }}
       >
         <Sparkles className="size-4" aria-hidden />
-        Générer mon CV gratuitement
+        {m.marketing.heroCta}
       </div>
     </div>
   );
 }
 
 function RegisterScene({ progress }: { progress: number }) {
+  const m = useMessages();
+
   return (
     <div className="bg-aurora flex h-full items-center justify-center px-4">
       <div
         className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/10"
         style={{ opacity: Math.min(1, progress * 2) }}
       >
-        <p className="font-display text-xl font-bold text-slate-900">Créer un compte</p>
-        <p className="mt-1 text-xs text-slate-500">
-          2 crédits offerts à l&apos;inscription, sans carte bancaire.
-        </p>
+        <p className="font-display text-xl font-bold text-slate-900">{m.auth.registerTitle}</p>
+        <p className="mt-1 text-xs text-slate-500">{m.content.demo.register.subtitle}</p>
         <div className="mt-5 space-y-3">
-          <Field label="Email" value="lea.martin@email.com" />
-          <Field label="Mot de passe" value="••••••••" />
-          <Field label="Confirmer" value="••••••••" />
+          <Field label={m.common.email} value="lea.martin@email.com" />
+          <Field label={m.auth.loginPassword} value="••••••••" />
+          <Field label={m.common.confirm} value="••••••••" />
         </div>
         <div
           className="mt-5 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 py-2.5 text-center text-sm font-semibold text-white"
           style={{ opacity: Math.min(1, Math.max(0, (progress - 0.4) * 2)) }}
         >
-          Créer mon compte
+          {m.auth.registerCta}
         </div>
       </div>
     </div>
@@ -714,19 +623,19 @@ function RegisterScene({ progress }: { progress: number }) {
 }
 
 function ProfileScene({ progress }: { progress: number }) {
+  const m = useMessages();
+  const t = m.content.demo.profile;
   const imported = progress > 0.35;
   return (
     <AppFrame active="profile" credits={2}>
       <div className="mx-auto max-w-xl space-y-3">
         <div>
-          <h2 className="font-display text-lg font-bold text-slate-900">Mon CV de base</h2>
-          <p className="text-xs text-slate-500">
-            Source de vérité : l&apos;IA reformule, elle n&apos;invente pas.
-          </p>
+          <h2 className="font-display text-lg font-bold text-slate-900">{m.app.profileTitle}</h2>
+          <p className="text-xs text-slate-500">{t.subtitle}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-900">Import automatique</p>
-          <p className="mt-1 text-xs text-slate-500">PDF ou DOCX · 8 Mo max</p>
+          <p className="text-sm font-semibold text-slate-900">{t.importTitle}</p>
+          <p className="mt-1 text-xs text-slate-500">{t.importHint}</p>
           <div
             className={cn(
               "mt-3 flex items-center justify-center gap-2 rounded-xl border border-dashed px-3 py-5 text-sm font-medium transition-colors",
@@ -738,17 +647,17 @@ function ProfileScene({ progress }: { progress: number }) {
             {imported ? (
               <>
                 <CheckCircle2 className="size-4" aria-hidden />
-                CV analysé, profil rempli
+                {t.importDone}
               </>
             ) : progress > 0.15 ? (
               <>
                 <Loader2 className="size-4 animate-spin" aria-hidden />
-                Analyse du CV en cours…
+                {t.importLoading}
               </>
             ) : (
               <>
                 <Upload className="size-4" aria-hidden />
-                Importer mon CV (PDF ou DOCX)
+                {t.importCta}
               </>
             )}
           </div>
@@ -759,12 +668,12 @@ function ProfileScene({ progress }: { progress: number }) {
             style={{ opacity: Math.min(1, (progress - 0.35) * 2.5) }}
           >
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Identité & contact
+              {t.identity}
             </p>
             <p className="mt-2 font-display text-base font-bold text-slate-900">Léa Martin</p>
-            <p className="text-sm text-slate-600">Product Designer</p>
+            <p className="text-sm text-slate-600">{t.role}</p>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {["Figma", "UX Research", "Prototypage"].map((skill) => (
+              {t.skills.map((skill) => (
                 <span
                   key={skill}
                   className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700"
@@ -777,7 +686,7 @@ function ProfileScene({ progress }: { progress: number }) {
               className="mt-4 rounded-full bg-blue-600 py-2 text-center text-xs font-semibold text-white"
               style={{ opacity: Math.min(1, Math.max(0, (progress - 0.65) * 3)) }}
             >
-              Enregistrer mon CV de base
+              {t.save}
             </div>
           </div>
         ) : null}
@@ -787,10 +696,9 @@ function ProfileScene({ progress }: { progress: number }) {
 }
 
 function ComposeScene({ progress }: { progress: number }) {
-  const offer = `Product Designer, Startup SaaS · Paris / Hybride
-Missions : Design System, recherche utilisateur, prototypage Figma.
-Must-have : Figma, Design System, UX Research. Nice : Agile, Framer.`;
-  const shown = offer.slice(0, Math.floor(Math.min(1, progress / 0.55) * offer.length));
+  const m = useMessages();
+  const t = m.content.demo.compose;
+  const shown = t.offer.slice(0, Math.floor(Math.min(1, progress / 0.55) * t.offer.length));
   const showTemplates = progress > 0.45;
   const showCta = progress > 0.7;
 
@@ -798,21 +706,16 @@ Must-have : Figma, Design System, UX Research. Nice : Agile, Framer.`;
     <AppFrame active="generate" credits={2}>
       <div className="mx-auto max-w-xl space-y-3">
         <div>
-          <h2 className="font-display text-lg font-bold text-slate-900">Générer un CV adapté</h2>
-          <p className="text-[11px] leading-relaxed text-slate-500">
-            1. Analysez gratuitement le matching. 2. Cochez les compétences manquantes. 3. Générez
-            (1 crédit).
-          </p>
+          <h2 className="font-display text-lg font-bold text-slate-900">{t.title}</h2>
+          <p className="text-[11px] leading-relaxed text-slate-500">{t.steps}</p>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-          <p className="text-sm font-semibold text-slate-900">1. L&apos;offre d&apos;emploi</p>
+          <p className="text-sm font-semibold text-slate-900">{t.jobTitle}</p>
           <div className="mt-2 flex gap-2 text-[10px] font-medium">
-            <span className="rounded-full bg-blue-600 px-2.5 py-1 text-white">
-              Texte collé (recommandé)
-            </span>
+            <span className="rounded-full bg-blue-600 px-2.5 py-1 text-white">{t.pasted}</span>
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
-              URL de l&apos;offre
+              {m.app.jobUrl}
             </span>
           </div>
           <div className="mt-2 min-h-[88px] rounded-lg border border-slate-200 bg-slate-50 p-2.5 font-mono text-[10px] leading-relaxed text-slate-700">
@@ -826,12 +729,12 @@ Must-have : Figma, Design System, UX Research. Nice : Agile, Framer.`;
             className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
             style={{ opacity: Math.min(1, (progress - 0.45) * 3) }}
           >
-            <p className="text-sm font-semibold text-slate-900">2. Template</p>
+            <p className="text-sm font-semibold text-slate-900">{t.templateTitle}</p>
             <div className="mt-2 flex gap-2">
               {[
-                { name: "Classique", colors: ["#1e3a5f", "#2563eb"] },
-                { name: "Épuré", colors: ["#0f172a", "#334155"] },
-                { name: "Modern", colors: ["#1d4ed8", "#38bdf8"] },
+                { name: t.templates[0], colors: ["#1e3a5f", "#2563eb"] },
+                { name: t.templates[1], colors: ["#0f172a", "#334155"] },
+                { name: t.templates[2], colors: ["#1d4ed8", "#38bdf8"] },
               ].map((tpl, index) => (
                 <div
                   key={tpl.name}
@@ -859,7 +762,7 @@ Must-have : Figma, Design System, UX Research. Nice : Agile, Framer.`;
             style={{ opacity: Math.min(1, (progress - 0.7) * 4) }}
           >
             <Sparkles className="size-3.5" aria-hidden />
-            Analyser le matching (gratuit)
+            {t.analyzeCta}
           </div>
         ) : null}
       </div>
@@ -868,33 +771,35 @@ Must-have : Figma, Design System, UX Research. Nice : Agile, Framer.`;
 }
 
 function ReviewScene({ progress }: { progress: number }) {
-  const checkedCount = Math.min(GAPS.length, Math.floor(progress * (GAPS.length + 1)));
+  const t = useMessages().content.demo;
+  const gaps = t.gaps;
+  const checkedCount = Math.min(gaps.length, Math.floor(progress * (gaps.length + 1)));
   const projected = 58 + checkedCount * 8;
 
   return (
     <AppFrame active="generate" credits={2}>
       <div className="mx-auto max-w-xl space-y-3">
         <div className="space-y-1 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-          <h2 className="font-display text-base font-semibold text-slate-900">
-            Analyse de matching
-          </h2>
-          <p className="text-[11px] text-slate-500">
-            Aucun crédit débité. Cochez les compétences que vous assumez.
-          </p>
+          <h2 className="font-display text-base font-semibold text-slate-900">{t.review.title}</h2>
+          <p className="text-[11px] text-slate-500">{t.review.subtitle}</p>
           <div className="mt-2 grid grid-cols-3 gap-2">
-            <ScoreBox label="Score actuel" value="58%" />
-            <ScoreBox label="Score projeté" value={`${Math.min(91, projected)}%`} highlight />
-            <ScoreBox label="Max si tout coché" value="91%" />
+            <ScoreBox label={t.review.currentScore} value="58%" />
+            <ScoreBox
+              label={t.review.projectedScore}
+              value={`${Math.min(91, projected)}%`}
+              highlight
+            />
+            <ScoreBox label={t.review.maxScore} value="91%" />
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-900">Compétences manquantes</p>
-            <p className="text-[10px] font-medium text-blue-600">Tout cocher</p>
+            <p className="text-xs font-semibold text-slate-900">{t.review.gapsTitle}</p>
+            <p className="text-[10px] font-medium text-blue-600">{t.review.checkAll}</p>
           </div>
           <ul className="space-y-1.5">
-            {GAPS.map((gap, index) => {
+            {gaps.map((gap, index) => {
               const on = index < checkedCount;
               return (
                 <li
@@ -929,7 +834,7 @@ function ReviewScene({ progress }: { progress: number }) {
           style={{ opacity: Math.min(1, Math.max(0, (progress - 0.55) * 3)) }}
         >
           <Sparkles className="size-3.5" aria-hidden />
-          Générer mon CV (1 crédit)
+          {t.review.generateCta}
         </div>
       </div>
     </AppFrame>
@@ -937,7 +842,9 @@ function ReviewScene({ progress }: { progress: number }) {
 }
 
 function GeneratingScene({ progress }: { progress: number }) {
-  const stepIdx = Math.min(PIPELINE_STEPS.length - 1, Math.floor(progress * PIPELINE_STEPS.length));
+  const t = useMessages().content.demo;
+  const steps = t.pipeline;
+  const stepIdx = Math.min(steps.length - 1, Math.floor(progress * steps.length));
   const afterVisible = progress > 0.75;
 
   return (
@@ -945,13 +852,11 @@ function GeneratingScene({ progress }: { progress: number }) {
       <div className="mx-auto max-w-xl">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="font-display text-base font-semibold text-slate-900">
-            Génération en cours
+            {t.generating.title}
           </h2>
-          <p className="mt-1 text-[11px] text-slate-500">
-            Les étapes restent synchronisées même si la connexion est interrompue un instant.
-          </p>
+          <p className="mt-1 text-[11px] text-slate-500">{t.generating.subtitle}</p>
           <ol className="mt-3 space-y-1">
-            {PIPELINE_STEPS.map((label, index) => {
+            {steps.map((label, index) => {
               const done = index < stepIdx;
               const current = index === stepIdx;
               return (
@@ -979,9 +884,9 @@ function GeneratingScene({ progress }: { progress: number }) {
             })}
           </ol>
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <ScoreBox label="Matching avant" value="58%" />
+            <ScoreBox label={t.generating.matchBefore} value="58%" />
             <ScoreBox
-              label="Matching après"
+              label={t.generating.matchAfter}
               value={afterVisible ? "91%" : "…"}
               highlight={afterVisible}
             />
@@ -993,20 +898,21 @@ function GeneratingScene({ progress }: { progress: number }) {
 }
 
 function ResultScene({ progress }: { progress: number }) {
+  const t = useMessages().content.demo.result;
   return (
     <AppFrame active="cv" credits={1}>
       <div className="mx-auto max-w-2xl space-y-3">
-        <p className="text-[11px] text-slate-500">← Retour au tableau de bord</p>
+        <p className="text-[11px] text-slate-500">{t.backToDashboard}</p>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <h2 className="font-display text-lg font-bold text-slate-900">Product Designer</h2>
-            <p className="text-[11px] text-slate-500">Template « Classique » · texte collé</p>
+            <h2 className="font-display text-lg font-bold text-slate-900">{t.jobTitle}</h2>
+            <p className="text-[11px] text-slate-500">{t.templateMeta}</p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
-                Source : texte collé
+                {t.source}
               </span>
               <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-                Matching 58% → 91% (+33)
+                {t.matchDelta}
               </span>
             </div>
           </div>
@@ -1015,7 +921,7 @@ function ResultScene({ progress }: { progress: number }) {
             style={{ opacity: Math.min(1, progress * 2) }}
           >
             <PenLine className="size-3" aria-hidden />
-            Modifier dans l&apos;éditeur
+            {t.editCta}
           </div>
         </div>
 
@@ -1027,30 +933,30 @@ function ResultScene({ progress }: { progress: number }) {
             <div className="mb-2 flex items-center justify-between">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-900">
                 <FileText className="size-3.5 text-blue-600" aria-hidden />
-                CV optimisé
+                {t.cvTitle}
               </p>
               <div className="flex gap-1">
                 <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-1.5 py-0.5 text-[9px] font-medium text-slate-700">
                   <Download className="size-2.5" aria-hidden />
-                  Word (.docx)
+                  {t.word}
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-1.5 py-0.5 text-[9px] font-medium text-slate-700">
                   <Download className="size-2.5" aria-hidden />
-                  PDF
+                  {t.pdf}
                 </span>
               </div>
             </div>
             <div className="overflow-hidden rounded-lg border border-slate-100 bg-slate-50">
               <div className="bg-gradient-to-br from-blue-800 to-blue-600 p-3 text-white">
                 <p className="text-[10px] text-blue-100">Léa Martin</p>
-                <p className="font-display text-sm font-bold">Product Designer</p>
+                <p className="font-display text-sm font-bold">{t.jobTitle}</p>
               </div>
               <div className="space-y-1.5 p-3">
                 <div className="h-1.5 w-2/3 rounded-full bg-slate-200" />
                 <div className="h-1.5 w-full rounded-full bg-slate-100" />
                 <div className="h-1.5 w-5/6 rounded-full bg-slate-100" />
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {["Figma", "Design System", "UX Research"].map((s) => (
+                  {t.cvSkills.map((s) => (
                     <span
                       key={s}
                       className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[8px] font-semibold text-blue-700"
@@ -1067,22 +973,19 @@ function ResultScene({ progress }: { progress: number }) {
             <div className="mb-2 flex items-center justify-between">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-900">
                 <Mail className="size-3.5 text-blue-600" aria-hidden />
-                Lettre de motivation
+                {t.letterTitle}
               </p>
               <div className="flex gap-1">
                 <span className="rounded-md border border-slate-200 px-1.5 py-0.5 text-[9px] font-medium text-slate-700">
-                  Word (.docx)
+                  {t.word}
                 </span>
                 <span className="rounded-md border border-slate-200 px-1.5 py-0.5 text-[9px] font-medium text-slate-700">
-                  PDF
+                  {t.pdf}
                 </span>
               </div>
             </div>
             <div className="space-y-1.5 rounded-lg border border-slate-100 bg-slate-50 p-3">
-              <p className="text-[10px] leading-relaxed text-slate-600">
-                Madame, Monsieur, forte d&apos;une expérience en Design System et recherche
-                utilisateur…
-              </p>
+              <p className="text-[10px] leading-relaxed text-slate-600">{t.letterExcerpt}</p>
               <div className="h-1.5 w-full rounded-full bg-slate-200" />
               <div className="h-1.5 w-11/12 rounded-full bg-slate-100" />
               <div className="h-1.5 w-4/5 rounded-full bg-slate-100" />
@@ -1095,28 +998,23 @@ function ResultScene({ progress }: { progress: number }) {
 }
 
 function OutroScene({ progress }: { progress: number }) {
-  const steps = [
-    "Importer mon CV de base",
-    "Analyser le matching (gratuit)",
-    "Générer mon CV (1 crédit)",
-    "Exporter Word & PDF",
-  ];
+  const t = useMessages().content.demo.outro;
   return (
     <div className="flex h-full flex-col items-center justify-center bg-slate-50 px-6 text-center">
       <p
         className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700"
         style={{ opacity: Math.min(1, progress * 3) }}
       >
-        Workflow Veyala
+        {t.eyebrow}
       </p>
       <h2
         className="mt-3 max-w-lg font-display text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
         style={{ opacity: Math.min(1, Math.max(0, (progress - 0.08) * 2.2)) }}
       >
-        Le vrai parcours, en 4 étapes
+        {t.title}
       </h2>
       <ol className="mt-6 w-full max-w-md space-y-2 text-left">
-        {steps.map((step, index) => (
+        {t.steps.map((step, index) => (
           <li
             key={step}
             className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-800 shadow-sm"

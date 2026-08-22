@@ -61,6 +61,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           >
             <VeyalaLogo />
           </Link>
+          <div className="border-b border-border px-3 py-2">
+            <LanguageSwitcher variant="compact" className="w-full justify-center" />
+          </div>
           <SidebarNav isAdmin={session.user.role === "ADMIN"} />
           <div className="space-y-3 border-t border-border p-3 max-md:pb-4">
             <section
@@ -99,7 +102,6 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               image={session.user.image ?? null}
               signOutAction={signOutAction}
             />
-            <LanguageSwitcher variant="compact" className="w-full justify-center" />
           </div>
         </CollapsibleSidebar>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -113,10 +115,13 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/dashboard" className="min-w-0" aria-label={m.app.dashboardAria}>
               <VeyalaLogo />
             </Link>
-            <Badge variant="secondary">
-              <Coins className="mr-1 size-3" aria-hidden />
-              {balance}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher variant="compact" />
+              <Badge variant="secondary">
+                <Coins className="mr-1 size-3" aria-hidden />
+                {balance}
+              </Badge>
+            </div>
           </header>
           <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6 pb-[calc(var(--app-tabbar)+1.5rem)] md:p-8">
             {children}
