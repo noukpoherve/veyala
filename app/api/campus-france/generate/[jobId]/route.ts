@@ -1,19 +1,32 @@
 import { auth } from "@/lib/auth";
 import { getGenerationJobForUser } from "@/lib/generation-job";
+import { getLocaleFromRequest } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
+import { localizeServerError } from "@/lib/user-facing-error";
 
 export const runtime = "nodejs";
 
 /** Poll endpoint for Campus France async generation jobs. */
-export async function GET(_req: Request, { params }: { params: { jobId: string } }) {
+export async function GET(req: Request, { params }: { params: { jobId: string } }) {
+  const locale = getLocaleFromRequest(req);
+  const m = getMessages(locale);
   const session = await auth();
   if (!session?.user) {
-    return Response.json({ error: "Authentification requise." }, { status: 401 });
+    return Response.json({ error: m.errors.authRequired }, { status: 401 });
   }
 
   const job = await getGenerationJobForUser(params.jobId, session.user.id);
   if (!job) {
-    return Response.json({ error: "Job introuvable." }, { status: 404 });
+    return Response.json({ error: m.api.generate.jobNotFound }, { status: 404 });
   }
 
-  return Response.json(job, { headers: { "Cache-Control": "no-store" } });
+  const payload =
+    job.error != null
+      ? {
+          ...job,
+          error: localizeServerError(job.error, job.errorStatus, locale, m.api.generate.failed),
+        }
+      : job;
+
+  return Response.json(payload, { headers: { "Cache-Control": "no-store" } });
 }

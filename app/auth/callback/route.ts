@@ -1,23 +1,33 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { persistUserLocale } from "@/lib/persist-locale";
 import { db } from "@/lib/db";
 import { normalizeEmail } from "@/lib/utils";
+import { getLocaleFromRequest } from "@/i18n/get-locale";
+import { localizeHref } from "@/i18n/path";
+import { sanitizeCallbackUrl } from "@/i18n/safe-path";
 
 /**
  * PKCE callback for every Supabase auth email link (signup confirmation,
  * password recovery, admin invitation): exchanges the one-time code for a
  * session, then forwards to `next` (sanitized to a local path).
+ *
+ * Public EN URL is `/en/auth/callback`; middleware rewrites to this handler.
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);
+  const locale = getLocaleFromRequest(req);
   const code = url.searchParams.get("code");
-  const rawNext = url.searchParams.get("next") ?? "/dashboard";
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/dashboard";
+  const next = sanitizeCallbackUrl(url.searchParams.get("next"), locale);
 
   if (code) {
     const supabase = createSupabaseServerClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) return NextResponse.redirect(new URL("/login?error=confirmation", url.origin));
+    if (error) {
+      return NextResponse.redirect(
+        new URL(localizeHref("/login?error=confirmation", locale), url.origin)
+      );
+    }
 
     const email = normalizeEmail(data.user?.email);
     if (email) {
@@ -27,15 +37,18 @@ export async function GET(req: Request) {
       });
       if (profile?.archivedAt) {
         await supabase.auth.signOut();
-        return NextResponse.redirect(new URL("/login?error=archived", url.origin));
+        return NextResponse.redirect(
+          new URL(localizeHref("/login?error=archived", locale), url.origin)
+        );
       }
+    }
+
+    if (data.user) {
+      await persistUserLocale(supabase, locale);
     }
 
     return NextResponse.redirect(new URL(next, url.origin));
   }
 
-  // No code: implicit-flow links (admin invitations) carry the tokens in the
-  // URL fragment, which never reaches the server. The fragment survives this
-  // redirect; the client bridge on the target page stores the session.
   return NextResponse.redirect(new URL(next, url.origin));
 }

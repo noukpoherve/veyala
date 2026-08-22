@@ -1,16 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Check, ChevronsUpDown, LogOut, Mail, Monitor, Moon, Sun } from "lucide-react";
+import { useMessages } from "@/components/i18n/locale-provider";
+import { Link } from "@/i18n/navigation";
 
 type Theme = "light" | "dark" | "system";
 const THEME_KEY = "veyala:theme";
 
-const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
-  { value: "light", label: "Clair", icon: Sun },
-  { value: "dark", label: "Sombre", icon: Moon },
-  { value: "system", label: "Préférence système", icon: Monitor },
+const THEME_OPTIONS: {
+  value: Theme;
+  icon: typeof Sun;
+  labelKey: "themeLight" | "themeDark" | "themeSystem";
+}[] = [
+  { value: "light", icon: Sun, labelKey: "themeLight" },
+  { value: "dark", icon: Moon, labelKey: "themeDark" },
+  { value: "system", icon: Monitor, labelKey: "themeSystem" },
 ];
 
 function applyTheme(theme: Theme) {
@@ -57,6 +62,7 @@ export function UserMenu({
   image: string | null;
   signOutAction: () => Promise<void>;
 }) {
+  const m = useMessages();
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>("system");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -123,9 +129,7 @@ export function UserMenu({
           </div>
 
           <div className="p-2">
-            <p className="px-3 pb-1 pt-2 text-sm font-semibold text-foreground">
-              Thème de l&apos;interface
-            </p>
+            <p className="px-3 pb-1 pt-2 text-sm font-semibold text-foreground">{m.app.theme}</p>
             {THEME_OPTIONS.map((option) => (
               <button
                 key={option.value}
@@ -136,7 +140,7 @@ export function UserMenu({
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent"
               >
                 <option.icon className="size-4 text-muted-foreground" aria-hidden />
-                <span className="flex-1 text-left">{option.label}</span>
+                <span className="flex-1 text-left">{m.app[option.labelKey]}</span>
                 {theme === option.value ? (
                   <Check className="size-4 text-foreground" aria-hidden />
                 ) : null}
@@ -152,7 +156,7 @@ export function UserMenu({
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent"
             >
               <Mail className="size-4 text-muted-foreground" aria-hidden />
-              Nous contacter
+              {m.pages.userMenu.contactUs}
             </Link>
             <form action={signOutAction}>
               <button
@@ -161,7 +165,7 @@ export function UserMenu({
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent"
               >
                 <LogOut className="size-4 text-muted-foreground" aria-hidden />
-                Se déconnecter
+                {m.app.signOut}
               </button>
             </form>
           </div>

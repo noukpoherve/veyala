@@ -6,7 +6,7 @@ import { ArrowDownWideNarrow, ChevronDown, ImagePlus, Plus, Trash2 } from "lucid
 import type { CVData } from "@/lib/cv-schema";
 import { sortByDatesDesc } from "@/lib/cv-sort";
 import { fileToDataUrl } from "@/lib/image-file";
-import { SOFT_SKILLS_CATALOG } from "@/lib/soft-skills";
+import { SOFT_SKILLS_CATALOG, softSkillDisplayLabel } from "@/lib/soft-skills";
 import { SortableList } from "@/components/cv/sortable-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useLocale, useMessages } from "@/components/i18n/locale-provider";
 
 function SectionCard({
   title,
@@ -93,6 +94,7 @@ function LinesField({
 }
 
 function ExperienceLinks({ form, index }: { form: UseFormReturn<CVData>; index: number }) {
+  const t = useMessages().forms.fields;
   const links = useFieldArray({
     control: form.control,
     name: `experiences.${index}.links`,
@@ -100,12 +102,12 @@ function ExperienceLinks({ form, index }: { form: UseFormReturn<CVData>; index: 
 
   return (
     <div className="space-y-2">
-      <Label>Liens de référence (package, démo, extension…)</Label>
+      <Label>{t.referenceLinks}</Label>
       {links.fields.map((field, i) => (
         <div key={field.id} className="flex flex-wrap gap-2">
           <Input
             className="w-full sm:w-40"
-            placeholder="Label"
+            placeholder={t.linkLabelPlaceholder}
             {...form.register(`experiences.${index}.links.${i}.label`)}
           />
           <Input
@@ -115,10 +117,7 @@ function ExperienceLinks({ form, index }: { form: UseFormReturn<CVData>; index: 
             placeholder="https://…"
             {...form.register(`experiences.${index}.links.${i}.url`)}
           />
-          <RemoveButton
-            onClick={() => links.remove(i)}
-            label={`Supprimer le lien de référence ${i + 1}`}
-          />
+          <RemoveButton onClick={() => links.remove(i)} label={t.removeReferenceLink(i + 1)} />
         </div>
       ))}
       <Button
@@ -128,13 +127,14 @@ function ExperienceLinks({ form, index }: { form: UseFormReturn<CVData>; index: 
         onClick={() => links.append({ label: "", url: "" })}
       >
         <Plus />
-        Ajouter un lien
+        {t.addLink}
       </Button>
     </div>
   );
 }
 
 function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
+  const t = useMessages().forms.fields;
   const inputRef = useRef<HTMLInputElement>(null);
   const photoUrl = form.watch("identity.photoUrl");
 
@@ -142,11 +142,7 @@ function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
     <div className="flex items-center gap-4">
       {photoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- data URL preview
-        <img
-          src={photoUrl}
-          alt="Portrait du candidat"
-          className="h-20 w-16 rounded-md border object-cover"
-        />
+        <img src={photoUrl} alt={t.photoAlt} className="h-20 w-16 rounded-md border object-cover" />
       ) : (
         <div className="flex h-20 w-16 items-center justify-center rounded-md border border-dashed text-muted-foreground">
           <ImagePlus className="size-5" aria-hidden />
@@ -174,7 +170,7 @@ function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
             onClick={() => inputRef.current?.click()}
           >
             <ImagePlus />
-            {photoUrl ? "Changer la photo" : "Ajouter une photo"}
+            {photoUrl ? t.changePhoto : t.addPhoto}
           </Button>
           {photoUrl ? (
             <Button
@@ -183,13 +179,11 @@ function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
               size="sm"
               onClick={() => form.setValue("identity.photoUrl", "", { shouldDirty: true })}
             >
-              Retirer
+              {t.removePhoto}
             </Button>
           ) : null}
         </div>
-        <p className="text-xs text-muted-foreground">
-          JPG, PNG ou WebP, affichée sur tous les templates (désactivable dans Personnaliser).
-        </p>
+        <p className="text-xs text-muted-foreground">{t.photoHint}</p>
       </div>
     </div>
   );
@@ -197,6 +191,9 @@ function PhotoField({ form }: { form: UseFormReturn<CVData> }) {
 
 /** All structured-CV form fields, shared by /profile and the CV editor. */
 export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
+  const t = useMessages().forms.fields;
+  const cv = useMessages().cv;
+  const locale = useLocale();
   const { control, register, getValues, setValue, watch } = form;
   const softSkills = watch("softSkills") ?? [];
   const links = useFieldArray({ control, name: "contact.links" });
@@ -209,19 +206,19 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
 
   return (
     <>
-      <SectionCard title="Identité & contact" defaultOpen>
+      <SectionCard title={t.identitySection} defaultOpen>
         <PhotoField form={form} />
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="fullName">Nom complet *</Label>
+            <Label htmlFor="fullName">{t.fullName}</Label>
             <Input id="fullName" {...register("identity.fullName")} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="headline">Titre / accroche</Label>
+            <Label htmlFor="headline">{t.headline}</Label>
             <Input
               id="headline"
               {...register("identity.headline")}
-              placeholder="Développeur Full-Stack, React, Node"
+              placeholder={t.headlinePlaceholder}
             />
           </div>
           <div className="space-y-1.5">
@@ -229,21 +226,25 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             <Input id="email" type="email" autoComplete="email" {...register("contact.email")} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="phone">Téléphone</Label>
+            <Label htmlFor="phone">{t.phone}</Label>
             <Input id="phone" type="tel" autoComplete="tel" {...register("contact.phone")} />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="location">Localisation</Label>
-            <Input id="location" {...register("contact.location")} placeholder="Paris, France" />
+            <Label htmlFor="location">{t.location}</Label>
+            <Input
+              id="location"
+              {...register("contact.location")}
+              placeholder={t.locationPlaceholder}
+            />
           </div>
         </div>
         <div className="space-y-2">
-          <Label>Liens (LinkedIn, GitHub, portfolio…)</Label>
+          <Label>{t.linksLabel}</Label>
           {links.fields.map((field, i) => (
             <div key={field.id} className="flex flex-wrap gap-2">
               <Input
                 className="w-full sm:w-40"
-                placeholder="Label"
+                placeholder={t.linkLabelPlaceholder}
                 {...register(`contact.links.${i}.label`)}
               />
               <Input
@@ -253,7 +254,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                 placeholder="https://…"
                 {...register(`contact.links.${i}.url`)}
               />
-              <RemoveButton onClick={() => links.remove(i)} label={`Supprimer le lien ${i + 1}`} />
+              <RemoveButton onClick={() => links.remove(i)} label={t.removeLink(i + 1)} />
             </div>
           ))}
           <Button
@@ -263,27 +264,24 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             onClick={() => links.append({ label: "", url: "" })}
           >
             <Plus />
-            Ajouter un lien
+            {t.addLink}
           </Button>
         </div>
         <div className="space-y-2">
-          <Label>Informations complémentaires (ex. Permis → B, Nationalité…)</Label>
+          <Label>{t.detailsLabel}</Label>
           {details.fields.map((field, i) => (
             <div key={field.id} className="flex flex-wrap gap-2">
               <Input
                 className="w-full sm:w-40"
-                placeholder="Permis"
+                placeholder={t.detailLabelPlaceholder}
                 {...register(`contact.details.${i}.label`)}
               />
               <Input
                 className="min-w-0 flex-1"
-                placeholder="B"
+                placeholder={t.detailValuePlaceholder}
                 {...register(`contact.details.${i}.value`)}
               />
-              <RemoveButton
-                onClick={() => details.remove(i)}
-                label={`Supprimer l'information ${i + 1}`}
-              />
+              <RemoveButton onClick={() => details.remove(i)} label={t.removeDetail(i + 1)} />
             </div>
           ))}
           <Button
@@ -293,16 +291,16 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             onClick={() => details.append({ label: "", value: "" })}
           >
             <Plus />
-            Ajouter une information
+            {t.addDetail}
           </Button>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="summary">Profil / résumé</Label>
+          <Label htmlFor="summary">{t.summary}</Label>
           <Textarea id="summary" rows={4} {...register("summary")} />
         </div>
       </SectionCard>
 
-      <SectionCard title="Expériences">
+      <SectionCard title={cv.experienceShort}>
         <SortableList ids={experiences.fields.map((f) => f.id)} onMove={experiences.move}>
           {(handle, i) => (
             <div className="space-y-3 rounded-lg border bg-card p-4">
@@ -310,48 +308,51 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                 <div className="pt-6">{handle}</div>
                 <div className="grid flex-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label>Intitulé du poste *</Label>
+                    <Label>{t.jobTitle}</Label>
                     <Input {...register(`experiences.${i}.title`)} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Entreprise</Label>
+                    <Label>{t.company}</Label>
                     <Input {...register(`experiences.${i}.company`)} />
                   </div>
                   <div className="space-y-1.5 sm:col-span-2">
-                    <Label>URL de l&apos;entreprise</Label>
+                    <Label>{t.companyUrl}</Label>
                     <Input
                       type="url"
                       inputMode="url"
                       {...register(`experiences.${i}.companyUrl`)}
-                      placeholder="https://entreprise.com"
+                      placeholder={t.companyUrlPlaceholder}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Lieu</Label>
+                    <Label>{t.place}</Label>
                     <Input {...register(`experiences.${i}.place`)} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Dates</Label>
-                    <Input {...register(`experiences.${i}.dates`)} placeholder="2023-2025" />
+                    <Label>{t.dates}</Label>
+                    <Input
+                      {...register(`experiences.${i}.dates`)}
+                      placeholder={t.datesPlaceholder}
+                    />
                   </div>
                 </div>
                 <RemoveButton
                   onClick={() => experiences.remove(i)}
-                  label={`Supprimer l'expérience ${i + 1}`}
+                  label={t.removeExperience(i + 1)}
                 />
               </div>
               <LinesField
-                label="Réalisations (une par ligne)"
+                label={t.bullets}
                 value={getValues(`experiences.${i}.bullets`)}
                 onChange={(lines) =>
                   setValue(`experiences.${i}.bullets`, lines, { shouldDirty: true })
                 }
-                placeholder={`Développé l'extension [MyExt](https://marketplace.visualstudio.com/…)`}
-                hint="Pour un mot cliquable dans une puce : [texte](https://url)"
+                placeholder={t.bulletsPlaceholder}
+                hint={t.bulletsHint}
               />
               <ExperienceLinks form={form} index={i} />
               <LinesField
-                label="Stack technique (une techno par ligne)"
+                label={t.stack}
                 rows={3}
                 value={getValues(`experiences.${i}.stack`)}
                 onChange={(lines) =>
@@ -380,7 +381,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             }
           >
             <Plus />
-            Ajouter une expérience
+            {t.addExperience}
           </Button>
           {experiences.fields.length > 1 ? (
             <Button
@@ -390,43 +391,40 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
               onClick={() => experiences.replace(sortByDatesDesc(getValues("experiences")))}
             >
               <ArrowDownWideNarrow />
-              Trier par date
+              {t.sortByDate}
             </Button>
           ) : null}
         </div>
       </SectionCard>
 
-      <SectionCard title="Formations">
+      <SectionCard title={cv.educationShort}>
         <SortableList ids={education.fields.map((f) => f.id)} onMove={education.move}>
           {(handle, i) => (
             <div className="flex items-start gap-2 rounded-lg border bg-card p-4">
               <div className="pt-6">{handle}</div>
               <div className="grid flex-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label>Diplôme *</Label>
+                  <Label>{t.degree}</Label>
                   <Input {...register(`education.${i}.degree`)} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>École</Label>
+                  <Label>{t.school}</Label>
                   <Input {...register(`education.${i}.school`)} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Lieu</Label>
+                  <Label>{t.place}</Label>
                   <Input {...register(`education.${i}.place`)} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Dates</Label>
+                  <Label>{t.dates}</Label>
                   <Input {...register(`education.${i}.dates`)} />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label>Détails</Label>
+                  <Label>{t.educationDetails}</Label>
                   <Input {...register(`education.${i}.details`)} />
                 </div>
               </div>
-              <RemoveButton
-                onClick={() => education.remove(i)}
-                label={`Supprimer la formation ${i + 1}`}
-              />
+              <RemoveButton onClick={() => education.remove(i)} label={t.removeEducation(i + 1)} />
             </div>
           )}
         </SortableList>
@@ -440,7 +438,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             }
           >
             <Plus />
-            Ajouter une formation
+            {t.addEducation}
           </Button>
           {education.fields.length > 1 ? (
             <Button
@@ -450,17 +448,15 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
               onClick={() => education.replace(sortByDatesDesc(getValues("education")))}
             >
               <ArrowDownWideNarrow />
-              Trier par date
+              {t.sortByDate}
             </Button>
           ) : null}
         </div>
       </SectionCard>
 
-      <SectionCard title="Certifications">
+      <SectionCard title={cv.certifications}>
         {certifications.fields.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Aucune certification. Ajoutez AWS, Scrum, Google Cloud, etc.
-          </p>
+          <p className="text-sm text-muted-foreground">{t.noCertifications}</p>
         ) : null}
         <SortableList ids={certifications.fields.map((f) => f.id)} onMove={certifications.move}>
           {(handle, i) => (
@@ -468,25 +464,28 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
               <div className="pt-6">{handle}</div>
               <div className="grid flex-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label>Nom *</Label>
+                  <Label>{t.certificationName}</Label>
                   <Input
                     {...register(`certifications.${i}.name`)}
-                    placeholder="AWS Solutions Architect Associate"
+                    placeholder={t.certificationNamePlaceholder}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Organisme</Label>
+                  <Label>{t.issuer}</Label>
                   <Input
                     {...register(`certifications.${i}.issuer`)}
-                    placeholder="Amazon Web Services"
+                    placeholder={t.issuerPlaceholder}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Date</Label>
-                  <Input {...register(`certifications.${i}.dates`)} placeholder="2024" />
+                  <Label>{t.dates}</Label>
+                  <Input
+                    {...register(`certifications.${i}.dates`)}
+                    placeholder={t.certificationDatePlaceholder}
+                  />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>URL du credential</Label>
+                  <Label>{t.credentialUrl}</Label>
                   <Input
                     type="url"
                     {...register(`certifications.${i}.url`)}
@@ -495,13 +494,13 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>N° / ID</Label>
+                  <Label>{t.credentialId}</Label>
                   <Input {...register(`certifications.${i}.credentialId`)} />
                 </div>
               </div>
               <RemoveButton
                 onClick={() => certifications.remove(i)}
-                label={`Supprimer la certification ${i + 1}`}
+                label={t.removeCertification(i + 1)}
               />
             </div>
           )}
@@ -521,31 +520,31 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
           }
         >
           <Plus />
-          Ajouter une certification
+          {t.addCertification}
         </Button>
       </SectionCard>
 
-      <SectionCard title="Compétences">
+      <SectionCard title={cv.skills}>
         <SortableList ids={skills.fields.map((f) => f.id)} onMove={skills.move}>
           {(handle, i) => (
             <div className="flex items-start gap-2 rounded-lg border bg-card p-4">
               <div className="pt-6">{handle}</div>
               <div className="flex-1 space-y-3">
                 <div className="space-y-1.5">
-                  <Label>Catégorie *</Label>
-                  <Input {...register(`skills.${i}.category`)} placeholder="Back-end, DevOps…" />
+                  <Label>{t.skillCategory}</Label>
+                  <Input
+                    {...register(`skills.${i}.category`)}
+                    placeholder={t.skillCategoryPlaceholder}
+                  />
                 </div>
                 <LinesField
-                  label="Compétences (une par ligne)"
+                  label={t.skillItems}
                   rows={3}
                   value={getValues(`skills.${i}.items`)}
                   onChange={(lines) => setValue(`skills.${i}.items`, lines, { shouldDirty: true })}
                 />
               </div>
-              <RemoveButton
-                onClick={() => skills.remove(i)}
-                label={`Supprimer la catégorie ${i + 1}`}
-              />
+              <RemoveButton onClick={() => skills.remove(i)} label={t.removeSkillCategory(i + 1)} />
             </div>
           )}
         </SortableList>
@@ -556,19 +555,14 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
           onClick={() => skills.append({ category: "", items: [] })}
         >
           <Plus />
-          Ajouter une catégorie
+          {t.addSkillCategory}
         </Button>
       </SectionCard>
 
-      <SectionCard title="Soft skills">
+      <SectionCard title={t.softSkillsSection}>
         <fieldset>
-          <legend className="mb-2 text-sm font-medium">
-            Qualités qui vous définissent (sélection)
-          </legend>
-          <p className="mb-3 text-xs text-muted-foreground">
-            Ces savoir-être enrichissent le matching ATS sans être confondus avec les outils
-            techniques.
-          </p>
+          <legend className="mb-2 text-sm font-medium">{t.softSkillsLegend}</legend>
+          <p className="mb-3 text-xs text-muted-foreground">{t.softSkillsHint}</p>
           <ul className="grid gap-2 sm:grid-cols-2">
             {SOFT_SKILLS_CATALOG.map((skill) => {
               const selected = softSkills.includes(skill.label);
@@ -589,7 +583,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                         });
                       }}
                     />
-                    {skill.label}
+                    {softSkillDisplayLabel(skill, locale)}
                   </label>
                 </li>
               );
@@ -598,23 +592,23 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
         </fieldset>
       </SectionCard>
 
-      <SectionCard title="Langues & centres d'intérêt">
+      <SectionCard title={t.languagesInterestsSection}>
         <div className="space-y-2">
-          <Label>Langues</Label>
+          <Label>{cv.languages}</Label>
           <SortableList ids={languages.fields.map((f) => f.id)} onMove={languages.move}>
             {(handle, i) => (
               <div className="flex items-center gap-2">
                 {handle}
                 <Input
                   className="w-48"
-                  placeholder="Français"
+                  placeholder={t.languageNamePlaceholder}
                   {...register(`languages.${i}.name`)}
                 />
-                <Input placeholder="Courant, C1…" {...register(`languages.${i}.level`)} />
-                <RemoveButton
-                  onClick={() => languages.remove(i)}
-                  label={`Supprimer la langue ${i + 1}`}
+                <Input
+                  placeholder={t.languageLevelPlaceholder}
+                  {...register(`languages.${i}.level`)}
                 />
+                <RemoveButton onClick={() => languages.remove(i)} label={t.removeLanguage(i + 1)} />
               </div>
             )}
           </SortableList>
@@ -625,11 +619,11 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             onClick={() => languages.append({ name: "", level: "" })}
           >
             <Plus />
-            Ajouter une langue
+            {t.addLanguage}
           </Button>
         </div>
         <LinesField
-          label="Centres d'intérêt (un par ligne)"
+          label={t.interests}
           rows={3}
           value={getValues("interests")}
           onChange={(lines) => setValue("interests", lines, { shouldDirty: true })}

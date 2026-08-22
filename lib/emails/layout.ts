@@ -46,6 +46,10 @@ function ctaButton(href: string, label: string): string {
                     </table>`;
 }
 
+import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
+import { localizePath } from "@/i18n/path";
+
 export type TransactionalEmail = {
   siteUrl: string;
   preheader: string;
@@ -59,18 +63,23 @@ export type TransactionalEmail = {
   /** Shown under the button; include the raw URL for clients that block buttons. */
   ctaUrl?: string;
   note?: string;
+  locale?: Locale;
 };
 
 export function renderTransactionalEmail(email: TransactionalEmail): {
   html: string;
   text: string;
 } {
+  const locale = email.locale ?? "fr";
+  const chrome = getMessages(locale).emails;
   const origin = email.siteUrl.replace(/\/+$/, "");
   const logoUrl = `${origin}/brand/veyala-logo-full.png`;
+  const termsHref = `${origin}${localizePath("/cgu", locale)}`;
+  const privacyHref = `${origin}${localizePath("/confidentialite", locale)}`;
   const cta = email.cta ? ctaButton(email.cta.href, email.cta.label) : "";
   const ctaUrl = email.ctaUrl
     ? `<p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:${EMAIL_BRAND.muted}">${escapeHtml(
-        "Si le bouton ne s'affiche pas, copiez ce lien :"
+        chrome.buttonFallback
       )}</p><p style="margin:6px 0 0;font-size:12px;line-height:1.6;color:${EMAIL_BRAND.faint};word-break:break-all">${escapeHtml(
         email.ctaUrl
       )}</p>`
@@ -82,7 +91,7 @@ export function renderTransactionalEmail(email: TransactionalEmail): {
     : "";
 
   const html = `<!DOCTYPE html>
-<html lang="fr" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="${locale === "en" ? "en" : "fr"}" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -119,12 +128,12 @@ export function renderTransactionalEmail(email: TransactionalEmail): {
           <tr>
             <td style="padding:28px 12px 8px;text-align:center;font-family:${EMAIL_BRAND.font}">
               <p style="margin:0 0 8px;font-size:12px;line-height:1.6;color:${EMAIL_BRAND.muted}">${escapeHtml(
-                "Veyala : votre candidature, augmentée par l'IA."
+                chrome.tagline
               )}</p>
               <p style="margin:0;font-size:12px;line-height:1.6;color:${EMAIL_BRAND.faint}">
-                <a href="${escapeHtml(`${origin}/cgu`)}" style="color:${EMAIL_BRAND.muted};text-decoration:underline">CGU</a>
+                <a href="${escapeHtml(termsHref)}" style="color:${EMAIL_BRAND.muted};text-decoration:underline">${escapeHtml(chrome.terms)}</a>
                 &nbsp;·&nbsp;
-                <a href="${escapeHtml(`${origin}/confidentialite`)}" style="color:${EMAIL_BRAND.muted};text-decoration:underline">Confidentialité</a>
+                <a href="${escapeHtml(privacyHref)}" style="color:${EMAIL_BRAND.muted};text-decoration:underline">${escapeHtml(chrome.privacy)}</a>
               </p>
             </td>
           </tr>
@@ -143,8 +152,8 @@ export function renderTransactionalEmail(email: TransactionalEmail): {
     email.bodyText ? `\n${email.bodyText}` : "",
     email.cta ? `\n${email.cta.label} : ${email.cta.href}` : "",
     email.note ? `\n${email.note}` : "",
-    "\n\nVeyala : votre candidature, augmentée par l'IA.",
-    `${origin}/cgu · ${origin}/confidentialite`,
+    `\n\n${chrome.tagline}`,
+    `${termsHref} · ${privacyHref}`,
   ];
 
   return { html, text: textParts.filter((part) => part !== "").join("\n") };

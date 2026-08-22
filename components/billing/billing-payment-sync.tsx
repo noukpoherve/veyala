@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { useMessages } from "@/components/i18n/locale-provider";
 
 /**
  * After Checkout redirects to /billing?status=success, asks Stripe (via our
@@ -12,6 +13,8 @@ import { Button } from "@/components/ui/button";
  * Safe to click repeatedly: the API is idempotent and will not double-credit.
  */
 export function BillingPaymentSync({ auto }: { auto: boolean }) {
+  const messages = useMessages();
+  const m = messages.pages.paymentSync;
   const router = useRouter();
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [credited, setCredited] = useState(0);
@@ -29,21 +32,17 @@ export function BillingPaymentSync({ auto }: { auto: boolean }) {
       } | null;
       if (!res.ok) {
         setState("error");
-        setMessage(body?.error || "Synchronisation impossible. Réessayez.");
+        setMessage(body?.error || m.syncFailed);
         return;
       }
       const n = body?.credited ?? 0;
       setCredited(n);
       setState("done");
-      setMessage(
-        n > 0
-          ? "De nouveaux crédits ont été ajoutés à votre solde."
-          : "Aucun nouveau crédit à ajouter. Votre solde est déjà à jour (un paiement « Payé » ne sera jamais re-crédité)."
-      );
+      setMessage(n > 0 ? m.creditsAdded : m.alreadyUpToDate);
       router.refresh();
     } catch {
       setState("error");
-      setMessage("Connexion impossible. Réessayez.");
+      setMessage(m.connectionFailed);
     }
   }
 
@@ -58,17 +57,17 @@ export function BillingPaymentSync({ auto }: { auto: boolean }) {
   if (state === "idle" && !auto) {
     return (
       <Button type="button" variant="outline" size="sm" onClick={() => void sync()}>
-        Actualiser mon solde
+        {m.refresh}
       </Button>
     );
   }
 
   if (state === "loading") {
     return (
-      <Alert variant="info" title="Vérification en cours…">
+      <Alert variant="info" title={m.checkingTitle}>
         <span className="inline-flex items-center gap-2">
           <Loader2 className="size-4 animate-spin" aria-hidden />
-          Synchronisation avec Stripe…
+          {m.checkingBody}
         </span>
       </Alert>
     );
@@ -76,7 +75,7 @@ export function BillingPaymentSync({ auto }: { auto: boolean }) {
 
   if (state === "error") {
     return (
-      <Alert variant="error" title="Synchronisation impossible">
+      <Alert variant="error" title={m.errorTitle}>
         <p>{message}</p>
         <Button
           type="button"
@@ -85,7 +84,7 @@ export function BillingPaymentSync({ auto }: { auto: boolean }) {
           className="mt-3"
           onClick={() => void sync()}
         >
-          Réessayer
+          {messages.common.retry}
         </Button>
       </Alert>
     );
@@ -95,7 +94,7 @@ export function BillingPaymentSync({ auto }: { auto: boolean }) {
     return (
       <Alert
         variant={credited > 0 ? "success" : "info"}
-        title={credited > 0 ? "Crédits ajoutés" : "Solde déjà à jour"}
+        title={credited > 0 ? m.addedTitle : m.upToDateTitle}
       >
         {message}
       </Alert>

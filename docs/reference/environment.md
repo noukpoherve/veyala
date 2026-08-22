@@ -10,7 +10,8 @@
 | `NEXT_PUBLIC_AUTH_GOOGLE` / `NEXT_PUBLIC_AUTH_LINKEDIN` | Affiche les boutons OAuth (`true`/`false`) — LinkedIn = provider Supabase `linkedin_oidc` | optionnel |
 | `ENCRYPTION_KEY` | Chiffrement des clés LLM admin (32 octets base64) | oui |
 | `ADMIN_EMAILS` | Emails promus ADMIN + destinataires des notifications support | oui |
-| `EMAIL_SERVER` / `EMAIL_FROM` | SMTP app (notifications support) — les emails Auth sont envoyés par Supabase | optionnel |
+| `EMAIL_SERVER` / `EMAIL_FROM` | SMTP app (support + Auth Send Email Hook) | recommandé |
+| `SEND_EMAIL_HOOK_SECRET` | Secret du hook Auth « Send Email » (Standard Webhooks). Sans lui, GoTrue envoie les templates FR statiques. | pour l'anglais Auth |
 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Paiements | pour la facturation |
 | `LLM_PROTOCOL` / `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` / `LLM_VISION_MODEL` | Fournisseur IA par défaut | oui |
 | `STORAGE_DRIVER` (+ `S3_*` ou `SUPABASE_*`) | Stockage fichiers (`local` interdit en prod / Vercel) | oui |

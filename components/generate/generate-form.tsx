@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Loader2, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MatchClaim, MatchItem } from "@/lib/match-score";
-import { resolveApiError, toUserMessage, USER_ERRORS } from "@/lib/user-facing-error";
+import { resolveApiError, toUserMessage } from "@/lib/user-facing-error";
+import { useLocale, useMessages } from "@/components/i18n/locale-provider";
+import type { Messages } from "@/i18n/messages";
+import { Link, useLocalizedRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,17 +35,37 @@ export interface TemplateOption {
   isOwn: boolean;
 }
 
-const PIPELINE_STEPS = [
-  { id: "reading_offer", label: "Lecture de l'offre" },
-  { id: "analyzing_requirements", label: "Analyse des exigences" },
-  { id: "scoring_before", label: "Matching initial" },
-  { id: "adapting_cv", label: "Adaptation ATS du CV" },
-  { id: "writing_letter", label: "Lettre de motivation" },
-  { id: "rendering_exports", label: "Exports PDF / Word" },
-  { id: "scoring_after", label: "Matching optimisé" },
+/**
+ * CV_LANGUAGE_OPTIONS carries the French values sent to the API; only the
+ * visible label is translated. Unknown values fall back to the raw label.
+ */
+export const CV_LANGUAGE_LABEL_KEYS: Record<string, keyof Messages["forms"]["cvLanguages"]> = {
+  "": "default",
+  français: "french",
+  anglais: "english",
+  espagnol: "spanish",
+  allemand: "german",
+  italien: "italian",
+  portugais: "portuguese",
+  néerlandais: "dutch",
+  arabe: "arabic",
+};
+
+const PIPELINE_STEP_IDS = [
+  "reading_offer",
+  "analyzing_requirements",
+  "scoring_before",
+  "adapting_cv",
+  "writing_letter",
+  "rendering_exports",
+  "scoring_after",
 ] as const;
 
-type StepId = (typeof PIPELINE_STEPS)[number]["id"];
+type StepId = (typeof PIPELINE_STEP_IDS)[number];
+
+function isStepId(value: string): value is StepId {
+  return (PIPELINE_STEP_IDS as readonly string[]).includes(value);
+}
 
 function claimKey(c: MatchClaim): string {
   return `${c.kind}:${c.term.toLowerCase()}`;
@@ -69,7 +90,10 @@ export function GenerateForm({
   balance: number;
   disabled: boolean;
 }) {
-  const router = useRouter();
+  const m = useMessages();
+  const locale = useLocale();
+  const t = m.forms.generate;
+  const router = useLocalizedRouter();
   const [mode, setMode] = useState<"text" | "url">("text");
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
   const [phase, setPhase] = useState<"compose" | "review" | "generating">("compose");
@@ -92,6 +116,16 @@ export function GenerateForm({
   const [activeStep, setActiveStep] = useState<StepId | "done" | null>(null);
   const [scoreBeforeLive, setScoreBeforeLive] = useState<number | null>(null);
   const [scoreAfterLive, setScoreAfterLive] = useState<number | null>(null);
+
+  const pipelineSteps = [
+    { id: "reading_offer", label: t.steps.readingOffer },
+    { id: "analyzing_requirements", label: t.steps.analyzingRequirements },
+    { id: "scoring_before", label: t.steps.scoringBefore },
+    { id: "adapting_cv", label: t.steps.adaptingCv },
+    { id: "writing_letter", label: m.app.coverLetter },
+    { id: "rendering_exports", label: m.forms.wizard.exportsStep },
+    { id: "scoring_after", label: t.steps.scoringAfter },
+  ];
 
   const noCredits = balance <= 0;
 
@@ -124,15 +158,15 @@ export function GenerateForm({
         });
         const body = (await res.json().catch(() => null)) as AnalyzeResponse | null;
         if (!res.ok) {
-          setWarning(resolveApiError(res.status, body, USER_ERRORS.reproject));
+          setWarning(resolveApiError(res.status, body, m.errors.reproject, locale));
           return;
         }
         if (body?.projected?.score != null) setProjectedScore(body.projected.score);
       } catch (e) {
-        setWarning(toUserMessage(e, USER_ERRORS.reproject));
+        setWarning(toUserMessage(e, m.errors.reproject, locale));
       }
     },
-    [jobPayload]
+    [jobPayload, locale, m.errors.reproject]
   );
 
   const onToggleClaim = useCallback(
@@ -188,7 +222,7 @@ export function GenerateForm({
     const fields = readForm(form);
     const validationError = validateOptions(fields);
     if (validationError) {
-      showError("Champs invalides", validationError);
+      showError(m.forms.wizard.invalidFields, validationError);
       return;
     }
     setOptions({
@@ -212,7 +246,7 @@ export function GenerateForm({
         });
         const body = (await res.json().catch(() => null)) as AnalyzeResponse | null;
         if (!res.ok || !body?.before) {
-          throw new Error(resolveApiError(res.status, body, USER_ERRORS.analyze));
+          throw new Error(resolveApiError(res.status, body, m.errors.analyze, locale));
         }
         setBeforeScore(body.before.score);
         setProjectedScore(body.projected?.score ?? body.before.score);
@@ -222,12 +256,12 @@ export function GenerateForm({
         if (body.jobText) setJobPayload({ jobText: body.jobText });
         setPhase("review");
       } catch (e) {
-        const message = toUserMessage(e, USER_ERRORS.analyze);
-        if (message === USER_ERRORS.network || /indisponible|502|503|500/i.test(message)) {
+        const message = toUserMessage(e, m.errors.analyze, locale);
+        if (message === m.errors.network || /indisponible|unavailable|502|503|500/i.test(message)) {
           failHard("analyze");
           return;
         }
-        showError("Analyse impossible", message);
+        showError(m.forms.wizard.analyzeFailed, message);
       }
     });
   }
@@ -264,7 +298,7 @@ export function GenerateForm({
         error?: string;
       } | null;
       if (!enqueueRes.ok || !enqueueBody?.jobId) {
-        throw new Error(resolveApiError(enqueueRes.status, enqueueBody, USER_ERRORS.generate));
+        throw new Error(resolveApiError(enqueueRes.status, enqueueBody, m.errors.generate, locale));
       }
 
       const jobId = enqueueBody.jobId;
@@ -292,8 +326,8 @@ export function GenerateForm({
           continue;
         }
 
-        if (job.step && PIPELINE_STEPS.some((s) => s.id === job.step)) {
-          setActiveStep(job.step as StepId);
+        if (job.step && isStepId(job.step)) {
+          setActiveStep(job.step);
         }
         if (typeof job.scoreBefore === "number") setScoreBeforeLive(job.scoreBefore);
         if (typeof job.scoreAfter === "number") setScoreAfterLive(job.scoreAfter);
@@ -304,7 +338,7 @@ export function GenerateForm({
           break;
         }
         if (job.status === "FAILED") {
-          throw new Error(job.error?.trim() || USER_ERRORS.generate);
+          throw new Error(job.error?.trim() || m.errors.generate);
         }
 
         await new Promise((r) => setTimeout(r, 450));
@@ -313,20 +347,20 @@ export function GenerateForm({
       // Drain worker (best-effort) so the browser doesn't leave it hanging silently.
       await runPromise;
 
-      if (!doneId) throw new Error(USER_ERRORS.generate);
+      if (!doneId) throw new Error(m.errors.generate);
       router.push(`/cv/${doneId}`);
     } catch (e) {
       idempotencyKeyRef.current = null;
-      const message = toUserMessage(e, USER_ERRORS.generate);
+      const message = toUserMessage(e, m.errors.generate, locale);
       if (
-        message === USER_ERRORS.network ||
-        message === USER_ERRORS.generate ||
-        /indisponible|remboursé|502|503|500/i.test(message)
+        message === m.errors.network ||
+        message === m.errors.generate ||
+        /indisponible|remboursé|unavailable|refunded|502|503|500/i.test(message)
       ) {
         router.push("/erreur?reason=generate&back=/generate");
         return;
       }
-      showError("Génération interrompue", message);
+      showError(m.forms.wizard.generateInterrupted, message);
       setPhase("review");
       setActiveStep(null);
     }
@@ -338,12 +372,12 @@ export function GenerateForm({
         <form onSubmit={onAnalyze} className="space-y-6" aria-busy={analyzing}>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">1. L&apos;offre d&apos;emploi</CardTitle>
+              <CardTitle className="text-base">{t.jobStep}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div
                 role="tablist"
-                aria-label="Source de l'offre"
+                aria-label={t.jobSource}
                 className="inline-flex rounded-md border p-0.5"
               >
                 <button
@@ -356,7 +390,7 @@ export function GenerateForm({
                   )}
                   onClick={() => setMode("text")}
                 >
-                  Texte collé (recommandé)
+                  {m.forms.wizard.pastedText}
                 </button>
                 <button
                   type="button"
@@ -368,32 +402,32 @@ export function GenerateForm({
                   )}
                   onClick={() => setMode("url")}
                 >
-                  URL de l&apos;offre
+                  {m.app.jobUrl}
                 </button>
               </div>
 
               {mode === "text" ? (
                 <div className="space-y-1.5">
-                  <Label htmlFor="jobText">Texte de l&apos;offre</Label>
+                  <Label htmlFor="jobText">{m.app.jobText}</Label>
                   <Textarea
                     id="jobText"
                     name="jobText"
                     rows={8}
                     required={phase === "compose"}
                     defaultValue={jobPayload.jobText}
-                    placeholder="Collez ici l'intégralité de l'offre d'emploi…"
+                    placeholder={t.jobTextPlaceholder}
                   />
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  <Label htmlFor="jobUrl">URL de l&apos;offre</Label>
+                  <Label htmlFor="jobUrl">{m.app.jobUrl}</Label>
                   <Input
                     id="jobUrl"
                     name="jobUrl"
                     type="url"
                     required={phase === "compose"}
                     defaultValue={jobPayload.jobUrl}
-                    placeholder="https://…"
+                    placeholder={m.forms.wizard.urlPlaceholder}
                   />
                 </div>
               )}
@@ -402,19 +436,19 @@ export function GenerateForm({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">2. Le template</CardTitle>
+              <CardTitle className="text-base">{t.templateStep}</CardTitle>
             </CardHeader>
             <CardContent>
               <fieldset className="grid gap-3 sm:grid-cols-3">
-                <legend className="sr-only">Choix du template</legend>
-                {templates.map((t) => (
+                <legend className="sr-only">{m.forms.wizard.templateLegend}</legend>
+                {templates.map((tpl) => (
                   <TemplateOptionCard
-                    key={t.id}
-                    id={t.id}
-                    name={t.name}
-                    swatch={{ layout: t.layout, colors: t.colors, band: t.band }}
-                    selected={templateId === t.id}
-                    onSelect={() => setTemplateId(t.id)}
+                    key={tpl.id}
+                    id={tpl.id}
+                    name={tpl.name}
+                    swatch={{ layout: tpl.layout, colors: tpl.colors, band: tpl.band }}
+                    selected={templateId === tpl.id}
+                    onSelect={() => setTemplateId(tpl.id)}
                     groupName="template"
                   />
                 ))}
@@ -424,50 +458,49 @@ export function GenerateForm({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">3. Options</CardTitle>
+              <CardTitle className="text-base">{m.forms.wizard.optionsStep}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="targetTitle">Intitulé de poste visé (optionnel)</Label>
+                <Label htmlFor="targetTitle">{t.targetTitleLabel}</Label>
                 <Input
                   id="targetTitle"
                   name="targetTitle"
                   defaultValue={options.targetTitle}
-                  placeholder="Développeur DevOps"
+                  placeholder={t.targetTitlePlaceholder}
                   maxLength={120}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Un vrai intitulé de poste, pas de texte aléatoire.
-                </p>
+                <p className="text-xs text-muted-foreground">{t.targetTitleHint}</p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="language">Langue du CV (optionnel)</Label>
+                <Label htmlFor="language">{m.app.languageLabel}</Label>
                 <select
                   id="language"
                   name="language"
                   defaultValue={options.language}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  {CV_LANGUAGE_OPTIONS.map((opt) => (
-                    <option key={opt.value || "default"} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
+                  {CV_LANGUAGE_OPTIONS.map((opt) => {
+                    const key = CV_LANGUAGE_LABEL_KEYS[opt.value];
+                    return (
+                      <option key={opt.value || "default"} value={opt.value}>
+                        {key ? m.forms.cvLanguages[key] : opt.label}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="instructions">Consignes libres (optionnel)</Label>
+                <Label htmlFor="instructions">{m.forms.wizard.instructionsLabel}</Label>
                 <Textarea
                   id="instructions"
                   name="instructions"
                   rows={2}
                   defaultValue={options.instructions}
                   maxLength={1000}
-                  placeholder="Ex. Insister sur React, CV sur une page…"
+                  placeholder={t.instructionsPlaceholder}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Instructions en français (ou anglais) lisibles. Le charabia est refusé.
-                </p>
+                <p className="text-xs text-muted-foreground">{t.instructionsHint}</p>
               </div>
             </CardContent>
           </Card>
@@ -481,7 +514,7 @@ export function GenerateForm({
               ) : null}
               <Button type="submit" variant="gradient" size="lg" disabled={disabled || analyzing}>
                 {analyzing ? <Loader2 className="animate-spin" /> : <Search />}
-                {analyzing ? "Analyse en cours…" : "Analyser le matching (gratuit)"}
+                {analyzing ? t.analyzing : t.analyzeCta}
               </Button>
             </div>
           ) : null}
@@ -496,7 +529,7 @@ export function GenerateForm({
             </Alert>
           ) : null}
           {warning ? (
-            <Alert variant="warning" title="Score projeté non mis à jour">
+            <Alert variant="warning" title={t.projectedStaleTitle}>
               {warning}
             </Alert>
           ) : null}
@@ -517,7 +550,7 @@ export function GenerateForm({
               onClick={() => setPhase("compose")}
               disabled={analyzing}
             >
-              Modifier l&apos;offre
+              {t.editJob}
             </Button>
             <Button
               type="button"
@@ -527,20 +560,20 @@ export function GenerateForm({
               onClick={onGenerate}
             >
               <Sparkles />
-              Générer mon CV (1 crédit)
+              {t.generateCta}
             </Button>
           </div>
           {noCredits ? (
             <Alert
               variant="warning"
-              title="Solde de crédits épuisé"
+              title={m.forms.wizard.noCreditsTitle}
               action={
                 <Link href="/billing" className="font-medium">
-                  Recharger des crédits
+                  {m.forms.wizard.topUpCredits}
                 </Link>
               }
             >
-              Il faut 1 crédit pour générer un CV adapté à cette offre.
+              {t.noCreditsBody}
             </Alert>
           ) : null}
         </div>
@@ -549,23 +582,21 @@ export function GenerateForm({
       {phase === "generating" ? (
         <Card aria-live="polite">
           <CardHeader>
-            <CardTitle className="text-base">Génération en cours</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Les étapes restent synchronisées même si la connexion est interrompue un instant.
-            </p>
+            <CardTitle className="text-base">{m.forms.wizard.generating}</CardTitle>
+            <p className="text-sm text-muted-foreground">{t.generatingHint}</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <PipelineTimeline steps={PIPELINE_STEPS} activeStep={activeStep} />
+            <PipelineTimeline steps={pipelineSteps} activeStep={activeStep} />
             <div className="grid gap-3 sm:grid-cols-2">
               <StatCard
                 size="compact"
-                label="Matching avant"
+                label={t.matchBefore}
                 value={`${scoreBeforeLive ?? beforeScore}%`}
               />
               <StatCard
                 size="compact"
                 emphasis
-                label="Matching après"
+                label={t.matchAfter}
                 value={scoreAfterLive !== null ? `${scoreAfterLive}%` : "…"}
               />
             </div>

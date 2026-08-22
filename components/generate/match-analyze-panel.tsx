@@ -1,17 +1,11 @@
 "use client";
 
 import { memo } from "react";
-import type { MatchClaim, MatchItem, MatchKind } from "@/lib/match-score";
+import type { MatchClaim, MatchItem } from "@/lib/match-score";
+import { useMessages } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/ui/stat-card";
 import { cn } from "@/lib/utils";
-
-const KIND_LABEL: Record<MatchKind, string> = {
-  must: "Indispensable",
-  tool: "Outil / stack",
-  soft: "Soft skill",
-  nice: "Atout",
-};
 
 export interface MatchAnalyzePanelProps {
   beforeScore: number;
@@ -42,6 +36,7 @@ export const MatchAnalyzePanel = memo(function MatchAnalyzePanel({
   onSelectAll,
   onClear,
 }: MatchAnalyzePanelProps) {
+  const t = useMessages().forms.match;
   const selectedKeys = new Set(selected.map(claimKey));
 
   return (
@@ -51,54 +46,43 @@ export const MatchAnalyzePanel = memo(function MatchAnalyzePanel({
     >
       <header className="space-y-1">
         <h2 id="analyze-panel-title" className="font-display text-lg font-semibold">
-          Analyse de matching
+          {t.panelTitle}
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Aucun crédit débité. Cochez les compétences que vous assumez pour viser un score élevé
-          avant de générer.
-        </p>
+        <p className="text-sm text-muted-foreground">{t.panelIntro}</p>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-3" role="status" aria-live="polite">
-        <StatCard size="compact" label="Score actuel" value={`${beforeScore}%`} />
-        <StatCard
-          size="compact"
-          emphasis
-          label="Score projeté (sélection)"
-          value={`${projectedScore}%`}
-        />
-        <StatCard size="compact" label="Max si tout est coché" value={`${maxProjectedScore}%`} />
+        <StatCard size="compact" label={t.currentScore} value={`${beforeScore}%`} />
+        <StatCard size="compact" emphasis label={t.projectedScore} value={`${projectedScore}%`} />
+        <StatCard size="compact" label={t.maxScore} value={`${maxProjectedScore}%`} />
       </div>
 
       {gaps.length === 0 ? (
         <p className="rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success">
-          Votre profil couvre déjà la checklist extraite. Vous pouvez générer directement.
+          {t.noGaps}
         </p>
       ) : (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold">Compétences manquantes</h3>
+            <h3 className="text-sm font-semibold">{t.gapsTitle}</h3>
             <div className="flex gap-2">
               <button
                 type="button"
                 className="text-xs font-medium text-primary underline-offset-2 hover:underline"
                 onClick={onSelectAll}
               >
-                Tout cocher
+                {t.checkAll}
               </button>
               <button
                 type="button"
                 className="text-xs text-muted-foreground underline-offset-2 hover:underline"
                 onClick={onClear}
               >
-                Tout décocher
+                {t.uncheckAll}
               </button>
             </div>
           </div>
-          <p className="text-xs text-amber-800">
-            N&apos;ajoutez que ce que vous pouvez assumer en entretien. Les cases décochées restent
-            absentes du CV généré.
-          </p>
+          <p className="text-xs text-amber-800">{t.gapsWarning}</p>
           <ul className="divide-y rounded-md border">
             {gaps.map((gap) => {
               const claim: MatchClaim = { term: gap.term, kind: gap.kind };
@@ -118,7 +102,7 @@ export const MatchAnalyzePanel = memo(function MatchAnalyzePanel({
                       onChange={() => onToggle(claim)}
                     />
                     <span className="min-w-0 flex-1 font-medium">{gap.term}</span>
-                    <Badge variant="secondary">{KIND_LABEL[gap.kind]}</Badge>
+                    <Badge variant="secondary">{t.kinds[gap.kind]}</Badge>
                   </label>
                 </li>
               );

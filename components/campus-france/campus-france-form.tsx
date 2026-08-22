@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CoherenceItem } from "@/lib/campus-france/coherence-score";
 import { PROJECT_MAX, PROJECT_MIN } from "@/lib/campus-france/schema";
-import { resolveApiError, toUserMessage, USER_ERRORS } from "@/lib/user-facing-error";
+import { resolveApiError, toUserMessage } from "@/lib/user-facing-error";
+import { useLocale, useMessages } from "@/components/i18n/locale-provider";
+import { Link, useLocalizedRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,19 +24,23 @@ import {
   validateInstructions,
   validateJobText,
 } from "@/lib/job-field-validation";
-import type { TemplateOption } from "@/components/generate/generate-form";
+import { CV_LANGUAGE_LABEL_KEYS, type TemplateOption } from "@/components/generate/generate-form";
 
-const PIPELINE_STEPS = [
-  { id: "reading_offer", label: "Lecture de la formation" },
-  { id: "analyzing_requirements", label: "Analyse des critères" },
-  { id: "scoring_before", label: "Cohérence initiale" },
-  { id: "writing_letter", label: "Lettre de motivation" },
-  { id: "adapting_cv", label: "CV académique" },
-  { id: "rendering_exports", label: "Exports PDF / Word" },
-  { id: "scoring_after", label: "Cohérence finale" },
+const PIPELINE_STEP_IDS = [
+  "reading_offer",
+  "analyzing_requirements",
+  "scoring_before",
+  "writing_letter",
+  "adapting_cv",
+  "rendering_exports",
+  "scoring_after",
 ] as const;
 
-type StepId = (typeof PIPELINE_STEPS)[number]["id"];
+type StepId = (typeof PIPELINE_STEP_IDS)[number];
+
+function isStepId(value: string): value is StepId {
+  return (PIPELINE_STEP_IDS as readonly string[]).includes(value);
+}
 
 type AnalyzeResponse = {
   ok?: boolean;
@@ -63,7 +67,10 @@ export function CampusFranceForm({
   balance: number;
   disabled: boolean;
 }) {
-  const router = useRouter();
+  const m = useMessages();
+  const locale = useLocale();
+  const t = m.forms.campusFrance;
+  const router = useLocalizedRouter();
   const [mode, setMode] = useState<"text" | "url">("text");
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
   const [phase, setPhase] = useState<"compose" | "review" | "generating">("compose");
@@ -96,6 +103,16 @@ export function CampusFranceForm({
   const [activeStep, setActiveStep] = useState<StepId | "done" | null>(null);
   const [scoreBeforeLive, setScoreBeforeLive] = useState<number | null>(null);
   const [scoreAfterLive, setScoreAfterLive] = useState<number | null>(null);
+
+  const pipelineSteps = [
+    { id: "reading_offer", label: t.steps.readingProgram },
+    { id: "analyzing_requirements", label: t.steps.analyzingCriteria },
+    { id: "scoring_before", label: t.steps.scoringBefore },
+    { id: "writing_letter", label: m.app.coverLetter },
+    { id: "adapting_cv", label: t.steps.academicCv },
+    { id: "rendering_exports", label: m.forms.wizard.exportsStep },
+    { id: "scoring_after", label: t.steps.scoringAfter },
+  ];
 
   const noCredits = balance <= 0;
 
@@ -152,7 +169,7 @@ export function CampusFranceForm({
       validateInstructions(fields.instructions) ||
       (fields.programText ? validateJobText(fields.programText) : null);
     if (validationError) {
-      showError("Champs invalides", validationError);
+      showError(m.forms.wizard.invalidFields, validationError);
       return;
     }
     setOptions({
@@ -175,17 +192,17 @@ export function CampusFranceForm({
         });
         const body = (await res.json().catch(() => null)) as AnalyzeResponse | null;
         if (!res.ok || !body?.before || !body.studyProject || !body.professionalProject) {
-          throw new Error(resolveApiError(res.status, body, USER_ERRORS.analyze));
+          throw new Error(resolveApiError(res.status, body, m.errors.analyze, locale));
         }
         applyAnalyzeResult(body);
         setPhase("review");
       } catch (e) {
-        const message = toUserMessage(e, USER_ERRORS.analyze);
-        if (message === USER_ERRORS.network || /indisponible|502|503|500/i.test(message)) {
+        const message = toUserMessage(e, m.errors.analyze, locale);
+        if (message === m.errors.network || /indisponible|unavailable|502|503|500/i.test(message)) {
           router.push("/erreur?reason=analyze&back=/campus-france");
           return;
         }
-        showError("Analyse impossible", message);
+        showError(m.forms.wizard.analyzeFailed, message);
       }
     });
   }
@@ -194,11 +211,11 @@ export function CampusFranceForm({
     setError(null);
     if (mode === "rescore") {
       if (projects.studyProject.trim().length < PROJECT_MIN) {
-        showError("Projet d'études", `Minimum ${PROJECT_MIN} caractères.`);
+        showError(t.studyProject, t.projectTooShort(PROJECT_MIN));
         return;
       }
       if (projects.professionalProject.trim().length < PROJECT_MIN) {
-        showError("Projet professionnel", `Minimum ${PROJECT_MIN} caractères.`);
+        showError(t.professionalProject, t.projectTooShort(PROJECT_MIN));
         return;
       }
     }
@@ -222,13 +239,13 @@ export function CampusFranceForm({
         });
         const body = (await res.json().catch(() => null)) as AnalyzeResponse | null;
         if (!res.ok || !body?.before || !body.studyProject || !body.professionalProject) {
-          throw new Error(resolveApiError(res.status, body, USER_ERRORS.analyze));
+          throw new Error(resolveApiError(res.status, body, m.errors.analyze, locale));
         }
         applyAnalyzeResult(body);
       } catch (e) {
         showError(
-          mode === "propose" ? "Nouvelle proposition impossible" : "Recalcul impossible",
-          toUserMessage(e, USER_ERRORS.analyze)
+          mode === "propose" ? t.proposeAgainFailed : t.rescoreFailed,
+          toUserMessage(e, m.errors.analyze, locale)
         );
       }
     });
@@ -237,11 +254,11 @@ export function CampusFranceForm({
   async function onGenerate() {
     setError(null);
     if (projects.studyProject.trim().length < PROJECT_MIN) {
-      showError("Projet d'études", `Minimum ${PROJECT_MIN} caractères avant de générer.`);
+      showError(t.studyProject, t.projectTooShortToGenerate(PROJECT_MIN));
       return;
     }
     if (projects.professionalProject.trim().length < PROJECT_MIN) {
-      showError("Projet professionnel", `Minimum ${PROJECT_MIN} caractères avant de générer.`);
+      showError(t.professionalProject, t.projectTooShortToGenerate(PROJECT_MIN));
       return;
     }
 
@@ -273,7 +290,7 @@ export function CampusFranceForm({
         error?: string;
       } | null;
       if (!enqueueRes.ok || !enqueueBody?.jobId) {
-        throw new Error(resolveApiError(enqueueRes.status, enqueueBody, USER_ERRORS.generate));
+        throw new Error(resolveApiError(enqueueRes.status, enqueueBody, m.errors.generate, locale));
       }
 
       const jobId = enqueueBody.jobId;
@@ -303,8 +320,8 @@ export function CampusFranceForm({
           continue;
         }
 
-        if (job.step && PIPELINE_STEPS.some((s) => s.id === job.step)) {
-          setActiveStep(job.step as StepId);
+        if (job.step && isStepId(job.step)) {
+          setActiveStep(job.step);
         }
         if (typeof job.scoreBefore === "number") setScoreBeforeLive(job.scoreBefore);
         if (typeof job.scoreAfter === "number") setScoreAfterLive(job.scoreAfter);
@@ -315,7 +332,7 @@ export function CampusFranceForm({
           break;
         }
         if (job.status === "FAILED") {
-          throw new Error(job.error?.trim() || USER_ERRORS.generate);
+          throw new Error(job.error?.trim() || m.errors.generate);
         }
 
         await new Promise((r) => setTimeout(r, 450));
@@ -323,20 +340,20 @@ export function CampusFranceForm({
 
       await runPromise;
 
-      if (!doneId) throw new Error(USER_ERRORS.generate);
+      if (!doneId) throw new Error(m.errors.generate);
       router.push(`/cv/${doneId}`);
     } catch (e) {
       idempotencyKeyRef.current = null;
-      const message = toUserMessage(e, USER_ERRORS.generate);
+      const message = toUserMessage(e, m.errors.generate, locale);
       if (
-        message === USER_ERRORS.network ||
-        message === USER_ERRORS.generate ||
-        /indisponible|remboursé|502|503|500/i.test(message)
+        message === m.errors.network ||
+        message === m.errors.generate ||
+        /indisponible|remboursé|unavailable|refunded|502|503|500/i.test(message)
       ) {
         router.push("/erreur?reason=generate&back=/campus-france");
         return;
       }
-      showError("Génération interrompue", message);
+      showError(m.forms.wizard.generateInterrupted, message);
       setPhase("review");
       setActiveStep(null);
     }
@@ -348,12 +365,12 @@ export function CampusFranceForm({
         <form onSubmit={onAnalyze} className="space-y-6" aria-busy={analyzing}>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">1. La fiche de formation</CardTitle>
+              <CardTitle className="text-base">{t.programStep}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div
                 role="tablist"
-                aria-label="Source de la formation"
+                aria-label={t.programSource}
                 className="inline-flex rounded-md border p-0.5"
               >
                 <button
@@ -366,7 +383,7 @@ export function CampusFranceForm({
                   )}
                   onClick={() => setMode("text")}
                 >
-                  Texte collé (recommandé)
+                  {m.forms.wizard.pastedText}
                 </button>
                 <button
                   type="button"
@@ -378,32 +395,32 @@ export function CampusFranceForm({
                   )}
                   onClick={() => setMode("url")}
                 >
-                  URL de la formation
+                  {t.programUrl}
                 </button>
               </div>
 
               {mode === "text" ? (
                 <div className="space-y-1.5">
-                  <Label htmlFor="programText">Texte de la fiche</Label>
+                  <Label htmlFor="programText">{t.programTextLabel}</Label>
                   <Textarea
                     id="programText"
                     name="programText"
                     rows={8}
                     required={phase === "compose"}
                     defaultValue={programPayload.programText}
-                    placeholder="Collez ici la fiche de formation (objectifs, prérequis, débouchés)…"
+                    placeholder={t.programTextPlaceholder}
                   />
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  <Label htmlFor="programUrl">URL de la formation</Label>
+                  <Label htmlFor="programUrl">{t.programUrl}</Label>
                   <Input
                     id="programUrl"
                     name="programUrl"
                     type="url"
                     required={phase === "compose"}
                     defaultValue={programPayload.programUrl}
-                    placeholder="https://…"
+                    placeholder={m.forms.wizard.urlPlaceholder}
                   />
                 </div>
               )}
@@ -412,19 +429,19 @@ export function CampusFranceForm({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">2. Le template CV</CardTitle>
+              <CardTitle className="text-base">{t.templateStep}</CardTitle>
             </CardHeader>
             <CardContent>
               <fieldset className="grid gap-3 sm:grid-cols-3">
-                <legend className="sr-only">Choix du template</legend>
-                {templates.map((t) => (
+                <legend className="sr-only">{m.forms.wizard.templateLegend}</legend>
+                {templates.map((tpl) => (
                   <TemplateOptionCard
-                    key={t.id}
-                    id={t.id}
-                    name={t.name}
-                    swatch={{ layout: t.layout, colors: t.colors, band: t.band }}
-                    selected={templateId === t.id}
-                    onSelect={() => setTemplateId(t.id)}
+                    key={tpl.id}
+                    id={tpl.id}
+                    name={tpl.name}
+                    swatch={{ layout: tpl.layout, colors: tpl.colors, band: tpl.band }}
+                    selected={templateId === tpl.id}
+                    onSelect={() => setTemplateId(tpl.id)}
                     groupName="template"
                   />
                 ))}
@@ -434,33 +451,36 @@ export function CampusFranceForm({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">3. Options</CardTitle>
+              <CardTitle className="text-base">{m.forms.wizard.optionsStep}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="language">Langue (optionnel)</Label>
+                <Label htmlFor="language">{t.languageLabel}</Label>
                 <select
                   id="language"
                   name="language"
                   defaultValue={options.language}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  {CV_LANGUAGE_OPTIONS.map((opt) => (
-                    <option key={opt.value || "default"} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
+                  {CV_LANGUAGE_OPTIONS.map((opt) => {
+                    const key = CV_LANGUAGE_LABEL_KEYS[opt.value];
+                    return (
+                      <option key={opt.value || "default"} value={opt.value}>
+                        {key ? m.forms.cvLanguages[key] : opt.label}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="instructions">Consignes libres (optionnel)</Label>
+                <Label htmlFor="instructions">{m.forms.wizard.instructionsLabel}</Label>
                 <Textarea
                   id="instructions"
                   name="instructions"
                   rows={2}
                   defaultValue={options.instructions}
                   maxLength={1000}
-                  placeholder="Ex. Insister sur mon stage en labo, lettre sur une page…"
+                  placeholder={t.instructionsPlaceholder}
                 />
               </div>
             </CardContent>
@@ -475,14 +495,9 @@ export function CampusFranceForm({
               ) : null}
               <Button type="submit" variant="gradient" size="lg" disabled={disabled || analyzing}>
                 {analyzing ? <Loader2 className="animate-spin" /> : <Search />}
-                {analyzing
-                  ? "Analyse et proposition des projets…"
-                  : "Analyser et proposer les projets (gratuit)"}
+                {analyzing ? t.analyzing : t.analyzeCta}
               </Button>
-              <p className="text-xs text-muted-foreground">
-                Le système propose un projet d&apos;études et un projet professionnel adaptés à la
-                formation, à partir de votre CV de base. Vous les validez ensuite.
-              </p>
+              <p className="text-xs text-muted-foreground">{t.analyzeHint}</p>
             </div>
           ) : null}
         </form>
@@ -498,16 +513,14 @@ export function CampusFranceForm({
 
           <Card>
             <CardHeader className="space-y-1">
-              <CardTitle className="text-base">Projets proposés, à valider</CardTitle>
+              <CardTitle className="text-base">{t.projectsTitle}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                {projectsProposed
-                  ? "Brouillons générés à partir de votre CV et de la formation. Relisez, corrigez si besoin, puis générez."
-                  : "Vos projets mis à jour. Relisez avant de générer la lettre et le CV."}
+                {projectsProposed ? t.projectsDraftHint : t.projectsUpdatedHint}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="studyProject">Projet d&apos;études</Label>
+                <Label htmlFor="studyProject">{t.studyProject}</Label>
                 <Textarea
                   id="studyProject"
                   rows={7}
@@ -521,11 +534,11 @@ export function CampusFranceForm({
                   maxLength={PROJECT_MAX}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {projects.studyProject.trim().length}/{PROJECT_MAX} · minimum {PROJECT_MIN}
+                  {t.projectCounter(projects.studyProject.trim().length, PROJECT_MAX, PROJECT_MIN)}
                 </p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="professionalProject">Projet professionnel</Label>
+                <Label htmlFor="professionalProject">{t.professionalProject}</Label>
                 <Textarea
                   id="professionalProject"
                   rows={7}
@@ -539,7 +552,11 @@ export function CampusFranceForm({
                   maxLength={PROJECT_MAX}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {projects.professionalProject.trim().length}/{PROJECT_MAX} · minimum {PROJECT_MIN}
+                  {t.projectCounter(
+                    projects.professionalProject.trim().length,
+                    PROJECT_MAX,
+                    PROJECT_MIN
+                  )}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -551,7 +568,7 @@ export function CampusFranceForm({
                   onClick={() => reanalyze("propose")}
                 >
                   {analyzing ? <Loader2 className="animate-spin" /> : <RefreshCw />}
-                  Nouvelle proposition
+                  {t.proposeAgain}
                 </Button>
                 <Button
                   type="button"
@@ -560,7 +577,7 @@ export function CampusFranceForm({
                   disabled={analyzing}
                   onClick={() => reanalyze("rescore")}
                 >
-                  Recalculer la cohérence
+                  {t.rescore}
                 </Button>
               </div>
             </CardContent>
@@ -583,7 +600,7 @@ export function CampusFranceForm({
               onClick={() => setPhase("compose")}
               disabled={analyzing}
             >
-              Modifier la formation
+              {t.editProgram}
             </Button>
             <Button
               type="button"
@@ -593,20 +610,20 @@ export function CampusFranceForm({
               onClick={onGenerate}
             >
               <Sparkles />
-              Générer lettre + CV (1 crédit)
+              {t.generateCta}
             </Button>
           </div>
           {noCredits ? (
             <Alert
               variant="warning"
-              title="Solde de crédits épuisé"
+              title={m.forms.wizard.noCreditsTitle}
               action={
                 <Link href="/billing" className="font-medium">
-                  Recharger des crédits
+                  {m.forms.wizard.topUpCredits}
                 </Link>
               }
             >
-              Il faut 1 crédit pour générer la lettre et le CV Campus France.
+              {t.noCreditsBody}
             </Alert>
           ) : null}
         </div>
@@ -615,23 +632,21 @@ export function CampusFranceForm({
       {phase === "generating" ? (
         <Card aria-live="polite">
           <CardHeader>
-            <CardTitle className="text-base">Génération en cours</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              La lettre est rédigée en priorité, puis le CV académique.
-            </p>
+            <CardTitle className="text-base">{m.forms.wizard.generating}</CardTitle>
+            <p className="text-sm text-muted-foreground">{t.generatingHint}</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <PipelineTimeline steps={PIPELINE_STEPS} activeStep={activeStep} />
+            <PipelineTimeline steps={pipelineSteps} activeStep={activeStep} />
             <div className="grid gap-3 sm:grid-cols-2">
               <StatCard
                 size="compact"
-                label="Cohérence avant"
+                label={t.coherenceBefore}
                 value={`${scoreBeforeLive ?? beforeScore}%`}
               />
               <StatCard
                 size="compact"
                 emphasis
-                label="Cohérence après"
+                label={t.coherenceAfter}
                 value={scoreAfterLive !== null ? `${scoreAfterLive}%` : "…"}
               />
             </div>

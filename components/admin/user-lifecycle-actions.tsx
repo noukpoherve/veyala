@@ -5,10 +5,14 @@ import {
   archiveUserAction,
   hardDeleteUserAction,
   restoreUserAction,
-} from "@/app/(admin)/admin/users/actions";
+} from "@/app/[locale]/(admin)/admin/users/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useMessages } from "@/components/i18n/locale-provider";
+
+/** The server action only accepts this exact token, whatever the UI language. */
+const SERVER_CONFIRM_TOKEN = "SUPPRIMER";
 
 export function AdminUserLifecycleActions({
   userId,
@@ -21,6 +25,8 @@ export function AdminUserLifecycleActions({
   archived: boolean;
   isSelf: boolean;
 }) {
+  const m = useMessages();
+  const t = m.adminUi.lifecycle;
   const hardDeleteRef = useRef<HTMLDialogElement>(null);
   const [confirm, setConfirm] = useState("");
   const [pending, startTransition] = useTransition();
@@ -33,14 +39,14 @@ export function AdminUserLifecycleActions({
         <form action={restoreUserAction}>
           <input type="hidden" name="userId" value={userId} />
           <Button type="submit" size="sm" variant="outline">
-            Réactiver
+            {t.restore}
           </Button>
         </form>
       ) : (
         <form action={archiveUserAction}>
           <input type="hidden" name="userId" value={userId} />
           <Button type="submit" size="sm" variant="outline">
-            Archiver
+            {t.archive}
           </Button>
         </form>
       )}
@@ -52,7 +58,7 @@ export function AdminUserLifecycleActions({
         className="text-destructive"
         onClick={() => hardDeleteRef.current?.showModal()}
       >
-        Effacer
+        {t.erase}
       </Button>
 
       <dialog
@@ -67,42 +73,43 @@ export function AdminUserLifecycleActions({
             const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
             if (submitter?.value === "cancel") return;
             e.preventDefault();
-            if (confirm !== "SUPPRIMER") return;
+            if (confirm !== t.confirmToken) return;
             const fd = new FormData();
             fd.set("userId", userId);
-            fd.set("confirm", "SUPPRIMER");
+            fd.set("confirm", SERVER_CONFIRM_TOKEN);
             startTransition(() => {
               void hardDeleteUserAction(fd);
             });
           }}
         >
           <header className="space-y-1">
-            <h3 className="font-display text-lg font-bold">Effacement RGPD</h3>
+            <h3 className="font-display text-lg font-bold">{t.dialogTitle}</h3>
             <p className="text-sm text-slate-600">
-              Supprime définitivement <strong>{email}</strong>, fichiers et historiques.
-              Irréversible.
+              {t.dialogBodyBefore}
+              <strong>{email}</strong>
+              {t.dialogBodyAfter}
             </p>
           </header>
           <div className="space-y-1.5">
-            <Label htmlFor={`hard-${userId}`}>Tapez SUPPRIMER</Label>
+            <Label htmlFor={`hard-${userId}`}>{t.confirmLabel(t.confirmToken)}</Label>
             <Input
               id={`hard-${userId}`}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              placeholder="SUPPRIMER"
+              placeholder={t.confirmToken}
               autoComplete="off"
             />
           </div>
           <div className="flex justify-end gap-2">
             <Button type="submit" value="cancel" variant="outline">
-              Annuler
+              {m.common.cancel}
             </Button>
             <Button
               type="submit"
               variant="destructive"
-              disabled={confirm !== "SUPPRIMER" || pending}
+              disabled={confirm !== t.confirmToken || pending}
             >
-              {pending ? "Suppression…" : "Confirmer"}
+              {pending ? t.deleting : m.common.confirm}
             </Button>
           </div>
         </form>

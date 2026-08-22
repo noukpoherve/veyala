@@ -7,42 +7,40 @@ import { saveFile } from "@/lib/storage";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { LLMError } from "@/lib/llm";
 import { reportError } from "@/lib/sentry";
+import { getLocaleFromRequest } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 /** Imports a resume (PDF/DOCX), structures it via the LLM and stores it as BaseProfile. */
 export async function POST(req: Request) {
+  const locale = getLocaleFromRequest(req);
+  const m = getMessages(locale);
   const session = await auth();
   if (!session?.user) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: m.errors.authRequired }, { status: 401 });
   }
   const userId = session.user.id;
 
   const { limit, windowMs } = RATE_LIMITS.importCv;
   if (!(await rateLimit(`import-cv:${userId}`, limit, windowMs))) {
-    return NextResponse.json(
-      { error: "Trop d'imports rapprochés. Réessayez dans quelques minutes." },
-      { status: 429 }
-    );
+    return NextResponse.json({ error: m.api.importCv.rateLimited }, { status: 429 });
   }
 
   const formData = await req.formData().catch(() => null);
   const file = formData?.get("file");
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Aucun fichier reçu." }, { status: 400 });
+    return NextResponse.json({ error: m.api.importCv.noFile }, { status: 400 });
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return NextResponse.json({ error: "Fichier trop volumineux (8 Mo max)." }, { status: 413 });
+    return NextResponse.json({ error: m.api.importCv.fileTooLarge }, { status: 413 });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const resolved = resolveCvMime(buffer, file.type, file.name);
   if (!resolved) {
-    return NextResponse.json(
-      { error: "Format non supporté : PDF ou DOCX uniquement." },
-      { status: 415 }
-    );
+    return NextResponse.json({ error: m.api.importCv.unsupportedFormat }, { status: 415 });
   }
 
   try {
@@ -66,35 +64,24 @@ export async function POST(req: Request) {
   } catch (e) {
     if (e instanceof LLMError) {
       reportError(e, "import-cv");
+      // Provider messages are written in French: only pass them to French readers.
       return NextResponse.json(
         {
           error:
-            e.message && e.message.length < 280
+            locale === "fr" && e.message && e.message.length < 280
               ? e.message
-              : "Le service IA n'a pas pu structurer votre CV. Réessayez dans un instant.",
+              : m.api.importCv.structureFailed,
         },
         { status: 502 }
       );
     }
     if (e instanceof Error && /extraire assez de texte|scan ou document vide/i.test(e.message)) {
-      return NextResponse.json(
-        {
-          error:
-            "Impossible d'extraire le texte de ce fichier. Utilisez un PDF ou DOCX texte (pas un scan image) de 8 Mo max.",
-        },
-        { status: 422 }
-      );
+      return NextResponse.json({ error: m.api.importCv.noTextExtracted }, { status: 422 });
     }
     if (e instanceof Error && /Format non supporté/i.test(e.message)) {
-      return NextResponse.json({ error: e.message }, { status: 415 });
+      return NextResponse.json({ error: m.api.importCv.unsupportedFormat }, { status: 415 });
     }
     reportError(e, "import-cv");
-    return NextResponse.json(
-      {
-        error:
-          "L'import a échoué après lecture du fichier. Réessayez dans un instant ; si le problème continue, utilisez le DOCX exporté.",
-      },
-      { status: 422 }
-    );
+    return NextResponse.json({ error: m.api.importCv.failed }, { status: 422 });
   }
 }

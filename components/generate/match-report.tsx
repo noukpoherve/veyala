@@ -9,27 +9,10 @@ import {
   MinusCircle,
   Sparkles,
 } from "lucide-react";
-import {
-  compareMatchBreakdown,
-  type MatchBreakdown,
-  type MatchItem,
-  type MatchStatus,
-} from "@/lib/match-score";
+import { compareMatchBreakdown, type MatchBreakdown, type MatchStatus } from "@/lib/match-score";
+import { useMessages } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-const STATUS_LABEL: Record<MatchStatus, string> = {
-  covered: "Couvert",
-  partial: "Partiel",
-  missing: "Absent",
-};
-
-const KIND_SHORT: Record<MatchItem["kind"], string> = {
-  must: "Must",
-  tool: "Outil",
-  soft: "Soft",
-  nice: "Nice",
-};
 
 const STATUS_BADGE_VARIANT: Record<MatchStatus, "success-soft" | "warning-soft" | "neutral-soft"> =
   {
@@ -39,6 +22,7 @@ const STATUS_BADGE_VARIANT: Record<MatchStatus, "success-soft" | "warning-soft" 
   };
 
 function StatusCell({ status }: { status: MatchStatus }) {
+  const statuses = useMessages().forms.match.statuses;
   return (
     <Badge variant={STATUS_BADGE_VARIANT[status]} className="gap-1 font-medium">
       {status === "covered" ? (
@@ -48,7 +32,7 @@ function StatusCell({ status }: { status: MatchStatus }) {
       ) : (
         <MinusCircle className="size-3" aria-hidden />
       )}
-      {STATUS_LABEL[status]}
+      {statuses[status]}
     </Badge>
   );
 }
@@ -57,13 +41,8 @@ function StatusCell({ status }: { status: MatchStatus }) {
  * Compact match bilan: score strip always visible, comparative table in an
  * accordion so the generated CV stays above the fold.
  */
-export function MatchReport({
-  breakdown,
-  title = "Bilan matching ATS",
-}: {
-  breakdown: MatchBreakdown;
-  title?: string;
-}) {
+export function MatchReport({ breakdown, title }: { breakdown: MatchBreakdown; title?: string }) {
+  const t = useMessages().forms.match;
   const panelId = useId();
   const [open, setOpen] = useState(false);
   const rows = compareMatchBreakdown(breakdown);
@@ -86,7 +65,7 @@ export function MatchReport({
       >
         <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">{title}</p>
+          <p className="text-sm font-semibold">{title ?? t.reportTitle}</p>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
             <span className="tabular-nums text-foreground/80">{breakdown.before.score}%</span>
             <ArrowRight className="size-3.5" aria-hidden />
@@ -94,13 +73,11 @@ export function MatchReport({
               {breakdown.after.score}%
             </span>
             <Badge variant={delta >= 0 ? "success" : "secondary"} className="ml-1">
-              {delta >= 0 ? `+${delta}` : delta} pts
+              {delta >= 0 ? `+${delta}` : delta} {t.points}
             </Badge>
             <span className="text-xs">
-              · {improved} amélioré{improved > 1 ? "s" : ""}
-              {stillMissing > 0
-                ? ` · ${stillMissing} encore absent${stillMissing > 1 ? "s" : ""}`
-                : ""}
+              · {t.improvedCount(improved)}
+              {stillMissing > 0 ? ` · ${t.stillMissingCount(stillMissing)}` : ""}
             </span>
           </div>
         </div>
@@ -115,29 +92,26 @@ export function MatchReport({
 
       <section id={panelId} aria-labelledby="match-bilan-title" hidden={!open} className="border-t">
         <div className="space-y-3 px-4 py-3">
-          <p className="text-xs text-muted-foreground">
-            Tableau avant → après. Les absents restants ne sont pas inventés (présents nulle part
-            dans ton CV de base).
-          </p>
+          <p className="text-xs text-muted-foreground">{t.reportIntro}</p>
 
           <div className="overflow-x-auto rounded-md border">
             <table className="w-full min-w-[28rem] text-left text-sm">
               <thead className="bg-muted/50 text-xs text-muted-foreground">
                 <tr>
                   <th scope="col" className="px-3 py-2 font-medium">
-                    Critère
+                    {t.columnCriterion}
                   </th>
                   <th scope="col" className="px-3 py-2 font-medium">
-                    Type
+                    {t.columnKind}
                   </th>
                   <th scope="col" className="px-3 py-2 font-medium">
-                    Avant
+                    {t.columnBefore}
                   </th>
                   <th scope="col" className="px-3 py-2 font-medium">
-                    Après
+                    {t.columnAfter}
                   </th>
                   <th scope="col" className="px-3 py-2 font-medium">
-                    Impact
+                    {t.columnImpact}
                   </th>
                 </tr>
               </thead>
@@ -152,7 +126,7 @@ export function MatchReport({
                   >
                     <td className="px-3 py-2 font-medium">{row.term}</td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">
-                      {KIND_SHORT[row.kind]}
+                      {t.kindsShort[row.kind]}
                     </td>
                     <td className="px-3 py-2">
                       <StatusCell status={row.before} />
@@ -162,11 +136,11 @@ export function MatchReport({
                     </td>
                     <td className="px-3 py-2">
                       {row.improved ? (
-                        <Badge variant="success">↑ Gain</Badge>
+                        <Badge variant="success">{t.impactGain}</Badge>
                       ) : row.stillMissing ? (
-                        <Badge variant="secondary">Gap</Badge>
+                        <Badge variant="secondary">{t.impactGap}</Badge>
                       ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
+                        <span className="text-xs text-muted-foreground">·</span>
                       )}
                     </td>
                   </tr>
@@ -176,14 +150,9 @@ export function MatchReport({
           </div>
 
           {stillMissing > 0 ? (
-            <p className="text-xs text-amber-800">
-              {stillMissing} critère{stillMissing > 1 ? "s" : ""} hors parcours d&apos;origine, à
-              clarifier en entretien, pas à fabriquer dans le CV.
-            </p>
+            <p className="text-xs text-amber-800">{t.reportGapsNote(stillMissing)}</p>
           ) : (
-            <p className="text-xs text-emerald-800">
-              Checklist couverte : l&apos;optimisation a aligné ton CV sur l&apos;offre.
-            </p>
+            <p className="text-xs text-emerald-800">{t.reportCovered}</p>
           )}
         </div>
       </section>

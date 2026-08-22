@@ -6,6 +6,7 @@ import type { ChipStyle, ColorsOverride, TemplateDefinition } from "@/lib/templa
 import { fileToDataUrl } from "@/lib/image-file";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useMessages } from "@/components/i18n/locale-provider";
 
 /**
  * Every "look of the CV" control, grouped into collapsible sections so the
@@ -16,37 +17,20 @@ import { cn } from "@/lib/utils";
 type PaletteColors = TemplateDefinition["colors"];
 type SkillsStyle = TemplateDefinition["skillsStyle"];
 
-const PRESETS: { name: string; sidebar: string; band: string; heading: string }[] = [
-  { name: "Océan", sidebar: "#1f3550", band: "#56a8dc", heading: "#1f3550" },
-  { name: "Émeraude", sidebar: "#0f3d2e", band: "#10b981", heading: "#0f3d2e" },
-  { name: "Bordeaux", sidebar: "#4c1d24", band: "#b03a4a", heading: "#4c1d24" },
-  { name: "Ardoise", sidebar: "#1e293b", band: "#64748b", heading: "#0f172a" },
-  { name: "Améthyste", sidebar: "#3b1f4e", band: "#8b5cf6", heading: "#3b1f4e" },
-  { name: "Graphite", sidebar: "#262626", band: "#525252", heading: "#171717" },
-  { name: "Corail", sidebar: "#7c2d12", band: "#f97316", heading: "#7c2d12" },
-  { name: "Nuit", sidebar: "#0b1220", band: "#3b82f6", heading: "#0b1220" },
-];
-
-const ROLES: { key: keyof PaletteColors; label: string; array?: boolean }[] = [
-  { key: "heading", label: "Titres" },
-  { key: "band", label: "Bandeaux / accents" },
-  { key: "bandText", label: "Texte des bandeaux" },
-  { key: "sidebar", label: "Barre latérale", array: true },
-  { key: "sidebarText", label: "Texte barre latérale" },
-  { key: "link", label: "Liens" },
-  { key: "body", label: "Texte courant" },
-];
-
-const SKILL_STYLES: { id: SkillsStyle; label: string }[] = [
-  { id: "bricks", label: "Briques" },
-  { id: "list", label: "Liste" },
-  { id: "inline", label: "Inline" },
-];
-
-const CHIP_STYLES: { id: ChipStyle; label: string }[] = [
-  { id: "solid", label: "Plein" },
-  { id: "outline", label: "Contour" },
-  { id: "ghost", label: "Transparent" },
+const PRESETS: {
+  id: keyof ReturnType<typeof useMessages>["forms"]["design"]["presets"];
+  sidebar: string;
+  band: string;
+  heading: string;
+}[] = [
+  { id: "ocean", sidebar: "#1f3550", band: "#56a8dc", heading: "#1f3550" },
+  { id: "emerald", sidebar: "#0f3d2e", band: "#10b981", heading: "#0f3d2e" },
+  { id: "burgundy", sidebar: "#4c1d24", band: "#b03a4a", heading: "#4c1d24" },
+  { id: "slate", sidebar: "#1e293b", band: "#64748b", heading: "#0f172a" },
+  { id: "amethyst", sidebar: "#3b1f4e", band: "#8b5cf6", heading: "#3b1f4e" },
+  { id: "graphite", sidebar: "#262626", band: "#525252", heading: "#171717" },
+  { id: "coral", sidebar: "#7c2d12", band: "#f97316", heading: "#7c2d12" },
+  { id: "midnight", sidebar: "#0b1220", band: "#3b82f6", heading: "#0b1220" },
 ];
 
 function Section({
@@ -129,12 +113,33 @@ export function DesignControls({
   onChangeSidebarDecor: (show: boolean) => void;
   onReset: () => void;
 }) {
+  const messages = useMessages();
+  const d = messages.forms.design;
   const logoInput = useRef<HTMLInputElement>(null);
+  const roles: { key: keyof PaletteColors; label: string; array?: boolean }[] = [
+    { key: "heading", label: d.roles.heading },
+    { key: "band", label: d.roles.band },
+    { key: "bandText", label: d.roles.bandText },
+    { key: "sidebar", label: d.roles.sidebar, array: true },
+    { key: "sidebarText", label: d.roles.sidebarText },
+    { key: "link", label: d.roles.link },
+    { key: "body", label: d.roles.body },
+  ];
+  const skillStyles = [
+    { id: "bricks" as const, label: d.skillStyles.bricks },
+    { id: "list" as const, label: d.skillStyles.list },
+    { id: "inline" as const, label: d.skillStyles.inline },
+  ];
+  const chipStyles = [
+    { id: "solid" as const, label: d.chipStyles.solid },
+    { id: "outline" as const, label: d.chipStyles.outline },
+    { id: "ghost" as const, label: d.chipStyles.ghost },
+  ];
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between px-0.5">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Apparence
+          {d.title}
         </h3>
         {hasOverride ? (
           <button
@@ -143,20 +148,21 @@ export function DesignControls({
             className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <RotateCcw className="size-3.5" aria-hidden />
-            Réinitialiser
+            {d.reset}
           </button>
         ) : null}
       </div>
 
-      <Section title="Palettes rapides" defaultOpen>
+      <Section title={d.quickPalettes} defaultOpen>
         <div className="flex flex-wrap gap-2">
           {PRESETS.map((p) => {
+            const name = d.presets[p.id];
             const active =
               colors.sidebar[0]?.toLowerCase() === p.sidebar.toLowerCase() &&
               colors.band.toLowerCase() === p.band.toLowerCase();
             return (
               <button
-                key={p.name}
+                key={p.id}
                 type="button"
                 onClick={() =>
                   onChangeColors({
@@ -167,7 +173,7 @@ export function DesignControls({
                     sidebarText: "#ffffff",
                   })
                 }
-                title={p.name}
+                title={name}
                 aria-pressed={active}
                 className={cn(
                   "flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-xs font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm",
@@ -179,16 +185,16 @@ export function DesignControls({
                   className="size-4 rounded-full border"
                   style={{ background: `linear-gradient(135deg, ${p.sidebar} 50%, ${p.band} 50%)` }}
                 />
-                {p.name}
+                {name}
               </button>
             );
           })}
         </div>
       </Section>
 
-      <Section title="Couleurs détaillées">
+      <Section title={d.detailedColors}>
         <div className="grid grid-cols-1 gap-2.5">
-          {ROLES.map((role) => {
+          {roles.map((role) => {
             const value = role.array ? colors.sidebar[0]! : (colors[role.key] as string);
             return (
               <label
@@ -206,7 +212,7 @@ export function DesignControls({
                       )
                     }
                     className="absolute inset-0 size-full cursor-pointer opacity-0"
-                    aria-label={`Couleur : ${role.label}`}
+                    aria-label={d.colorAria(role.label)}
                   />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -221,12 +227,12 @@ export function DesignControls({
         </div>
       </Section>
 
-      <Section title="Compétences (style)" defaultOpen>
+      <Section title={d.skillsSection} defaultOpen>
         <div className="space-y-3.5">
           <fieldset>
-            <legend className="mb-2 text-sm font-medium">Affichage</legend>
+            <legend className="mb-2 text-sm font-medium">{d.skillsDisplay}</legend>
             <div className="grid grid-cols-3 gap-2">
-              {SKILL_STYLES.map((s) => (
+              {skillStyles.map((s) => (
                 <button
                   key={s.id}
                   type="button"
@@ -247,9 +253,9 @@ export function DesignControls({
           {skillsStyle === "bricks" ? (
             <>
               <fieldset>
-                <legend className="mb-2 text-sm font-medium">Fond des briques</legend>
+                <legend className="mb-2 text-sm font-medium">{d.chipSection}</legend>
                 <div className="grid grid-cols-3 gap-2">
-                  {CHIP_STYLES.map((s) => (
+                  {chipStyles.map((s) => (
                     <button
                       key={s.id}
                       type="button"
@@ -272,19 +278,19 @@ export function DesignControls({
                   [
                     {
                       key: "chipBackground" as const,
-                      label: "Fond",
+                      label: d.chipParts.chipBackground,
                       value: chipBackground ?? "#ffffff",
                       disabled: chipStyle === "ghost" || chipStyle === "outline",
                     },
                     {
                       key: "chipText" as const,
-                      label: "Texte",
+                      label: d.chipParts.chipText,
                       value: chipText ?? colors.body,
                       disabled: false,
                     },
                     {
                       key: "chipBorder" as const,
-                      label: "Contour",
+                      label: d.chipParts.chipBorder,
                       value: chipBorder ?? "#d5d9e2",
                       disabled: false,
                     },
@@ -309,7 +315,7 @@ export function DesignControls({
                         disabled={row.disabled}
                         onChange={(e) => onChangeChipColors({ [row.key]: e.target.value })}
                         className="absolute inset-0 size-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
-                        aria-label={`Couleur brique : ${row.label}`}
+                        aria-label={d.chipColorAria(row.label)}
                       />
                     </span>
                     <span className="text-sm font-medium">{row.label}</span>
@@ -322,9 +328,9 @@ export function DesignControls({
       </Section>
 
       {hasSidebarDecorAsset ? (
-        <Section title="Fond barre latérale">
+        <Section title={d.sidebarDecorSection}>
           <label className="flex items-center justify-between gap-3 text-sm font-medium">
-            Image / dégradé décoratif
+            {d.sidebarDecorToggle}
             <input
               type="checkbox"
               checked={sidebarDecor}
@@ -332,17 +338,15 @@ export function DesignControls({
               className="size-4 accent-primary"
             />
           </label>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Désactivez pour un fond uni (couleur barre latérale uniquement).
-          </p>
+          <p className="mt-2 text-xs text-muted-foreground">{d.sidebarDecorHint}</p>
         </Section>
       ) : null}
 
       {hasPhoto ? (
-        <Section title="Photo">
+        <Section title={d.photoSection}>
           <div className="space-y-3.5">
             <label className="flex items-center justify-between gap-3 text-sm font-medium">
-              Afficher la photo
+              {d.photoToggle}
               <input
                 type="checkbox"
                 checked={photo}
@@ -352,7 +356,7 @@ export function DesignControls({
             </label>
             {photo ? (
               <fieldset>
-                <legend className="mb-2 text-sm font-medium">Forme</legend>
+                <legend className="mb-2 text-sm font-medium">{d.photoShape}</legend>
                 <div className="grid grid-cols-2 gap-2">
                   {(["circle", "square"] as const).map((shape) => (
                     <button
@@ -374,7 +378,7 @@ export function DesignControls({
                           shape === "circle" ? "rounded-full" : "rounded"
                         )}
                       />
-                      {shape === "circle" ? "Ronde" : "Carrée"}
+                      {shape === "circle" ? d.photoShapeCircle : d.photoShapeSquare}
                     </button>
                   ))}
                 </div>
@@ -384,11 +388,9 @@ export function DesignControls({
         </Section>
       ) : null}
 
-      <Section title="Logo (école, entreprise…)">
+      <Section title={d.logoSection}>
         <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            Affiché en filigrane dans le coin supérieur droit du CV.
-          </p>
+          <p className="text-xs text-muted-foreground">{d.logoHint}</p>
           <input
             ref={logoInput}
             type="file"
@@ -404,7 +406,7 @@ export function DesignControls({
             <div className="flex items-center gap-3">
               <img
                 src={logo}
-                alt="Logo"
+                alt={d.logoAlt}
                 className="size-14 rounded-md border bg-white object-contain p-1"
               />
               <div className="flex gap-2">
@@ -414,10 +416,10 @@ export function DesignControls({
                   size="sm"
                   onClick={() => logoInput.current?.click()}
                 >
-                  Changer
+                  {d.changeLogo}
                 </Button>
                 <Button type="button" variant="ghost" size="sm" onClick={() => onChangeLogo("")}>
-                  Retirer
+                  {messages.forms.fields.removePhoto}
                 </Button>
               </div>
             </div>
@@ -429,7 +431,7 @@ export function DesignControls({
               onClick={() => logoInput.current?.click()}
             >
               <ImagePlus />
-              Ajouter un logo
+              {d.addLogo}
             </Button>
           )}
         </div>

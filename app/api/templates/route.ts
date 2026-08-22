@@ -8,6 +8,8 @@ import {
   createCommunityTemplate,
   extractDefinitionFromImage,
 } from "@/lib/templates/import";
+import { getLocaleFromRequest } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -17,17 +19,16 @@ export const maxDuration = 60;
  * fingerprint; new templates are created as PENDING (admin validation).
  */
 export async function POST(req: Request) {
+  const locale = getLocaleFromRequest(req);
+  const m = getMessages(locale);
   const session = await auth();
   if (!session?.user) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: m.errors.authRequired }, { status: 401 });
   }
   const userId = session.user.id;
 
   if (!(await rateLimit(`templates:${userId}`, 5, 10 * 60 * 1000))) {
-    return NextResponse.json(
-      { error: "Trop de soumissions rapprochées. Réessayez dans quelques minutes." },
-      { status: 429 }
-    );
+    return NextResponse.json({ error: m.api.templates.rateLimited }, { status: 429 });
   }
 
   const formData = await req.formData().catch(() => null);
@@ -35,22 +36,16 @@ export async function POST(req: Request) {
   const image = formData?.get("image");
 
   if (name.length < 3 || name.length > 60) {
-    return NextResponse.json(
-      { error: "Nom du template requis (3 à 60 caractères)." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: m.api.templates.nameRequired }, { status: 400 });
   }
   if (!(image instanceof File)) {
-    return NextResponse.json({ error: "Image de référence requise." }, { status: 400 });
+    return NextResponse.json({ error: m.api.templates.imageRequired }, { status: 400 });
   }
   if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
-    return NextResponse.json(
-      { error: "Format d'image non supporté : PNG, JPEG ou WebP." },
-      { status: 415 }
-    );
+    return NextResponse.json({ error: m.api.templates.unsupportedImage }, { status: 415 });
   }
   if (image.size > MAX_IMAGE_BYTES) {
-    return NextResponse.json({ error: "Image trop volumineuse (5 Mo max)." }, { status: 413 });
+    return NextResponse.json({ error: m.api.templates.imageTooLarge }, { status: 413 });
   }
 
   try {
@@ -69,18 +64,19 @@ export async function POST(req: Request) {
         duplicate: true,
         templateId: result.template.id,
         templateName: result.template.name,
-        message: `Ce template existe déjà sous le nom « ${result.template.name} » : vous pouvez l'utiliser directement.`,
+        message: m.api.templates.duplicate(result.template.name),
       });
     }
     return NextResponse.json({
       ok: true,
       duplicate: false,
       templateId: result.template.id,
-      message:
-        "Template soumis ! Vous pouvez l'utiliser dès maintenant ; il sera proposé aux autres utilisateurs après validation.",
+      message: m.api.templates.submitted,
     });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "L'analyse du template a échoué.";
+    // Import errors are written in French: only pass them to French readers.
+    const message =
+      locale === "fr" && e instanceof Error ? e.message : m.api.templates.analyzeFailed;
     const status = e instanceof LLMError ? 502 : 422;
     return NextResponse.json({ error: message }, { status });
   }

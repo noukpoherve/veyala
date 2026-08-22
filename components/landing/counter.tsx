@@ -46,7 +46,11 @@ export function Counter({
 
   return (
     <span ref={ref} className={className}>
-      {new Intl.NumberFormat("fr-FR").format(display)}
+      {new Intl.NumberFormat(
+        typeof document !== "undefined" && document.documentElement.lang === "en"
+          ? "en-US"
+          : "fr-FR"
+      ).format(display)}
       {suffix}
     </span>
   );

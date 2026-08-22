@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Copy, Share2 } from "lucide-react";
+import { useMessages } from "@/components/i18n/locale-provider";
 
 type ShareButtonsProps = {
   url: string;
@@ -10,6 +11,7 @@ type ShareButtonsProps = {
 };
 
 export function ShareButtons({ url, title, summary }: ShareButtonsProps) {
+  const m = useMessages();
   const [copied, setCopied] = useState(false);
 
   const encodedUrl = encodeURIComponent(url);
@@ -53,7 +55,7 @@ export function ShareButtons({ url, title, summary }: ShareButtonsProps) {
     <div className="flex flex-wrap items-center gap-2">
       <span className="mr-1 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600">
         <Share2 className="size-4" aria-hidden />
-        Partager
+        {m.blog.share}
       </span>
       {links.map((link) => (
         <a
@@ -61,7 +63,7 @@ export function ShareButtons({ url, title, summary }: ShareButtonsProps) {
           href={link.href}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Partager sur ${link.label}`}
+          aria-label={m.content.blog.shareOn(link.label)}
           className="inline-flex size-10 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
         >
           <link.icon className="size-4" aria-hidden />
@@ -70,7 +72,7 @@ export function ShareButtons({ url, title, summary }: ShareButtonsProps) {
       <button
         type="button"
         onClick={copyLink}
-        aria-label="Copier le lien"
+        aria-label={m.content.blog.copyLink}
         className="inline-flex h-10 items-center gap-2 rounded-full border border-slate-200 px-3.5 text-sm font-medium text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
       >
         {copied ? (
@@ -78,7 +80,7 @@ export function ShareButtons({ url, title, summary }: ShareButtonsProps) {
         ) : (
           <Copy className="size-4" aria-hidden />
         )}
-        {copied ? "Copié" : "Lien"}
+        {copied ? m.common.copied : m.content.blog.copyLinkShort}
       </button>
     </div>
   );

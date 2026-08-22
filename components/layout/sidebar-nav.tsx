@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { memo, useState } from "react";
 import {
@@ -21,30 +20,10 @@ import {
   Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useMessages } from "@/components/i18n/locale-provider";
+import { Link } from "@/i18n/navigation";
+import { stripLocalePrefix } from "@/i18n/path";
 
-const MAIN_ITEMS = [
-  { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-  { href: "/generate", label: "Générer un CV", icon: Sparkles },
-  { href: "/campus-france", label: "Campus France", icon: GraduationCap },
-  { href: "/profile", label: "Mon CV de base", icon: UserRound },
-  { href: "/templates", label: "Templates", icon: Palette },
-  { href: "/billing", label: "Crédits & factures", icon: Wallet },
-  { href: "/support", label: "Support", icon: LifeBuoy },
-];
-
-const ADMIN_ITEMS = [
-  { href: "/admin", label: "Statistiques", icon: LayoutDashboard },
-  { href: "/admin/inbox", label: "Boîte de réception", icon: Inbox },
-  { href: "/admin/blog", label: "Blog", icon: FileText },
-  { href: "/admin/users", label: "Utilisateurs", icon: Users },
-  { href: "/admin/activity", label: "Activité", icon: ShieldCheck },
-  { href: "/admin/templates", label: "Validation templates", icon: Palette },
-  { href: "/admin/payments", label: "Paiements", icon: CreditCard },
-  { href: "/admin/promos", label: "Codes promo", icon: Tag },
-  { href: "/admin/settings", label: "Réglages", icon: Settings },
-];
-
-// Memoized: only the links whose `active` flag changes re-render on navigation.
 const NavLink = memo(function NavLink({
   href,
   label,
@@ -77,9 +56,30 @@ const NavLink = memo(function NavLink({
 });
 
 export function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
-  const pathname = usePathname();
+  const pathname = stripLocalePrefix(usePathname() || "/");
+  const m = useMessages();
   const onAdminPage = pathname === "/admin" || pathname.startsWith("/admin/");
   const [adminOpen, setAdminOpen] = useState(onAdminPage);
+  const MAIN_ITEMS = [
+    { href: "/dashboard", label: m.nav.dashboard, icon: LayoutDashboard },
+    { href: "/generate", label: m.nav.generate, icon: Sparkles },
+    { href: "/campus-france", label: m.nav.campusFrance, icon: GraduationCap },
+    { href: "/profile", label: m.nav.baseCv, icon: UserRound },
+    { href: "/templates", label: m.nav.templates, icon: Palette },
+    { href: "/billing", label: m.nav.billing, icon: Wallet },
+    { href: "/support", label: m.nav.support, icon: LifeBuoy },
+  ];
+  const ADMIN_ITEMS = [
+    { href: "/admin", label: m.admin.stats, icon: LayoutDashboard },
+    { href: "/admin/inbox", label: m.admin.inbox, icon: Inbox },
+    { href: "/admin/blog", label: m.admin.blog, icon: FileText },
+    { href: "/admin/users", label: m.admin.users, icon: Users },
+    { href: "/admin/activity", label: m.admin.activity, icon: ShieldCheck },
+    { href: "/admin/templates", label: m.nav.adminTemplates, icon: Palette },
+    { href: "/admin/payments", label: m.admin.payments, icon: CreditCard },
+    { href: "/admin/promos", label: m.admin.promos, icon: Tag },
+    { href: "/admin/settings", label: m.admin.settings, icon: Settings },
+  ];
 
   const isActive = (href: string) =>
     href === "/admin"
@@ -89,7 +89,7 @@ export function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
   return (
     <nav
       className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-3"
-      aria-label="Navigation principale"
+      aria-label={m.nav.mainNav}
     >
       {MAIN_ITEMS.map((item) => (
         <NavLink key={item.href} {...item} active={isActive(item.href)} />
@@ -110,7 +110,7 @@ export function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
             )}
           >
             <ShieldCheck className="size-4" aria-hidden />
-            Administration
+            {m.nav.adminSection}
             <ChevronDown
               className={cn("ml-auto size-4 transition-transform", adminOpen && "rotate-180")}
               aria-hidden

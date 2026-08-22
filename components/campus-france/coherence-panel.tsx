@@ -1,17 +1,10 @@
 "use client";
 
 import { memo } from "react";
-import type { CoherenceItem, CoherenceKind } from "@/lib/campus-france/coherence-score";
+import type { CoherenceItem } from "@/lib/campus-france/coherence-score";
+import { useMessages } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/ui/stat-card";
-
-const KIND_LABEL: Record<CoherenceKind, string> = {
-  prerequisite: "Prérequis",
-  selection: "Sélection",
-  skill: "Compétence",
-  objective: "Objectif",
-  outcome: "Débouché",
-};
 
 export interface CoherencePanelProps {
   beforeScore: number;
@@ -36,6 +29,8 @@ export const CoherencePanel = memo(function CoherencePanel({
   domain,
   level,
 }: CoherencePanelProps) {
+  const t = useMessages().forms.coherence;
+
   return (
     <section
       aria-labelledby="cf-coherence-title"
@@ -43,12 +38,9 @@ export const CoherencePanel = memo(function CoherencePanel({
     >
       <header className="space-y-1">
         <h2 id="cf-coherence-title" className="font-display text-lg font-semibold">
-          Analyse de cohérence
+          {t.panelTitle}
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Aucun crédit débité. Les projets proposés sont des brouillons à valider. La lettre
-          s&apos;appuiera dessus, le CV illustrera l&apos;alignement du parcours.
-        </p>
+        <p className="text-sm text-muted-foreground">{t.panelIntro}</p>
         {programTitle ? (
           <p className="text-sm font-medium">
             {programTitle}
@@ -63,22 +55,18 @@ export const CoherencePanel = memo(function CoherencePanel({
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <StatCard size="compact" label="Score de cohérence" value={`${beforeScore}%`} />
-        <StatCard size="compact" emphasis label="Critères couverts" value={`${covered}/${total}`} />
+        <StatCard size="compact" label={t.score} value={`${beforeScore}%`} />
+        <StatCard size="compact" emphasis label={t.covered} value={`${covered}/${total}`} />
       </div>
 
       {gaps.length === 0 ? (
         <p className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
-          Votre parcours et vos projets couvrent déjà les critères extraits. Vous pouvez générer la
-          lettre et le CV.
+          {t.noGaps}
         </p>
       ) : (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold">Arguments à renforcer dans la lettre</h3>
-          <p className="text-xs text-muted-foreground">
-            Ces points sont peu visibles dans votre profil ou vos projets. La génération s&apos;en
-            servira pour structurer la lettre, sans inventer de faits.
-          </p>
+          <h3 className="text-sm font-semibold">{t.gapsTitle}</h3>
+          <p className="text-xs text-muted-foreground">{t.gapsHint}</p>
           <ul className="divide-y rounded-md border">
             {gaps.map((gap) => (
               <li
@@ -86,7 +74,7 @@ export const CoherencePanel = memo(function CoherencePanel({
                 className="flex items-center gap-3 px-3 py-2.5 text-sm"
               >
                 <span className="min-w-0 flex-1 font-medium">{gap.term}</span>
-                <Badge variant="secondary">{KIND_LABEL[gap.kind]}</Badge>
+                <Badge variant="secondary">{t.kinds[gap.kind]}</Badge>
               </li>
             ))}
           </ul>

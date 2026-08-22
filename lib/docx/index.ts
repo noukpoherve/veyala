@@ -23,6 +23,8 @@ import {
 import type { CVData } from "@/lib/cv-schema";
 import { normalizeHttpUrl, parseInlineLinks } from "@/lib/inline-links";
 import type { SectionId, TemplateDefinition } from "@/lib/templates/definition";
+import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
 
 /**
  * Generic DOCX engine driven by a template definition. Mirrors the HTML
@@ -50,6 +52,7 @@ interface Ctx {
   cv: CVData;
   def: TemplateDefinition;
   font: string;
+  copy: ReturnType<typeof getMessages>["cv"];
 }
 
 // ---------- shared paragraph helpers ----------
@@ -224,7 +227,7 @@ function sideLink(label: string, url: string, ctx: Ctx): Paragraph {
 function contactParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
   const { contact } = ctx.cv;
   const out: Paragraph[] = [];
-  if (inSidebar) out.push(sideTitle("Informations", ctx));
+  if (inSidebar) out.push(sideTitle(ctx.copy.information, ctx));
 
   const line = (text: string) => (inSidebar ? sideText(text, ctx) : bodyText(text, ctx));
   if (contact.phone) out.push(line(contact.phone));
@@ -248,7 +251,7 @@ function contactParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
 function skillsParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
   if (ctx.cv.skills.length === 0) return [];
   const out: Paragraph[] = [
-    inSidebar ? sideTitle("Compétences", ctx) : bandTitle("Compétences", ctx),
+    inSidebar ? sideTitle(ctx.copy.skills, ctx) : bandTitle(ctx.copy.skills, ctx),
   ];
   const itemColor = ctx.def.chipText
     ? hex(ctx.def.chipText)
@@ -297,7 +300,7 @@ function skillsParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
 
 function experienceParagraphs(ctx: Ctx): Paragraph[] {
   if (ctx.cv.experiences.length === 0) return [];
-  const out: Paragraph[] = [bandTitle("Expériences professionnelles", ctx)];
+  const out: Paragraph[] = [bandTitle(ctx.copy.experience, ctx)];
   for (const exp of ctx.cv.experiences) {
     if (exp.company && exp.companyUrl) {
       out.push(
@@ -386,7 +389,7 @@ function experienceParagraphs(ctx: Ctx): Paragraph[] {
           indent: { left: 160 },
           children: [
             new TextRun({
-              text: "Stack : ",
+              text: `${ctx.copy.stack} : `,
               bold: true,
               color: hex(ctx.def.colors.heading),
               size: 13,
@@ -409,7 +412,7 @@ function experienceParagraphs(ctx: Ctx): Paragraph[] {
 
 function educationParagraphs(ctx: Ctx): Paragraph[] {
   if (ctx.cv.education.length === 0) return [];
-  const out: Paragraph[] = [bandTitle("Formation", ctx)];
+  const out: Paragraph[] = [bandTitle(ctx.copy.education, ctx)];
   for (const ed of ctx.cv.education) {
     out.push(itemTitle(ed.school ? `${ed.degree} — ${ed.school}` : ed.degree, ctx));
     out.push(metaLine(ed.dates, ed.place, ctx));
@@ -421,7 +424,7 @@ function educationParagraphs(ctx: Ctx): Paragraph[] {
 function certificationsParagraphs(ctx: Ctx): Paragraph[] {
   const list = ctx.cv.certifications ?? [];
   if (list.length === 0) return [];
-  const out: Paragraph[] = [bandTitle("Certifications", ctx)];
+  const out: Paragraph[] = [bandTitle(ctx.copy.certifications, ctx)];
   for (const cert of list) {
     if (cert.url) {
       out.push(
@@ -457,7 +460,9 @@ function certificationsParagraphs(ctx: Ctx): Paragraph[] {
 
 function languagesParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
   if (ctx.cv.languages.length === 0) return [];
-  const out: Paragraph[] = [inSidebar ? sideTitle("Langues", ctx) : bandTitle("Langues", ctx)];
+  const out: Paragraph[] = [
+    inSidebar ? sideTitle(ctx.copy.languages, ctx) : bandTitle(ctx.copy.languages, ctx),
+  ];
   for (const lang of ctx.cv.languages) {
     const text = lang.level ? `${lang.name} — ${lang.level}` : lang.name;
     out.push(inSidebar ? sideText(text, ctx, { after: 20 }) : bodyText(text, ctx));
@@ -469,14 +474,14 @@ function interestsParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
   if (ctx.cv.interests.length === 0) return [];
   const text = ctx.cv.interests.join(" · ");
   return [
-    inSidebar ? sideTitle("Centres d'intérêt", ctx) : bandTitle("Centres d'intérêt", ctx),
+    inSidebar ? sideTitle(ctx.copy.interests, ctx) : bandTitle(ctx.copy.interests, ctx),
     inSidebar ? sideText(text, ctx) : bodyText(text, ctx),
   ];
 }
 
 function summaryParagraphs(ctx: Ctx): Paragraph[] {
   if (!ctx.cv.summary) return [];
-  return [bandTitle("Profil", ctx), bodyText(ctx.cv.summary, ctx)];
+  return [bandTitle(ctx.copy.summary, ctx), bodyText(ctx.cv.summary, ctx)];
 }
 
 function sectionParagraphs(id: SectionId, ctx: Ctx, inSidebar: boolean): Paragraph[] {
@@ -772,8 +777,12 @@ async function singleColumnDocument(ctx: Ctx): Promise<Document> {
 }
 
 /** Builds the .docx export of a CV for the given template definition. */
-export async function renderCVDocx(cv: CVData, def: TemplateDefinition): Promise<Buffer> {
-  const ctx: Ctx = { cv, def, font: def.fonts.body };
+export async function renderCVDocx(
+  cv: CVData,
+  def: TemplateDefinition,
+  locale: Locale = "fr"
+): Promise<Buffer> {
+  const ctx: Ctx = { cv, def, font: def.fonts.body, copy: getMessages(locale).cv };
   const doc =
     def.layout === "sidebar-left" ? await sidebarDocument(ctx) : await singleColumnDocument(ctx);
   return Packer.toBuffer(doc);

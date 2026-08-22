@@ -8,54 +8,57 @@ import { cvSchema } from "@/lib/cv-schema";
 import { db } from "@/lib/db";
 import { validateJobText } from "@/lib/job-field-validation";
 import { logActivity } from "@/lib/activity";
+import { getLocaleFromRequest } from "@/i18n/get-locale";
+import { getMessages, type Messages } from "@/i18n/messages";
+import { localizeServerError } from "@/lib/user-facing-error";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const bodySchema = z
-  .object({
-    jobUrl: z.string().url().optional(),
-    jobText: z.string().max(20000).optional(),
-    claims: z.array(matchClaimSchema).max(40).optional(),
-    targetTitle: z.string().max(120).optional(),
-    language: z.string().max(40).optional(),
-  })
-  .superRefine((b, ctx) => {
-    if (!b.jobUrl && !b.jobText?.trim()) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Fournissez l'URL de l'offre ou collez son texte.",
-        path: ["jobText"],
-      });
-    }
-    if (b.jobText?.trim()) {
-      const err = validateJobText(b.jobText);
-      if (err) ctx.addIssue({ code: "custom", message: err, path: ["jobText"] });
-    }
-  });
+const buildBodySchema = (m: Messages) =>
+  z
+    .object({
+      jobUrl: z.string().url().optional(),
+      jobText: z.string().max(20000).optional(),
+      claims: z.array(matchClaimSchema).max(40).optional(),
+      targetTitle: z.string().max(120).optional(),
+      language: z.string().max(40).optional(),
+    })
+    .superRefine((b, ctx) => {
+      if (!b.jobUrl && !b.jobText?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          message: m.api.analyze.jobSourceRequired,
+          path: ["jobText"],
+        });
+      }
+      if (b.jobText?.trim()) {
+        const err = validateJobText(b.jobText);
+        if (err) ctx.addIssue({ code: "custom", message: err, path: ["jobText"] });
+      }
+    });
 
 /**
  * Free match analysis (no credit). Returns before score, gaps, and projected
  * scores (with optional claims + all-gaps upper bound).
  */
 export async function POST(req: Request) {
+  const locale = getLocaleFromRequest(req);
+  const m = getMessages(locale);
   const session = await auth();
   if (!session?.user) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: m.errors.authRequired }, { status: 401 });
   }
 
   const { limit, windowMs } = RATE_LIMITS.analyze;
   if (!(await rateLimit(`analyze:${session.user.id}:${clientIp()}`, limit, windowMs))) {
-    return NextResponse.json(
-      { error: "Trop d'analyses rapprochées. Réessayez dans quelques minutes." },
-      { status: 429 }
-    );
+    return NextResponse.json({ error: m.api.analyze.rateLimited }, { status: 429 });
   }
 
-  const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
+  const parsed = buildBodySchema(m).safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Requête invalide." },
+      { error: parsed.error.issues[0]?.message ?? m.api.invalidRequest },
       { status: 400 }
     );
   }
@@ -113,8 +116,13 @@ export async function POST(req: Request) {
     });
   } catch (e) {
     if (e instanceof AnalyzeError) {
-      return NextResponse.json({ error: e.message }, { status: e.status });
+      return NextResponse.json(
+        {
+          error: localizeServerError(e.message, e.status, locale, m.api.analyze.failed),
+        },
+        { status: e.status }
+      );
     }
-    return NextResponse.json({ error: "L'analyse a échoué." }, { status: 500 });
+    return NextResponse.json({ error: m.api.analyze.failed }, { status: 500 });
   }
 }

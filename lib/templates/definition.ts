@@ -1,4 +1,6 @@
 import { z } from "zod";
+import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
 
 /**
  * Template definition — the JSON contract stored in Template.definition.
@@ -20,17 +22,23 @@ export const SECTION_IDS = [
 export const sectionIdSchema = z.enum(SECTION_IDS);
 export type SectionId = z.infer<typeof sectionIdSchema>;
 
-/** French labels for atelier / editor section controls. */
-export const SECTION_LABELS: Record<SectionId, string> = {
-  contact: "Contact",
-  summary: "Profil",
-  experience: "Expériences",
-  education: "Formations",
-  certifications: "Certifications",
-  skills: "Compétences",
-  languages: "Langues",
-  interests: "Centres d'intérêt",
-};
+/** Localized labels for atelier / editor / PDF / DOCX section headings. */
+export function sectionLabels(locale: Locale = "fr"): Record<SectionId, string> {
+  const cv = getMessages(locale).cv;
+  return {
+    contact: cv.contact,
+    summary: cv.summary,
+    experience: locale === "en" ? cv.experience : cv.experienceShort,
+    education: locale === "en" ? cv.education : cv.educationShort,
+    certifications: cv.certifications,
+    skills: cv.skills,
+    languages: cv.languages,
+    interests: cv.interests,
+  };
+}
+
+/** French labels (default export surface for existing editor/PDF callers). */
+export const SECTION_LABELS: Record<SectionId, string> = sectionLabels("fr");
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Couleur hex attendue (#rrggbb)");
 

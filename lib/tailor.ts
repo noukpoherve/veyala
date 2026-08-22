@@ -3,7 +3,13 @@ import * as cheerio from "cheerio";
 import { chatJSON } from "@/lib/llm";
 import { cvSchema, cvForLLM, CV_JSON_SHAPE, type CVData } from "@/lib/cv-schema";
 import { assertSafePublicUrl } from "@/lib/job-url";
-import { GENERATED_COPY_TYPOGRAPHY, stripEmDashes, stripEmDashesDeep } from "@/lib/typography";
+import {
+  GENERATED_COPY_TYPOGRAPHY,
+  GENERATED_COPY_TYPOGRAPHY_EN,
+  stripEmDashes,
+  stripEmDashesDeep,
+} from "@/lib/typography";
+import { isEnglishGeneration } from "@/lib/generation-locale";
 
 /** Keeps prompts within free-tier TPM budgets (Groq: 12k tokens/min). */
 const MAX_JOB_TEXT_PROMPT_CHARS = 8000;
@@ -79,6 +85,28 @@ Règles STRICTES :
 - Réponds UNIQUEMENT avec un objet JSON valide, sans backticks ni texte autour, conforme à ce format (+ detectedTitle) :
 ${CV_JSON_SHAPE}`;
 
+const SYSTEM_PROMPT_EN = `You are an expert recruiter and ATS optimizer.
+You receive (1) a candidate's base resume as JSON, (2) a job posting, and optionally (3) a requirements checklist.
+Your job: maximize ATS keyword match WITHOUT INVENTING ANYTHING.
+
+Business goal: the tailored resume must score clearly higher than the base resume on the posting's keywords.
+
+STRICT rules:
+- Invent no experience, tech, degree, metric, or responsibility that is not already in the base resume.
+- If a checklist or posting criterion ALREADY appears somewhere in the resume (skills, stack, bullets, summary), you MUST surface it explicitly in skills, headline, summary, and experience bullets, using the posting's EXACT wording.
+- You may ADD a posting term to "skills" only if it already appears elsewhere in the resume (including a clear synonym: JS→JavaScript, k8s→Kubernetes). Never add a term absent from the resume.
+- "identity.headline": title close to the posting + 2-3 posting technologies the candidate actually has. Max 70 characters.
+- "summary": 3-4 sentences (max 480 characters) that explicitly cite must-have / tools the candidate has.
+- "skills": reorder so posting-relevant items come first; add posting terms already evidenced in the resume.
+- "experiences": same jobs (same title/company/companyUrl/dates/place/links). Rewrite bullets in natural US English with the posting's vocabulary; most relevant bullets first. Same bullet count (±1). Bullets 110–220 characters. Keep existing markdown links [text](url). Enrich "stack" with technologies already in those bullets / the resume.
+- "education", "languages", "interests", "contact": copy as-is (except reorder a required language already listed to first).
+- Do not translate the candidate's proper nouns, company names, or school names.
+- Write all generated prose (headline, summary, bullets) in English.
+- Add "detectedTitle": the job title from the posting.
+- ${GENERATED_COPY_TYPOGRAPHY_EN}
+- Reply ONLY with valid JSON, no backticks or surrounding text, matching this shape (+ detectedTitle):
+${CV_JSON_SHAPE}`;
+
 /** Tailors the base CV to a job posting. ATS rules, zero invention. */
 export async function tailorCV(params: TailorParams): Promise<TailorResult> {
   const { baseCV, jobText, targetTitle, instructions, language, mustHave, niceHave, tools } =
@@ -97,6 +125,7 @@ export async function tailorCV(params: TailorParams): Promise<TailorResult> {
     .filter(Boolean)
     .join("\n");
 
+  const english = isEnglishGeneration(language);
   const user = [
     `CV DE BASE (JSON) :\n${cvJson}`,
     `OFFRE D'EMPLOI :\n${jobText.slice(0, MAX_JOB_TEXT_PROMPT_CHARS)}`,
@@ -104,6 +133,8 @@ export async function tailorCV(params: TailorParams): Promise<TailorResult> {
     targetTitle && `POSTE VISÉ (indiqué par le candidat) : ${targetTitle}`,
     instructions && `CONSIGNES SUPPLÉMENTAIRES DU CANDIDAT : ${instructions}`,
     language && `LANGUE DU CV GÉNÉRÉ : ${language}`,
+    english &&
+      `OUTPUT LANGUAGE: English. Rewrite generated prose in English. Do not translate proper nouns.`,
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -112,7 +143,7 @@ export async function tailorCV(params: TailorParams): Promise<TailorResult> {
   const maxTokens = Math.min(Math.max(Math.ceil(cvJson.length / 3) + 800, 2000), 6000);
 
   const raw = await chatJSON<Record<string, unknown>>({
-    system: SYSTEM_PROMPT,
+    system: english ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT,
     user,
     maxTokens,
     temperature: 0.35,

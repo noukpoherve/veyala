@@ -1,21 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VeyalaLogo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
-
-const NAV_LINKS = [
-  { href: "/#fonctionnalites", label: "Fonctionnalités" },
-  { href: "/#tarifs", label: "Tarifs" },
-  { href: "/#etudiants", label: "Étudiants" },
-  { href: "/blog", label: "Blog" },
-  { href: "/#faq", label: "FAQ" },
-];
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { useLocale, useMessages } from "@/components/i18n/locale-provider";
+import { Link } from "@/i18n/navigation";
+import { localizeHref } from "@/i18n/path";
 
 export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const m = useMessages();
+  const locale = useLocale();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -27,6 +24,13 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
   }, []);
 
   const primaryHref = isAuthenticated ? "/dashboard" : "/login";
+  const navLinks = [
+    { href: "/#fonctionnalites", label: m.nav.features },
+    { href: "/#tarifs", label: m.nav.pricing },
+    { href: "/#etudiants", label: m.nav.students },
+    { href: "/blog", label: m.nav.blog },
+    { href: "/#faq", label: m.nav.faq },
+  ].map((link) => ({ ...link, href: localizeHref(link.href, locale) }));
 
   return (
     <header
@@ -36,13 +40,13 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
       )}
     >
       <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-4 px-6 py-3 md:grid-cols-[1fr_auto_1fr]">
-        <Link href="/" aria-label="Accueil Veyala" className="justify-self-start">
+        <Link href="/" aria-label={m.common.homeAria} className="justify-self-start">
           <VeyalaLogo />
         </Link>
 
-        <nav aria-label="Navigation principale" className="hidden md:block">
+        <nav aria-label={m.nav.mainNav} className="hidden md:block">
           <ul className="flex items-center gap-8 text-sm font-medium text-slate-600">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <li key={link.href}>
                 <a href={link.href} className="transition-colors hover:text-slate-900">
                   {link.label}
@@ -53,19 +57,20 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
         </nav>
 
         <div className="hidden items-center gap-3 justify-self-end md:flex">
+          <LanguageSwitcher />
           {isAuthenticated ? null : (
             <Link
               href="/login"
-              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+              className="whitespace-nowrap text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
-              Se connecter
+              {m.nav.login}
             </Link>
           )}
-          <Button asChild className="group">
+          <Button asChild className="group whitespace-nowrap">
             <Link href={primaryHref}>
-              {isAuthenticated ? "Mon espace" : "Générer mon CV"}
+              {isAuthenticated ? m.nav.myWorkspace : m.nav.generateCv}
               <ArrowRight
-                className="size-4 transition-transform group-hover:translate-x-0.5"
+                className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5"
                 aria-hidden
               />
             </Link>
@@ -76,7 +81,7 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
           type="button"
           className="flex size-11 items-center justify-center justify-self-end rounded-md text-slate-600 md:hidden"
           aria-expanded={menuOpen}
-          aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+          aria-label={menuOpen ? m.common.closeMenu : m.common.openMenu}
           onClick={() => setMenuOpen((open) => !open)}
         >
           {menuOpen ? (
@@ -89,27 +94,28 @@ export function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean })
 
       {menuOpen ? (
         <nav
-          aria-label="Navigation mobile"
+          aria-label={m.nav.mainNav}
           className="border-t border-slate-100 bg-white/95 px-6 py-4 md:hidden"
         >
           <ul className="text-sm font-medium text-slate-700">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <li key={link.href}>
                 <a href={link.href} className="block py-2.5" onClick={() => setMenuOpen(false)}>
                   {link.label}
                 </a>
               </li>
             ))}
-            <li className="flex items-center gap-3 pt-2">
+            <li className="flex flex-wrap items-center gap-3 pt-2">
+              <LanguageSwitcher />
               {isAuthenticated ? null : (
-                <Link href="/login" className="text-slate-600">
-                  Se connecter
+                <Link href="/login" className="whitespace-nowrap text-slate-600">
+                  {m.nav.login}
                 </Link>
               )}
-              <Button asChild size="sm">
+              <Button asChild size="sm" className="whitespace-nowrap">
                 <Link href={primaryHref}>
-                  {isAuthenticated ? "Mon espace" : "Générer mon CV"}
-                  <ArrowRight className="size-4" aria-hidden />
+                  {isAuthenticated ? m.nav.myWorkspace : m.nav.generateCv}
+                  <ArrowRight className="size-4 shrink-0" aria-hidden />
                 </Link>
               </Button>
             </li>

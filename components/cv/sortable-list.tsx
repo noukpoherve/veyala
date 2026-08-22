@@ -19,6 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
+import { useMessages } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/utils";
 
 /**
@@ -34,6 +35,7 @@ function SortableItem({
   id: string;
   children: (handle: ReactNode) => ReactNode;
 }) {
+  const m = useMessages();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   });
@@ -42,7 +44,7 @@ function SortableItem({
     <button
       type="button"
       className="flex size-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
-      aria-label="Glisser pour réordonner"
+      aria-label={m.forms.layout.dragHandle}
       {...attributes}
       {...listeners}
     >

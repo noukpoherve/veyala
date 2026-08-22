@@ -1,6 +1,9 @@
 import { AlignmentType, Document, Packer, Paragraph, TextRun } from "docx";
 import type { CVData } from "@/lib/cv-schema";
 import type { TemplateDefinition } from "@/lib/templates/definition";
+import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
+import { intlLocale } from "@/i18n/format";
 
 const hex = (color: string): string => color.replace("#", "").toUpperCase();
 
@@ -8,17 +11,21 @@ const hex = (color: string): string => color.replace("#", "").toUpperCase();
 export async function renderCoverLetterDocx(
   cv: CVData,
   letter: { body: string; jobTitle: string },
-  def: TemplateDefinition
+  def: TemplateDefinition,
+  locale: Locale = "fr"
 ): Promise<Buffer> {
   const font = def.fonts.body;
   const heading = hex(def.colors.heading);
+  const copy = getMessages(locale).cv;
   const contactParts = [
     cv.contact.email,
     cv.contact.phone,
     cv.contact.location,
     ...cv.contact.links.map((l) => l.url),
   ].filter(Boolean);
-  const today = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(new Date());
+  const today = new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "long" }).format(
+    new Date()
+  );
 
   const children: Paragraph[] = [
     new Paragraph({
@@ -34,13 +41,13 @@ export async function renderCoverLetterDocx(
     new Paragraph({
       alignment: AlignmentType.RIGHT,
       spacing: { after: 240 },
-      children: [new TextRun({ text: `Le ${today}`, size: 19, color: "555555", font })],
+      children: [new TextRun({ text: copy.letterDate(today), size: 19, color: "555555", font })],
     }),
     new Paragraph({
       spacing: { after: 220 },
       children: [
         new TextRun({
-          text: `Objet : candidature au poste de ${letter.jobTitle}`,
+          text: copy.letterSubject(letter.jobTitle),
           bold: true,
           size: 21,
           color: heading,

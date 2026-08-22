@@ -17,6 +17,8 @@ import { renderCVDocx } from "@/lib/docx";
 import { renderCoverLetterDocx } from "@/lib/docx/letter";
 import { saveFile } from "@/lib/storage";
 import { exportFilename } from "@/lib/export-filename";
+import type { Locale } from "@/i18n/config";
+import { isEnglishGeneration } from "@/lib/generation-locale";
 import { getOrCreateJobAnalysis } from "@/lib/job-analysis";
 import {
   scoreCvAgainstJob,
@@ -110,18 +112,19 @@ export async function renderAndStoreExports(params: {
   letterBody: string;
   jobTitle: string;
   definition: TemplateDefinition;
+  locale?: Locale;
 }): Promise<ExportUrls> {
-  const { userId, cv, letterBody, jobTitle, definition } = params;
+  const { userId, cv, letterBody, jobTitle, definition, locale = "fr" } = params;
   const letter = { body: letterBody, jobTitle };
 
   // The two PDFs share one single-process Chromium; rendering them concurrently
   // doubles peak memory and OOM-crashes the serverless function ("Target page
   // has been closed"). Serialize the PDF renders (cap browser concurrency at 1)
   // while keeping the browser-less DOCX renders in flight alongside them.
-  const cvDocxPromise = renderCVDocx(cv, definition);
-  const letterDocxPromise = renderCoverLetterDocx(cv, letter, definition);
-  const cvPdf = await htmlToPdf(renderCVHtml(cv, definition));
-  const letterPdf = await htmlToPdf(renderCoverLetterHtml(cv, letter, definition));
+  const cvDocxPromise = renderCVDocx(cv, definition, locale);
+  const letterDocxPromise = renderCoverLetterDocx(cv, letter, definition, locale);
+  const cvPdf = await htmlToPdf(renderCVHtml(cv, definition, locale));
+  const letterPdf = await htmlToPdf(renderCoverLetterHtml(cv, letter, definition, locale));
   const [cvDocx, letterDocx] = await Promise.all([cvDocxPromise, letterDocxPromise]);
 
   const dir = `exports/${userId}`;
@@ -309,6 +312,7 @@ export async function generateCV(
       letterBody,
       jobTitle: detectedTitle,
       definition: resolveDefinition(definition, { photoUrl: cv.identity.photoUrl }),
+      locale: isEnglishGeneration(params.language) ? "en" : "fr",
     });
 
     emit({ step: "scoring_after", message: "Recalcul du matching optimisé…" });

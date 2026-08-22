@@ -5,6 +5,9 @@ import { campusFranceAnalyzeSchema } from "@/lib/campus-france/schema";
 import { rateLimit, RATE_LIMITS, clientIp } from "@/lib/rate-limit";
 import { logActivity } from "@/lib/activity";
 import { reportError } from "@/lib/sentry";
+import { getLocaleFromRequest } from "@/i18n/get-locale";
+import { getMessages } from "@/i18n/messages";
+import { localizeServerError } from "@/lib/user-facing-error";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -15,23 +18,22 @@ export const maxDuration = 90;
  * With projects: rescores the user's edited drafts.
  */
 export async function POST(req: Request) {
+  const locale = getLocaleFromRequest(req);
+  const m = getMessages(locale);
   const session = await auth();
   if (!session?.user) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: m.errors.authRequired }, { status: 401 });
   }
 
   const { limit, windowMs } = RATE_LIMITS.analyze;
   if (!(await rateLimit(`cf-analyze:${session.user.id}:${clientIp()}`, limit, windowMs))) {
-    return NextResponse.json(
-      { error: "Trop d'analyses rapprochées. Réessayez dans quelques minutes." },
-      { status: 429 }
-    );
+    return NextResponse.json({ error: m.api.analyze.rateLimited }, { status: 429 });
   }
 
   const parsed = campusFranceAnalyzeSchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Requête invalide." },
+      { error: parsed.error.issues[0]?.message ?? m.api.invalidRequest },
       { status: 400 }
     );
   }
@@ -84,17 +86,19 @@ export async function POST(req: Request) {
           ? (e as CampusFranceAnalyzeError)
           : null;
     if (cfErr) {
-      return NextResponse.json({ error: cfErr.message }, { status: cfErr.status });
+      return NextResponse.json(
+        {
+          error: localizeServerError(
+            cfErr.message,
+            cfErr.status,
+            locale,
+            m.api.campusFrance.analyzeFailed
+          ),
+        },
+        { status: cfErr.status }
+      );
     }
     reportError(e, "campus-france/analyze");
-    const message = e instanceof Error ? e.message : "L'analyse a échoué.";
-    // Surface safe French messages; hide infra dumps.
-    const safe =
-      message.length <= 280 &&
-      /[àâäéèêëïîôùûüç]/i.test(message) &&
-      !/prisma|ECONN|api_key|sk_/i.test(message)
-        ? message
-        : "L'analyse a échoué. Réessayez, ou collez le texte de la fiche si l'URL est bloquée.";
-    return NextResponse.json({ error: safe }, { status: 500 });
+    return NextResponse.json({ error: m.api.campusFrance.analyzeFailed }, { status: 500 });
   }
 }
