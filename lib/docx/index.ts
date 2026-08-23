@@ -25,6 +25,7 @@ import { normalizeHttpUrl, parseInlineLinks } from "@/lib/inline-links";
 import type { SectionId, TemplateDefinition } from "@/lib/templates/definition";
 import type { Locale } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
+import { sidebarFillPng } from "./sidebar-fill-png";
 
 /**
  * Generic DOCX engine driven by a template definition. Mirrors the HTML
@@ -298,122 +299,158 @@ function skillsParagraphs(ctx: Ctx, inSidebar: boolean): Paragraph[] {
   return out;
 }
 
-function experienceParagraphs(ctx: Ctx): Paragraph[] {
-  if (ctx.cv.experiences.length === 0) return [];
-  const out: Paragraph[] = [bandTitle(ctx.copy.experience, ctx)];
-  for (const exp of ctx.cv.experiences) {
-    if (exp.company && exp.companyUrl) {
-      out.push(
-        new Paragraph({
-          spacing: { before: 90, after: 10 },
-          children: [
-            new TextRun({
-              text: exp.title,
-              bold: true,
-              color: hex(ctx.def.colors.heading),
-              size: 18,
-              font: ctx.font,
-            }),
-            new TextRun({
-              text: " — ",
-              bold: true,
-              color: hex(ctx.def.colors.heading),
-              size: 18,
-              font: ctx.font,
-            }),
-            new ExternalHyperlink({
-              link: normalizeHttpUrl(exp.companyUrl),
-              children: [
-                new TextRun({
-                  text: exp.company,
-                  bold: true,
-                  color: hex(ctx.def.colors.link),
-                  underline: {},
-                  size: 18,
-                  font: ctx.font,
-                }),
-              ],
-            }),
-          ],
-        })
-      );
-    } else {
-      out.push(itemTitle(exp.company ? `${exp.title} — ${exp.company}` : exp.title, ctx));
-    }
-    out.push(metaLine(exp.dates, exp.place, ctx));
-    for (const b of exp.bullets) out.push(bulletLine(b, ctx));
-    if (exp.links.length) {
-      const linkChildren: (TextRun | ExternalHyperlink)[] = [];
-      exp.links
-        .filter((l) => l.url)
-        .forEach((l, i) => {
-          if (i > 0) {
-            linkChildren.push(
+/** Paragraphs for one job/project entry. Experience and project entries share this shape. */
+function experienceItemParagraphs(exp: CVData["experiences"][number], ctx: Ctx): Paragraph[] {
+  const out: Paragraph[] = [];
+  if (exp.company && exp.companyUrl) {
+    out.push(
+      new Paragraph({
+        spacing: { before: 90, after: 10 },
+        children: [
+          new TextRun({
+            text: exp.title,
+            bold: true,
+            color: hex(ctx.def.colors.heading),
+            size: 18,
+            font: ctx.font,
+          }),
+          new TextRun({
+            text: " — ",
+            bold: true,
+            color: hex(ctx.def.colors.heading),
+            size: 18,
+            font: ctx.font,
+          }),
+          new ExternalHyperlink({
+            link: normalizeHttpUrl(exp.companyUrl),
+            children: [
               new TextRun({
-                text: "  ·  ",
-                color: hex(ctx.def.colors.body),
-                size: 13,
+                text: exp.company,
+                bold: true,
+                color: hex(ctx.def.colors.link),
+                underline: {},
+                size: 18,
                 font: ctx.font,
-              })
-            );
-          }
+              }),
+            ],
+          }),
+        ],
+      })
+    );
+  } else if (exp.companyUrl) {
+    out.push(
+      new Paragraph({
+        spacing: { before: 90, after: 10 },
+        children: [
+          new ExternalHyperlink({
+            link: normalizeHttpUrl(exp.companyUrl),
+            children: [
+              new TextRun({
+                text: exp.title,
+                bold: true,
+                color: hex(ctx.def.colors.link),
+                underline: {},
+                size: 18,
+                font: ctx.font,
+              }),
+            ],
+          }),
+        ],
+      })
+    );
+  } else {
+    out.push(itemTitle(exp.company ? `${exp.title} — ${exp.company}` : exp.title, ctx));
+  }
+  out.push(metaLine(exp.dates, exp.place, ctx));
+  for (const b of exp.bullets) out.push(bulletLine(b, ctx));
+  if (exp.links.length) {
+    const linkChildren: (TextRun | ExternalHyperlink)[] = [];
+    exp.links
+      .filter((l) => l.url)
+      .forEach((l, i) => {
+        if (i > 0) {
           linkChildren.push(
-            new ExternalHyperlink({
-              link: normalizeHttpUrl(l.url),
-              children: [
-                new TextRun({
-                  text: l.label || l.url,
-                  color: hex(ctx.def.colors.link),
-                  underline: {},
-                  size: 13,
-                  font: ctx.font,
-                }),
-              ],
-            })
-          );
-        });
-      if (linkChildren.length) {
-        out.push(
-          new Paragraph({
-            spacing: { after: 16, line: 222, lineRule: "auto" },
-            indent: { left: 160 },
-            children: linkChildren,
-          })
-        );
-      }
-    }
-    if (exp.stack.length) {
-      out.push(
-        new Paragraph({
-          spacing: { after: 20, line: 222, lineRule: "auto" },
-          indent: { left: 160 },
-          children: [
             new TextRun({
-              text: `${ctx.copy.stack} : `,
-              bold: true,
-              color: hex(ctx.def.colors.heading),
-              size: 13,
-              font: ctx.font,
-            }),
-            new TextRun({
-              text: exp.stack.join(", "),
-              italics: true,
+              text: "  ·  ",
               color: hex(ctx.def.colors.body),
               size: 13,
               font: ctx.font,
-            }),
-          ],
+            })
+          );
+        }
+        linkChildren.push(
+          new ExternalHyperlink({
+            link: normalizeHttpUrl(l.url),
+            children: [
+              new TextRun({
+                text: l.label || l.url,
+                color: hex(ctx.def.colors.link),
+                underline: {},
+                size: 13,
+                font: ctx.font,
+              }),
+            ],
+          })
+        );
+      });
+    if (linkChildren.length) {
+      out.push(
+        new Paragraph({
+          spacing: { after: 16, line: 222, lineRule: "auto" },
+          indent: { left: 160 },
+          children: linkChildren,
         })
       );
     }
+  }
+  if (exp.stack.length) {
+    out.push(
+      new Paragraph({
+        spacing: { after: 20, line: 222, lineRule: "auto" },
+        indent: { left: 160 },
+        children: [
+          new TextRun({
+            text: `${ctx.copy.stack} : `,
+            bold: true,
+            color: hex(ctx.def.colors.heading),
+            size: 13,
+            font: ctx.font,
+          }),
+          new TextRun({
+            text: exp.stack.join(", "),
+            italics: true,
+            color: hex(ctx.def.colors.body),
+            size: 13,
+            font: ctx.font,
+          }),
+        ],
+      })
+    );
+  }
+  return out;
+}
+
+function experienceParagraphs(ctx: Ctx): Paragraph[] {
+  const experiences = ctx.cv.experiences.filter((e) => e.included !== false);
+  const projects = (ctx.cv.projects ?? []).filter((p) => p.included !== false);
+  const out: Paragraph[] = [];
+  if (experiences.length) {
+    out.push(bandTitle(ctx.copy.experience, ctx));
+    for (const exp of experiences) out.push(...experienceItemParagraphs(exp, ctx));
+  }
+  // Personal projects always render after work experience, and never before it.
+  if (projects.length) {
+    out.push(bandTitle(ctx.copy.projects, ctx));
+    for (const proj of projects) out.push(...experienceItemParagraphs(proj, ctx));
   }
   return out;
 }
 
 function educationParagraphs(ctx: Ctx): Paragraph[] {
-  if (ctx.cv.education.length === 0) return [];
+  const list = ctx.cv.education.filter((e) => e.included !== false);
+  if (list.length === 0) return [];
   const out: Paragraph[] = [bandTitle(ctx.copy.education, ctx)];
-  for (const ed of ctx.cv.education) {
+  for (const ed of list) {
     out.push(itemTitle(ed.school ? `${ed.degree} — ${ed.school}` : ed.degree, ctx));
     out.push(metaLine(ed.dates, ed.place, ctx));
     if (ed.details) out.push(bulletLine(ed.details, ctx));
@@ -422,7 +459,7 @@ function educationParagraphs(ctx: Ctx): Paragraph[] {
 }
 
 function certificationsParagraphs(ctx: Ctx): Paragraph[] {
-  const list = ctx.cv.certifications ?? [];
+  const list = (ctx.cv.certifications ?? []).filter((c) => c.included !== false);
   if (list.length === 0) return [];
   const out: Paragraph[] = [bandTitle(ctx.copy.certifications, ctx)];
   for (const cert of list) {
@@ -514,6 +551,11 @@ async function loadSidebarImage(def: TemplateDefinition): Promise<Buffer | null>
   } catch {
     return null;
   }
+}
+
+/** Decorative asset when present, otherwise a generated full-page color strip. */
+async function loadSidebarFill(def: TemplateDefinition): Promise<Buffer> {
+  return (await loadSidebarImage(def)) ?? sidebarFillPng(def.colors.sidebar);
 }
 
 type DocxImageType = "jpg" | "png" | "gif" | "bmp";
@@ -658,37 +700,33 @@ async function sidebarDocument(ctx: Ctx): Promise<Document> {
   const right: Paragraph[] = def.namePlacement === "sidebar" ? [] : [...nameHeader(ctx)];
   for (const id of def.mainSections) right.push(...sectionParagraphs(id, ctx, false));
 
-  // Full-height gradient behind the sidebar column, drawn from the header
-  // so it spans the entire page (Word cannot fill a table cell with a gradient).
-  const sidebarImage = await loadSidebarImage(def);
-  const headers = sidebarImage
-    ? {
-        default: new Header({
+  // Full-height rail behind the sidebar column, drawn from the header so it
+  // spans every page (Word cannot stretch a table-cell fill to the page foot).
+  const sidebarImage = await loadSidebarFill(def);
+  const headers = {
+    default: new Header({
+      children: [
+        new Paragraph({
           children: [
-            new Paragraph({
-              children: [
-                new ImageRun({
-                  type: "png",
-                  data: sidebarImage,
-                  transformation: { width: 302, height: 1123 },
-                  floating: {
-                    horizontalPosition: {
-                      relative: HorizontalPositionRelativeFrom.PAGE,
-                      offset: 0,
-                    },
-                    verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 0 },
-                    behindDocument: true,
-                    allowOverlap: true,
-                  },
-                }),
-              ],
+            new ImageRun({
+              type: "png",
+              data: sidebarImage,
+              transformation: { width: 302, height: 1123 },
+              floating: {
+                horizontalPosition: {
+                  relative: HorizontalPositionRelativeFrom.PAGE,
+                  offset: 0,
+                },
+                verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 0 },
+                behindDocument: true,
+                allowOverlap: true,
+              },
             }),
           ],
         }),
-      }
-    : undefined;
-
-  const sidebarFill = sidebarImage ? undefined : hex(def.colors.sidebar[0]!);
+      ],
+    }),
+  };
 
   const table = new Table({
     width: { size: SIDEBAR_DXA + MAIN_DXA, type: WidthType.DXA },
@@ -700,17 +738,14 @@ async function sidebarDocument(ctx: Ctx): Promise<Document> {
         children: [
           new TableCell({
             width: { size: SIDEBAR_DXA, type: WidthType.DXA },
-            shading: sidebarFill
-              ? { type: ShadingType.CLEAR, fill: sidebarFill, color: "auto" }
-              : undefined,
-            margins: { top: 80, bottom: 80, left: 260, right: 210 },
+            margins: { top: 0, bottom: 0, left: 260, right: 210 },
             verticalAlign: VerticalAlign.TOP,
             children: left,
           }),
           new TableCell({
             width: { size: MAIN_DXA, type: WidthType.DXA },
             shading: { type: ShadingType.CLEAR, fill: "FFFFFF", color: "auto" },
-            margins: { top: 80, bottom: 80, left: 300, right: 280 },
+            margins: { top: 0, bottom: 0, left: 300, right: 280 },
             verticalAlign: VerticalAlign.TOP,
             children: right,
           }),
@@ -728,10 +763,12 @@ async function sidebarDocument(ctx: Ctx): Promise<Document> {
         properties: {
           page: {
             size: A4,
-            margin: { top: 0, bottom: 0, left: 0, right: 0, header: 0, footer: 0 },
+            // 8mm top/bottom insets text on every page, including splits.
+            // The sidebar PNG is pinned to the PAGE, so the rail stays full-bleed.
+            margin: { top: 454, bottom: 454, left: 0, right: 0, header: 0, footer: 0 },
           },
         },
-        ...(headers ? { headers: { default: headers.default, first: headers.default } } : {}),
+        headers: { default: headers.default, first: headers.default },
         children: [table],
       },
     ],
