@@ -1,3 +1,17 @@
+# [1.16.0](https://github.com/noukpoherve/veyala/compare/v1.15.0...v1.16.0) (2026-08-23)
+
+
+### Bug Fixes
+
+* **ci:** narrow Horizon template before reading its section lists ([309857a](https://github.com/noukpoherve/veyala/commit/309857a8251f1058bf71a47c72c879db1d112440))
+* **docx:** paint a full-bleed sidebar rail on every Word page ([7b358e2](https://github.com/noukpoherve/veyala/commit/7b358e2968b4e0c9907a0d1b17748510ab4a1578))
+* **pdf:** inset every page without shrinking the sidebar rail ([0003016](https://github.com/noukpoherve/veyala/commit/00030166f8ed4675cdfd6d0b5eb077d04865e133))
+
+
+### Features
+
+* **cv:** add personal projects, visibility toggles, and project URLs ([240ad10](https://github.com/noukpoherve/veyala/commit/240ad10d37ed7bf347b94dd9084df55f6b29f48a))
+
 # [1.15.0](https://github.com/noukpoherve/veyala/compare/v1.14.1...v1.15.0) (2026-08-22)
 
 
