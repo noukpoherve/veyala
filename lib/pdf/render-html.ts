@@ -84,43 +84,58 @@ function jobHead(title: string, dates: string, def: TemplateDefinition): string 
   return `<h3>${title}</h3>`;
 }
 
-function experienceSection(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
-  if (cv.experiences.length === 0) return "";
-  const items = cv.experiences
-    .map((e) => {
-      const companyHtml = e.company
-        ? e.companyUrl
-          ? `<a href="${esc(httpUrl(e.companyUrl))}">${esc(e.company)}</a>`
-          : esc(e.company)
-        : "";
-      const companyLine = [companyHtml, e.place ? esc(e.place) : ""].filter(Boolean).join(" — ");
-      const inlineMeta =
-        def.datesStyle === "pill"
-          ? ""
-          : `<p class="meta"><strong>${esc(e.dates)}</strong>${e.place && !companyLine ? `<em> · ${esc(e.place)}</em>` : ""}</p>`;
-      const refs =
-        e.links.length > 0
-          ? `<p class="refs">${e.links
-              .filter((l) => l.url)
-              .map((l) => `<a href="${esc(httpUrl(l.url))}">${esc(l.label || l.url)}</a>`)
-              .join(" · ")}</p>`
-          : "";
-      return `<article class="job">
-      ${jobHead(esc(e.title), e.dates, def)}
+/** Renders one job/project article. Experience and project entries share this markup. */
+function experienceArticle(
+  e: CVData["experiences"][number],
+  def: TemplateDefinition,
+  copy: CvCopy
+): string {
+  const href = e.companyUrl ? esc(httpUrl(e.companyUrl)) : "";
+  const companyHtml = e.company
+    ? href
+      ? `<a href="${href}">${esc(e.company)}</a>`
+      : esc(e.company)
+    : "";
+  const titleHtml = href && !e.company ? `<a href="${href}">${esc(e.title)}</a>` : esc(e.title);
+  const companyLine = [companyHtml, e.place ? esc(e.place) : ""].filter(Boolean).join(" — ");
+  const inlineMeta =
+    def.datesStyle === "pill"
+      ? ""
+      : `<p class="meta"><strong>${esc(e.dates)}</strong>${e.place && !companyLine ? `<em> · ${esc(e.place)}</em>` : ""}</p>`;
+  const refs =
+    e.links.length > 0
+      ? `<p class="refs">${e.links
+          .filter((l) => l.url)
+          .map((l) => `<a href="${esc(httpUrl(l.url))}">${esc(l.label || l.url)}</a>`)
+          .join(" · ")}</p>`
+      : "";
+  return `<article class="job">
+      ${jobHead(titleHtml, e.dates, def)}
       ${companyLine ? `<p class="company">${companyLine}</p>` : ""}
       ${inlineMeta}
       ${e.bullets.length ? `<ul>${e.bullets.map((b) => `<li>${inlineLinksToHtml(b, esc)}</li>`).join("")}</ul>` : ""}
       ${refs}
       ${e.stack.length ? `<p class="stack"><strong>${esc(copy.stack)} :</strong> <em>${e.stack.map(esc).join(", ")}</em></p>` : ""}
     </article>`;
-    })
-    .join("");
-  return `<section class="experience"><h2>${esc(copy.experience)}</h2>${items}</section>`;
+}
+
+function experienceSection(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
+  const experiences = cv.experiences.filter((e) => e.included !== false);
+  const projects = (cv.projects ?? []).filter((p) => p.included !== false);
+  const experienceBlock = experiences.length
+    ? `<section class="experience"><h2>${esc(copy.experience)}</h2>${experiences.map((e) => experienceArticle(e, def, copy)).join("")}</section>`
+    : "";
+  // Personal projects always render after work experience, and never before it.
+  const projectsBlock = projects.length
+    ? `<section class="projects"><h2>${esc(copy.projects)}</h2>${projects.map((p) => experienceArticle(p, def, copy)).join("")}</section>`
+    : "";
+  return experienceBlock + projectsBlock;
 }
 
 function educationSection(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
-  if (cv.education.length === 0) return "";
-  const items = cv.education
+  const list = cv.education.filter((e) => e.included !== false);
+  if (list.length === 0) return "";
+  const items = list
     .map((e) => {
       const schoolLine = [e.school, e.place].filter(Boolean).map(esc).join(" — ");
       const inlineMeta =
@@ -137,7 +152,7 @@ function educationSection(cv: CVData, def: TemplateDefinition, copy: CvCopy): st
 }
 
 function certificationsSection(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
-  const list = cv.certifications ?? [];
+  const list = (cv.certifications ?? []).filter((c) => c.included !== false);
   if (list.length === 0) return "";
   const items = list
     .map((c) => {
@@ -247,13 +262,25 @@ function headerHtml(cv: CVData, def: TemplateDefinition, copy: CvCopy): string {
   </header>`;
 }
 
+/** Repeating 8mm gaps at the top/bottom of every printed page, without
+ *  shrinking the full-bleed sidebar rail (which `@page` margins would do).
+ *  Horizontal padding lives on an inner div: padding on the `<td>` itself
+ *  inflates the table past 210mm in Chromium and clips later pages. */
+function columnFlow(inner: string): string {
+  return `<table class="col-flow">
+    <thead><tr><td class="page-gap">&nbsp;</td></tr></thead>
+    <tfoot><tr><td class="page-gap">&nbsp;</td></tr></tfoot>
+    <tbody><tr><td><div class="col-pad">${inner}</div></td></tr></tbody>
+  </table>`;
+}
+
 function baseCss(def: TemplateDefinition): string {
   const c = def.colors;
   const headerCss =
     def.headerStyle === "underline"
       ? `color: ${c.heading}; background: none; padding: 0 0 1mm;
          border-bottom: 2px solid ${c.band}; margin-bottom: 2.6mm;`
-      : `background: ${c.band}; color: ${c.bandText}; padding: 1.4mm 2.5mm; margin-bottom: 2.4mm;`;
+      : `background: ${c.band}; color: ${c.bandText}; padding: 1.8mm 3mm; margin-bottom: 2.4mm;`;
   const datesCss =
     def.datesStyle === "pill"
       ? `.job .job-head { display: flex; justify-content: space-between; align-items: baseline; gap: 3mm; }
@@ -265,8 +292,12 @@ function baseCss(def: TemplateDefinition): string {
 
   return `
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  @page { size: A4; margin: 0; }
   html, body { width: 210mm; }
+  .col-flow { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .col-flow td { border: none; padding: 0; vertical-align: top; }
+  .col-flow thead { display: table-header-group; }
+  .col-flow tfoot { display: table-footer-group; }
+  .page-gap { height: 8mm; font-size: 0; line-height: 0; }
   body {
     font-family: "${def.fonts.body}", "Segoe UI", Arial, sans-serif;
     font-size: 9.2pt; line-height: 1.38; color: ${c.body};
@@ -331,13 +362,27 @@ function sidebarLayout(cv: CVData, def: TemplateDefinition, copy: CvCopy): strin
   const mainBrickCss = brickItemCss(def, { lightSidebar: light, inSidebar: false });
   const ruleColor = light ? c.band : "#ffffff66";
 
+  const railImage = c.sidebar.length > 1 ? gradientCss(c.sidebar) : "none";
+
   return `<style>
     ${baseCss(def)}
-    body { display: flex; min-height: 296mm; }
+    /* Full-bleed sheet: @page margins would shrink the rail. */
+    @page { size: A4; margin: 0; }
+    html, body { min-height: 297mm; }
+    body { display: flex; align-items: stretch; position: relative; }
+    .sidebar-rail {
+      display: none;
+      background-color: ${c.sidebar[0]};
+      background-image: ${railImage};
+      background-size: 62mm 297mm; background-repeat: repeat-y;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
     .sidebar {
-      width: 62mm; flex: none; padding: 8mm 5.5mm;
+      width: 62mm; flex: none; padding: 0; align-self: stretch;
+      min-height: 297mm;
       background: ${gradientCss(c.sidebar)}; color: ${c.sidebarText};
     }
+    .sidebar .col-pad { padding: 0 5.5mm; }
     .sidebar a { color: ${light ? c.link : c.sidebarText}; }
     .sidebar .identity { display: block; margin-bottom: 6mm; }
     .sidebar .identity h1 { font-size: 15pt; }
@@ -352,18 +397,31 @@ function sidebarLayout(cv: CVData, def: TemplateDefinition, copy: CvCopy): strin
     .sidebar .photo { display: block; margin: 0 auto 4mm; }
     .sidebar .inline-skills { font-size: 8.4pt; }
     .sidebar .bricks li { ${sidebarBrickCss} }
-    .main { flex: 1; padding: 8mm 7mm 8mm 7mm; background: #ffffff; }
+    .main { flex: 1; padding: 0; background: #ffffff; min-height: 297mm; }
+    .main .col-pad { padding: 0 7mm; }
     .main .bricks li { ${mainBrickCss} }
     .identity { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5mm; }
+    @media print {
+      html, body { min-height: 0; }
+      body { display: block; }
+      body::after { content: ""; display: block; clear: both; }
+      .sidebar-rail {
+        display: block; position: fixed; top: 0; left: 0; width: 62mm; height: 297mm;
+        z-index: 0;
+      }
+      .sidebar {
+        float: left; width: 62mm; min-height: 0; background: none;
+        position: relative; z-index: 1;
+      }
+      .main { margin-left: 62mm; min-height: 297mm; position: relative; z-index: 1; }
+    }
   </style>
+  <div class="sidebar-rail" aria-hidden="true"></div>
   <div class="sidebar">
-    ${sidebarName}
-    ${photo}
-    ${sidebar}
+    ${columnFlow(`${sidebarName}${photo}${sidebar}`)}
   </div>
   <main class="main">
-    ${mainHeader}
-    ${main}
+    ${columnFlow(`${mainHeader}${main}`)}
   </main>`;
 }
 
@@ -372,14 +430,16 @@ function singleColumnLayout(cv: CVData, def: TemplateDefinition, copy: CvCopy): 
   const brickCss = brickItemCss(def, { lightSidebar: true, inSidebar: false });
   return `<style>
     ${baseCss(def)}
-    body { padding: 10mm 14mm; }
+    /* No rail to protect: real @page margins inset every page, including splits. */
+    @page { size: A4; margin: 12mm 14mm; }
+    body { padding: 12mm 14mm; }
+    @media print { body { padding: 0; } }
     .identity { display: flex; justify-content: space-between; align-items: center;
       border-bottom: 2px solid ${def.colors.heading}; padding-bottom: 3mm; margin-bottom: 5mm; }
-    .contact ul { display: flex; flex-wrap: wrap; gap: 1mm 5mm; }
+    .contact ul { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 1mm 5mm; }
     .bricks li { ${brickCss} }
   </style>
-  ${headerHtml(cv, def, copy)}
-  <main>${main}</main>`;
+  ${headerHtml(cv, def, copy)}<main>${main}</main>`;
 }
 
 /** Full standalone HTML document for a CV + template definition. */

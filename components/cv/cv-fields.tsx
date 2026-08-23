@@ -2,7 +2,15 @@
 
 import { useRef, useState } from "react";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
-import { ArrowDownWideNarrow, ChevronDown, ImagePlus, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowDownWideNarrow,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  ImagePlus,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import type { CVData } from "@/lib/cv-schema";
 import { sortByDatesDesc } from "@/lib/cv-sort";
 import { fileToDataUrl } from "@/lib/image-file";
@@ -56,6 +64,37 @@ function RemoveButton({ onClick, label }: { onClick: () => void; label: string }
   );
 }
 
+/** Toggles whether an item is rendered on the CV, without deleting its data. */
+function VisibilityToggle({
+  visible,
+  onClick,
+  showLabel,
+  hideLabel,
+}: {
+  visible: boolean;
+  onClick: () => void;
+  showLabel: string;
+  hideLabel: string;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      aria-label={visible ? hideLabel : showLabel}
+      aria-pressed={!visible}
+      title={visible ? hideLabel : showLabel}
+    >
+      {visible ? (
+        <Eye className="text-muted-foreground" />
+      ) : (
+        <EyeOff className="text-muted-foreground" />
+      )}
+    </Button>
+  );
+}
+
 /** Textarea bound to a string array (one entry per line). */
 function LinesField({
   label,
@@ -93,11 +132,20 @@ function LinesField({
   );
 }
 
-function ExperienceLinks({ form, index }: { form: UseFormReturn<CVData>; index: number }) {
+/** Reference links (package, demo, repo…) under an experience or personal project. */
+function ExperienceLinks({
+  form,
+  list,
+  index,
+}: {
+  form: UseFormReturn<CVData>;
+  list: "experiences" | "projects";
+  index: number;
+}) {
   const t = useMessages().forms.fields;
   const links = useFieldArray({
     control: form.control,
-    name: `experiences.${index}.links`,
+    name: `${list}.${index}.links`,
   });
 
   return (
@@ -108,14 +156,14 @@ function ExperienceLinks({ form, index }: { form: UseFormReturn<CVData>; index: 
           <Input
             className="w-full sm:w-40"
             placeholder={t.linkLabelPlaceholder}
-            {...form.register(`experiences.${index}.links.${i}.label`)}
+            {...form.register(`${list}.${index}.links.${i}.label`)}
           />
           <Input
             className="min-w-0 flex-1"
             type="url"
             inputMode="url"
             placeholder="https://…"
-            {...form.register(`experiences.${index}.links.${i}.url`)}
+            {...form.register(`${list}.${index}.links.${i}.url`)}
           />
           <RemoveButton onClick={() => links.remove(i)} label={t.removeReferenceLink(i + 1)} />
         </div>
@@ -199,6 +247,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
   const links = useFieldArray({ control, name: "contact.links" });
   const details = useFieldArray({ control, name: "contact.details" });
   const experiences = useFieldArray({ control, name: "experiences" });
+  const projects = useFieldArray({ control, name: "projects" });
   const education = useFieldArray({ control, name: "education" });
   const certifications = useFieldArray({ control, name: "certifications" });
   const skills = useFieldArray({ control, name: "skills" });
@@ -336,10 +385,24 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                     />
                   </div>
                 </div>
-                <RemoveButton
-                  onClick={() => experiences.remove(i)}
-                  label={t.removeExperience(i + 1)}
-                />
+                <div className="flex flex-col pt-4">
+                  <VisibilityToggle
+                    visible={watch(`experiences.${i}.included`) !== false}
+                    onClick={() =>
+                      setValue(
+                        `experiences.${i}.included`,
+                        watch(`experiences.${i}.included`) === false,
+                        { shouldDirty: true }
+                      )
+                    }
+                    showLabel={t.showExperience(i + 1)}
+                    hideLabel={t.hideExperience(i + 1)}
+                  />
+                  <RemoveButton
+                    onClick={() => experiences.remove(i)}
+                    label={t.removeExperience(i + 1)}
+                  />
+                </div>
               </div>
               <LinesField
                 label={t.bullets}
@@ -350,7 +413,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                 placeholder={t.bulletsPlaceholder}
                 hint={t.bulletsHint}
               />
-              <ExperienceLinks form={form} index={i} />
+              <ExperienceLinks form={form} list="experiences" index={i} />
               <LinesField
                 label={t.stack}
                 rows={3}
@@ -377,6 +440,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                 bullets: [],
                 stack: [],
                 links: [],
+                included: true,
               })
             }
           >
@@ -395,6 +459,100 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             </Button>
           ) : null}
         </div>
+      </SectionCard>
+
+      <SectionCard title={cv.projects}>
+        {projects.fields.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t.noProjects}</p>
+        ) : null}
+        <SortableList ids={projects.fields.map((f) => f.id)} onMove={projects.move}>
+          {(handle, i) => (
+            <div className="space-y-3 rounded-lg border bg-card p-4">
+              <div className="flex items-start gap-2">
+                <div className="pt-6">{handle}</div>
+                <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>{t.projectTitle}</Label>
+                    <Input {...register(`projects.${i}.title`)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{t.projectContext}</Label>
+                    <Input {...register(`projects.${i}.company`)} />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>{t.projectUrl}</Label>
+                    <Input
+                      type="url"
+                      inputMode="url"
+                      {...register(`projects.${i}.companyUrl`)}
+                      placeholder={t.projectUrlPlaceholder}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{t.place}</Label>
+                    <Input {...register(`projects.${i}.place`)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{t.dates}</Label>
+                    <Input {...register(`projects.${i}.dates`)} placeholder={t.datesPlaceholder} />
+                  </div>
+                </div>
+                <div className="flex flex-col pt-4">
+                  <VisibilityToggle
+                    visible={watch(`projects.${i}.included`) !== false}
+                    onClick={() =>
+                      setValue(
+                        `projects.${i}.included`,
+                        watch(`projects.${i}.included`) === false,
+                        { shouldDirty: true }
+                      )
+                    }
+                    showLabel={t.showProject(i + 1)}
+                    hideLabel={t.hideProject(i + 1)}
+                  />
+                  <RemoveButton onClick={() => projects.remove(i)} label={t.removeProject(i + 1)} />
+                </div>
+              </div>
+              <LinesField
+                label={t.bullets}
+                value={getValues(`projects.${i}.bullets`)}
+                onChange={(lines) =>
+                  setValue(`projects.${i}.bullets`, lines, { shouldDirty: true })
+                }
+                placeholder={t.bulletsPlaceholder}
+                hint={t.bulletsHint}
+              />
+              <ExperienceLinks form={form} list="projects" index={i} />
+              <LinesField
+                label={t.stack}
+                rows={3}
+                value={getValues(`projects.${i}.stack`)}
+                onChange={(lines) => setValue(`projects.${i}.stack`, lines, { shouldDirty: true })}
+              />
+            </div>
+          )}
+        </SortableList>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            projects.append({
+              title: "",
+              company: "",
+              companyUrl: "",
+              place: "",
+              dates: "",
+              bullets: [],
+              stack: [],
+              links: [],
+              included: true,
+            })
+          }
+        >
+          <Plus />
+          {t.addProject}
+        </Button>
       </SectionCard>
 
       <SectionCard title={cv.educationShort}>
@@ -424,7 +582,24 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                   <Input {...register(`education.${i}.details`)} />
                 </div>
               </div>
-              <RemoveButton onClick={() => education.remove(i)} label={t.removeEducation(i + 1)} />
+              <div className="flex flex-col pt-4">
+                <VisibilityToggle
+                  visible={watch(`education.${i}.included`) !== false}
+                  onClick={() =>
+                    setValue(
+                      `education.${i}.included`,
+                      watch(`education.${i}.included`) === false,
+                      { shouldDirty: true }
+                    )
+                  }
+                  showLabel={t.showEducation(i + 1)}
+                  hideLabel={t.hideEducation(i + 1)}
+                />
+                <RemoveButton
+                  onClick={() => education.remove(i)}
+                  label={t.removeEducation(i + 1)}
+                />
+              </div>
             </div>
           )}
         </SortableList>
@@ -434,7 +609,14 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
             variant="outline"
             size="sm"
             onClick={() =>
-              education.append({ degree: "", school: "", place: "", dates: "", details: "" })
+              education.append({
+                degree: "",
+                school: "",
+                place: "",
+                dates: "",
+                details: "",
+                included: true,
+              })
             }
           >
             <Plus />
@@ -498,10 +680,24 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
                   <Input {...register(`certifications.${i}.credentialId`)} />
                 </div>
               </div>
-              <RemoveButton
-                onClick={() => certifications.remove(i)}
-                label={t.removeCertification(i + 1)}
-              />
+              <div className="flex flex-col pt-4">
+                <VisibilityToggle
+                  visible={watch(`certifications.${i}.included`) !== false}
+                  onClick={() =>
+                    setValue(
+                      `certifications.${i}.included`,
+                      watch(`certifications.${i}.included`) === false,
+                      { shouldDirty: true }
+                    )
+                  }
+                  showLabel={t.showCertification(i + 1)}
+                  hideLabel={t.hideCertification(i + 1)}
+                />
+                <RemoveButton
+                  onClick={() => certifications.remove(i)}
+                  label={t.removeCertification(i + 1)}
+                />
+              </div>
             </div>
           )}
         </SortableList>
@@ -516,6 +712,7 @@ export function CvFields({ form }: { form: UseFormReturn<CVData> }) {
               dates: "",
               url: "",
               credentialId: "",
+              included: true,
             })
           }
         >

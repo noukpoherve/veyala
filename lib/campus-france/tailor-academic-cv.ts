@@ -108,15 +108,28 @@ export async function tailorAcademicCv(
     contact: baseCV.contact,
     education:
       parsed.data.education.length === baseCV.education.length
-        ? parsed.data.education
+        ? // Same rationale as "experiences" below: re-apply the candidate's
+          // show/hide choice, which the LLM doesn't know about.
+          parsed.data.education.map((ed, i) => ({
+            ...ed,
+            included: baseCV.education[i]!.included,
+          }))
         : baseCV.education,
     certifications: baseCV.certifications ?? [],
+    // Personal projects are never sent to the LLM (see cvForLLM) and never rewritten.
+    projects: baseCV.projects ?? [],
     languages: parsed.data.languages.length ? parsed.data.languages : baseCV.languages,
     interests: baseCV.interests,
     softSkills: baseCV.softSkills ?? [],
     experiences:
       parsed.data.experiences.length === baseCV.experiences.length
-        ? parsed.data.experiences
+        ? // "included" isn't in CV_JSON_SHAPE, so it always comes back at its zod
+          // default (true). Re-apply the candidate's show/hide choice instead of
+          // letting tailoring silently reset it.
+          parsed.data.experiences.map((exp, i) => ({
+            ...exp,
+            included: baseCV.experiences[i]!.included,
+          }))
         : baseCV.experiences,
     skills: parsed.data.skills.length > 0 ? parsed.data.skills : baseCV.skills,
   };

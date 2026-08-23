@@ -98,4 +98,52 @@ describe("cvSchema", () => {
       })
     ).toThrow();
   });
+
+  it("defaults experiences/education/certifications to included: true", () => {
+    const parsed = cvSchema.parse({
+      ...minimalCv,
+      experiences: [{ title: "Dev" }],
+      education: [{ degree: "Master" }],
+      certifications: [{ name: "AWS SAA" }],
+    });
+    expect(parsed.experiences[0]?.included).toBe(true);
+    expect(parsed.education[0]?.included).toBe(true);
+    expect(parsed.certifications[0]?.included).toBe(true);
+  });
+
+  it("preserves an explicit included: false (hidden from the rendered CV)", () => {
+    const parsed = cvSchema.parse({
+      ...minimalCv,
+      experiences: [{ title: "Dev", included: false }],
+    });
+    expect(parsed.experiences[0]?.included).toBe(false);
+  });
+
+  it("defaults projects to an empty array and accepts entries shaped like an experience", () => {
+    const empty = cvSchema.parse(minimalCv);
+    expect(empty.projects).toEqual([]);
+
+    const parsed = cvSchema.parse({
+      ...minimalCv,
+      projects: [{ title: "Side project", bullets: ["Built a thing"] }],
+    });
+    expect(parsed.projects[0]?.title).toBe("Side project");
+    expect(parsed.projects[0]?.included).toBe(true);
+    expect(parsed.projects[0]?.companyUrl).toBe("");
+  });
+
+  it("preserves a project companyUrl so the name can be a clickable link", () => {
+    const parsed = cvSchema.parse({
+      ...minimalCv,
+      projects: [
+        {
+          title: "Founder",
+          company: "Veyala",
+          companyUrl: "https://veyala.fr",
+          bullets: ["Built an AI resume tool."],
+        },
+      ],
+    });
+    expect(parsed.projects[0]?.companyUrl).toBe("https://veyala.fr");
+  });
 });
