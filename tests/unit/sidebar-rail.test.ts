@@ -56,11 +56,12 @@ describe("sidebar rail (HTML / PDF)", () => {
   it("applies the same rail and page gaps on a custom atelier sidebar definition", () => {
     const horizon = OFFICIAL_TEMPLATES.find((t) => t.slug === "horizon-bleu-nuit");
     expect(horizon).toBeDefined();
+    if (!horizon) return;
     const custom = {
-      ...horizon!.definition,
+      ...horizon.definition,
       namePlacement: "sidebar" as const,
       skillsStyle: "list" as const,
-      colors: { ...horizon!.definition.colors, sidebar: ["#032b44"] },
+      colors: { ...horizon.definition.colors, sidebar: ["#032b44"] },
       sidebarSections: [
         "contact",
         "summary",
