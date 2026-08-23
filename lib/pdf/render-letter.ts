@@ -51,6 +51,7 @@ export function renderCoverLetterHtml(
     font-family: "${def.fonts.body}", "Segoe UI", Arial, sans-serif;
     font-size: 10.5pt; line-height: 1.55; color: #333333;
     padding: 16mm 18mm;
+    -webkit-box-decoration-break: clone; box-decoration-break: clone;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
   .rule { height: 2.2mm; border-radius: 1mm; margin-bottom: 6mm;
