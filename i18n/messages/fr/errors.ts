@@ -133,6 +133,7 @@ export const cv = {
   summary: "Profil",
   experience: "Expériences professionnelles",
   experienceShort: "Expériences",
+  projects: "Projets personnels",
   education: "Formation",
   educationShort: "Formations",
   certifications: "Certifications",

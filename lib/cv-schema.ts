@@ -27,7 +27,13 @@ export const experienceSchema = z.object({
   stack: z.array(z.string()).default([]),
   /** Reference links (package, demo, extension…) shown under the experience. */
   links: z.array(linkSchema).default([]),
+  /** Shown on the rendered CV when true (the default); hidden but kept when false. */
+  included: z.boolean().default(true),
 });
+
+/** Personal project — same shape as a professional experience, rendered in its own
+ *  section that always comes after "Work experience" and is never reorderable above it. */
+export const projectSchema = experienceSchema;
 
 export const educationSchema = z.object({
   degree: z.string().min(1),
@@ -35,6 +41,7 @@ export const educationSchema = z.object({
   place: z.string().default(""),
   dates: z.string().default(""),
   details: z.string().default(""),
+  included: z.boolean().default(true),
 });
 
 export const skillGroupSchema = z.object({
@@ -54,6 +61,7 @@ export const certificationSchema = z.object({
   /** Credential URL (http/https only when set). */
   url: z.string().default(""),
   credentialId: z.string().default(""),
+  included: z.boolean().default(true),
 });
 
 export const cvSchema = z.object({
@@ -76,6 +84,8 @@ export const cvSchema = z.object({
   }),
   summary: z.string().default(""),
   experiences: z.array(experienceSchema).default([]),
+  /** Personal projects, always rendered after "experiences" on the CV. */
+  projects: z.array(projectSchema).default([]),
   education: z.array(educationSchema).default([]),
   certifications: z.array(certificationSchema).default([]),
   skills: z.array(skillGroupSchema).default([]),
@@ -87,6 +97,7 @@ export const cvSchema = z.object({
 
 export type CVData = z.infer<typeof cvSchema>;
 export type CVExperience = z.infer<typeof experienceSchema>;
+export type CVProject = z.infer<typeof projectSchema>;
 export type CVEducation = z.infer<typeof educationSchema>;
 export type CVCertification = z.infer<typeof certificationSchema>;
 export type CVSkillGroup = z.infer<typeof skillGroupSchema>;
@@ -99,9 +110,12 @@ export function parseCV(data: unknown): CVData {
 /**
  * Copy of the CV safe to embed in LLM prompts: the photo (base64 data URL,
  * enormous in tokens) is stripped — it is re-attached after tailoring.
+ * "projects" is stripped too: tailoring never rewrites personal projects, it is
+ * always copied back from the base CV verbatim (see lib/tailor.ts), so there is
+ * no reason to spend prompt tokens describing it.
  */
 export function cvForLLM(cv: CVData): CVData {
-  return { ...cv, identity: { ...cv.identity, photoUrl: "" } };
+  return { ...cv, identity: { ...cv.identity, photoUrl: "" }, projects: [] };
 }
 
 /** Text version of the schema, injected into prompts to constrain JSON output. */

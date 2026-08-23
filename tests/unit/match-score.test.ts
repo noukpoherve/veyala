@@ -28,8 +28,10 @@ const baseCv: CVData = {
       bullets: ["Mise en place de CI/CD", "Apps React performantes"],
       stack: ["React", "TypeScript", "Node.js"],
       links: [],
+      included: true,
     },
   ],
+  projects: [],
   education: [],
   certifications: [],
   skills: [

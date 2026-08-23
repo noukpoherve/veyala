@@ -172,12 +172,20 @@ export async function tailorCV(params: TailorParams): Promise<TailorResult> {
     contact: baseCV.contact,
     education: baseCV.education,
     certifications: baseCV.certifications ?? [],
+    // Personal projects are never sent to the LLM (see cvForLLM) and never rewritten.
+    projects: baseCV.projects ?? [],
     languages: baseCV.languages,
     interests: baseCV.interests,
     softSkills: baseCV.softSkills ?? [],
     experiences:
       parsed.data.experiences.length === baseCV.experiences.length
-        ? parsed.data.experiences
+        ? // The LLM's output shape doesn't carry "included" (it's not in CV_JSON_SHAPE),
+          // so it always comes back at its zod default (true). Re-apply the candidate's
+          // show/hide choice from the base CV instead of letting tailoring silently reset it.
+          parsed.data.experiences.map((exp, i) => ({
+            ...exp,
+            included: baseCV.experiences[i]!.included,
+          }))
         : baseCV.experiences,
     skills: parsed.data.skills.length > 0 ? parsed.data.skills : baseCV.skills,
   };

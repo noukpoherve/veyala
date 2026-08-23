@@ -55,8 +55,15 @@ describe("coerceImportedCV", () => {
     expect(parsed.contact.links).toEqual([{ label: "GitHub", url: "https://github.com/x" }]);
     expect(parsed.experiences[0]?.links).toEqual([]);
     expect(parsed.certifications).toEqual([
-      { name: "AWS", issuer: "Amazon", dates: "", url: "", credentialId: "" },
-      { name: "Scrum", issuer: "", dates: "", url: "https://scrum.org/x", credentialId: "" },
+      { name: "AWS", issuer: "Amazon", dates: "", url: "", credentialId: "", included: true },
+      {
+        name: "Scrum",
+        issuer: "",
+        dates: "",
+        url: "https://scrum.org/x",
+        credentialId: "",
+        included: true,
+      },
     ]);
   });
 });
