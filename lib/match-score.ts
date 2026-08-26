@@ -415,14 +415,28 @@ export function promoteRequirementsInCv(cv: CVData, requirements: JobRequirement
   };
 }
 
+/** Dedupes soft-skill labels (accent-insensitive) while keeping first-seen wording. */
+export function unionSoftSkills(...lists: Array<readonly string[] | undefined>): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const list of lists) {
+    for (const raw of list ?? []) {
+      const term = raw.trim();
+      if (!term) continue;
+      const key = normalizeTerm(term);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(term);
+    }
+  }
+  return out;
+}
+
 export function sanitizeSkillsAgainstBase(cv: CVData, baseCV: CVData): CVData {
   const corpus = cvCorpus(baseCV);
-  const claimedSoft = new Set((cv.softSkills ?? []).map(normalizeTerm));
-  const baseSoft = new Set((baseCV.softSkills ?? []).map(normalizeTerm));
-  // Soft skills newly claimed for this generation are allowed (user consent).
-  const softSkills = (cv.softSkills ?? []).filter(
-    (s) => baseSoft.has(normalizeTerm(s)) || claimedSoft.has(normalizeTerm(s))
-  );
+  const allowedSoft = new Set(unionSoftSkills(baseCV.softSkills, cv.softSkills).map(normalizeTerm));
+  // Soft skills from the profile or newly claimed for this generation are allowed.
+  const softSkills = (cv.softSkills ?? []).filter((s) => allowedSoft.has(normalizeTerm(s)));
 
   const skills = cv.skills
     .map((g) => ({
@@ -438,13 +452,45 @@ export function sanitizeSkillsAgainstBase(cv: CVData, baseCV: CVData): CVData {
   };
 }
 
-/** Ensures soft skills appear as a visible skill group for PDF/DOCX templates. */
+function isSoftSkillsCategory(category: string): boolean {
+  const n = category.trim().toLowerCase();
+  return (
+    /^soft\s*skills?$/.test(n) ||
+    /savoir[\s-]*[eê]tre/.test(n) ||
+    /qualit[eé]s?\s*(humaines|personnelles|relationnelles)/.test(n) ||
+    /comp[eé]tences?\s*(comportementales|transversales|douces)/.test(n)
+  );
+}
+
+/** Ensures catalog / claimed soft skills appear as a visible skill group for PDF/DOCX. */
 export function withSoftSkillsGroup(cv: CVData): CVData {
-  const soft = cv.softSkills ?? [];
-  const others = cv.skills.filter((g) => !/^soft\s*skills?$/i.test(g.category));
-  if (soft.length === 0) return { ...cv, skills: others };
+  const fromGroups = cv.skills
+    .filter((g) => isSoftSkillsCategory(g.category))
+    .flatMap((g) => g.items);
+  const soft = unionSoftSkills(cv.softSkills, fromGroups);
+  const others = cv.skills.filter((g) => !isSoftSkillsCategory(g.category));
+  if (soft.length === 0) return { ...cv, softSkills: [], skills: others };
   return {
     ...cv,
+    softSkills: soft,
     skills: [...others, { category: "Soft skills", items: soft }],
   };
+}
+
+/**
+ * Post-tailor merge: keep profile + claimed soft skills even if the LLM
+ * returned a different non-empty list, then sanitize / promote / surface them.
+ */
+export function finalizeTailoredCv(
+  tailored: CVData,
+  enrichedBase: CVData,
+  requirements: JobRequirements
+): CVData {
+  const softSkills = unionSoftSkills(enrichedBase.softSkills, tailored.softSkills);
+  return withSoftSkillsGroup(
+    promoteRequirementsInCv(
+      sanitizeSkillsAgainstBase({ ...tailored, softSkills }, enrichedBase),
+      requirements
+    )
+  );
 }

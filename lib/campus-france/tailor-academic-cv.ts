@@ -21,7 +21,7 @@ Règles STRICTES :
 - "education" : mêmes entrées ; tu peux enrichir "details" uniquement avec des éléments déjà présents ailleurs dans le CV ; place les formations les plus pertinentes en premier.
 - "experiences" : mêmes expériences (mêmes title/company/companyUrl/dates/place/links). Reformule les puces pour souligner le lien avec la formation ; réordonne les puces (plus pertinentes en premier). Même nombre de puces (±1). Conserve les liens markdown déjà présents.
 - "skills" : réordonne pour placer d'abord les compétences utiles à la formation ; n'ajoute un terme que s'il est déjà prouvé dans le CV.
-- "languages", "certifications", "interests", "contact" : recopiés (sauf réordonner une langue exigée déjà listée en premier).
+- "languages", "certifications", "interests", "contact", "softSkills" : recopiés (sauf réordonner une langue exigée déjà listée en premier). Ne déplace pas "softSkills" dans "skills".
 - Ajoute "detectedTitle" : intitulé de la formation.
 - ${GENERATED_COPY_TYPOGRAPHY}
 - Réponds UNIQUEMENT avec un objet JSON valide, sans backticks ni texte autour, conforme à ce format (+ detectedTitle) :

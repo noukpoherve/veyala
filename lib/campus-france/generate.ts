@@ -11,6 +11,7 @@ import {
   type GenerateStep,
 } from "@/lib/generate-cv";
 import { parseTemplateDefinition, resolveDefinition } from "@/lib/templates/definition";
+import { unionSoftSkills, withSoftSkillsGroup } from "@/lib/match-score";
 import { getOrCreateFormationAnalysis } from "@/lib/campus-france/program-analysis";
 import { scoreCampusFranceCoherence } from "@/lib/campus-france/coherence-score";
 import { writeCampusFranceMotivationLetter } from "@/lib/campus-france/motivation-letter";
@@ -213,7 +214,11 @@ export async function generateCampusFranceDossier(
       instructions: params.instructions,
       language: params.language,
     });
-    const { cv, detectedTitle } = tailored;
+    const cv = withSoftSkillsGroup({
+      ...tailored.cv,
+      softSkills: unionSoftSkills(profileCv.softSkills, tailored.cv.softSkills),
+    });
+    const { detectedTitle } = tailored;
 
     emit({ step: "rendering_exports", message: "Génération PDF et Word…" });
     const urls = await renderAndStoreExports({

@@ -76,6 +76,8 @@ describe("sidebar rail (HTML / PDF)", () => {
     expect(html).toContain('class="col-flow"');
     expect(html).toContain('class="page-gap"');
     expect(html).toContain("table-header-group");
+    expect(html).toContain("Rigueur");
+    expect(html).toContain("Soft skills");
   });
 });
 

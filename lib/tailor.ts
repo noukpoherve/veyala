@@ -45,7 +45,7 @@ Règles STRICTES :
 - "summary" : 3-4 phrases (max 480 caractères) qui citent explicitement les must-have / tools que le candidat possède.
 - "skills" : réordonne pour placer d'abord les items utiles à l'offre ; ajoute les termes de l'offre déjà prouvés dans le CV.
 - "experiences" : mêmes expériences (mêmes title/company/companyUrl/dates/place/links). Reformule les puces avec le vocabulaire de l'offre et les mots-clés couvrables ; réordonne les puces (plus pertinentes en premier). Même nombre de puces (±1). Puces 110–220 caractères. Conserve les liens markdown [texte](url) déjà présents dans les puces. Enrichis "stack" avec les technos de l'expérience déjà présentes dans les puces / le CV.
-- "education", "languages", "interests", "contact" : recopiés à l'identique (sauf languages si l'offre demande une langue déjà listée : garde-la en premier).
+- "education", "languages", "interests", "contact", "softSkills" : recopiés à l'identique (sauf languages si l'offre demande une langue déjà listée : garde-la en premier). Ne déplace pas "softSkills" dans "skills".
 - Ajoute "detectedTitle" : intitulé du poste dans l'offre.
 - ${GENERATED_COPY_TYPOGRAPHY}
 - Réponds UNIQUEMENT avec un objet JSON valide, sans backticks ni texte autour, conforme à ce format (+ detectedTitle) :
@@ -65,7 +65,7 @@ STRICT rules:
 - "summary": 3-4 sentences (max 480 characters) that explicitly cite must-have / tools the candidate has.
 - "skills": reorder so posting-relevant items come first; add posting terms already evidenced in the resume.
 - "experiences": same jobs (same title/company/companyUrl/dates/place/links). Rewrite bullets in natural US English with the posting's vocabulary; most relevant bullets first. Same bullet count (±1). Bullets 110–220 characters. Keep existing markdown links [text](url). Enrich "stack" with technologies already in those bullets / the resume.
-- "education", "languages", "interests", "contact": copy as-is (except reorder a required language already listed to first).
+- "education", "languages", "interests", "contact", "softSkills": copy as-is (except reorder a required language already listed to first). Do not move "softSkills" into "skills".
 - Do not translate the candidate's proper nouns, company names, or school names.
 - Write all generated prose (headline, summary, bullets) in English.
 - Add "detectedTitle": the job title from the posting.
