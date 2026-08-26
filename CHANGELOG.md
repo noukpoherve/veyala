@@ -1,3 +1,11 @@
+## [1.16.1](https://github.com/noukpoherve/veyala/compare/v1.16.0...v1.16.1) (2026-08-26)
+
+
+### Bug Fixes
+
+* **cv:** keep profile and claimed soft skills after tailoring ([6dd36e7](https://github.com/noukpoherve/veyala/commit/6dd36e73016f5eef3e71a5777b74ff7c317077fc))
+* **jobs:** recover offer text from blocked job-board URLs ([ed64380](https://github.com/noukpoherve/veyala/commit/ed643805376ceeb07c1015923e8048a07222bc16))
+
 # [1.16.0](https://github.com/noukpoherve/veyala/compare/v1.15.0...v1.16.0) (2026-08-23)
 
 
