@@ -1,5 +1,6 @@
 import type { CVData, CVSkillGroup } from "@/lib/cv-schema";
 import { inlineLinksToHtml, normalizeHttpUrl } from "@/lib/inline-links";
+import { withSoftSkillsGroup } from "@/lib/match-score";
 import type { SectionId, TemplateDefinition } from "@/lib/templates/definition";
 import type { Locale } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
@@ -444,11 +445,12 @@ function singleColumnLayout(cv: CVData, def: TemplateDefinition, copy: CvCopy): 
 
 /** Full standalone HTML document for a CV + template definition. */
 export function renderCVHtml(cv: CVData, def: TemplateDefinition, locale: Locale = "fr"): string {
+  const data = withSoftSkillsGroup(cv);
   const copy = getMessages(locale).cv;
   const content =
     def.layout === "sidebar-left"
-      ? sidebarLayout(cv, def, copy)
-      : singleColumnLayout(cv, def, copy);
+      ? sidebarLayout(data, def, copy)
+      : singleColumnLayout(data, def, copy);
   const logo = def.logo
     ? `<img class="cv-logo" src="${esc(def.logo)}" alt="" aria-hidden="true" />`
     : "";

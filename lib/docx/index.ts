@@ -22,6 +22,7 @@ import {
 } from "docx";
 import type { CVData } from "@/lib/cv-schema";
 import { normalizeHttpUrl, parseInlineLinks } from "@/lib/inline-links";
+import { withSoftSkillsGroup } from "@/lib/match-score";
 import type { SectionId, TemplateDefinition } from "@/lib/templates/definition";
 import type { Locale } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
@@ -819,7 +820,8 @@ export async function renderCVDocx(
   def: TemplateDefinition,
   locale: Locale = "fr"
 ): Promise<Buffer> {
-  const ctx: Ctx = { cv, def, font: def.fonts.body, copy: getMessages(locale).cv };
+  const data = withSoftSkillsGroup(cv);
+  const ctx: Ctx = { cv: data, def, font: def.fonts.body, copy: getMessages(locale).cv };
   const doc =
     def.layout === "sidebar-left" ? await sidebarDocument(ctx) : await singleColumnDocument(ctx);
   return Packer.toBuffer(doc);
