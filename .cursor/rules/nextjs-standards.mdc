@@ -1,0 +1,36 @@
+---
+description: Apply Next.js quality standards on every task (features, bugfixes, refactors, one-liners).
+alwaysApply: true
+---
+
+# Next.js standards — every task, no exceptions
+
+Before writing or reviewing Next.js/React code, follow
+`~/.claude/skills/nextjs-standards/SKILL.md`. These bars apply to **bugfixes,
+refactors, copy, and one-line changes**, not only new features. Do not skip
+them because the task looks small.
+
+## Non-negotiable
+
+- **Server Components by default.** `'use client'` only on the leaf that needs
+  state, effects, or browser APIs.
+- **Rendering:** pick SSG / ISR / RSC / SSR / CSR per page on purpose. Never
+  default to SSR. Do not cache data whose staleness would be a correctness bug.
+- **DRY / KISS / YAGNI:** reuse existing `lib/`, schemas, and UI. No abstraction
+  for a case that does not exist yet. Logic in `lib/`, routes validate +
+  authorize + delegate, UI stays presentational.
+- **Security:** validate all input server-side (Zod). Check session and
+  permission in the handler, not only in the UI. SSRF-safe fetches. No secrets
+  in client bundles or error messages.
+- **A11y:** semantic HTML, keyboard/focus, labels, contrast. No clickable `div`.
+- **UX states:** loading (skeleton), empty, error (retry when retryable),
+  success — for any async surface you touch.
+- **TypeScript strict.** No `any` without a one-line why.
+- **Tests** match existing convention (`lib/` unit tests, route permission
+  branches, critical E2E).
+
+## Before calling the task done
+
+Reused an existing util instead of re-deriving one. Client island scoped to
+what needs it. Inputs validated and authorized in the handler. Loading / empty /
+error covered if you touched async UI. Tests updated when behavior changed.
