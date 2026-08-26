@@ -1,8 +1,6 @@
 import "server-only";
-import * as cheerio from "cheerio";
 import { chatJSON } from "@/lib/llm";
 import { cvSchema, cvForLLM, CV_JSON_SHAPE, type CVData } from "@/lib/cv-schema";
-import { assertSafePublicUrl } from "@/lib/job-url";
 import {
   GENERATED_COPY_TYPOGRAPHY,
   GENERATED_COPY_TYPOGRAPHY_EN,
@@ -11,42 +9,10 @@ import {
 } from "@/lib/typography";
 import { isEnglishGeneration } from "@/lib/generation-locale";
 
+export { fetchJobText } from "@/lib/fetch-job-text";
+
 /** Keeps prompts within free-tier TPM budgets (Groq: 12k tokens/min). */
 const MAX_JOB_TEXT_PROMPT_CHARS = 8000;
-
-const FETCH_TIMEOUT_MS = 12_000;
-
-/** Fetches and cleans a job posting's text from its URL (SSRF-safe). */
-export async function fetchJobText(rawUrl: string): Promise<string> {
-  const url = await assertSafePublicUrl(rawUrl);
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36",
-      "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
-    },
-    redirect: "follow",
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-  });
-  // Re-check the final URL after redirects.
-  if (res.url && res.url !== url.href) {
-    await assertSafePublicUrl(res.url);
-  }
-  if (!res.ok) {
-    throw new Error(`Le site a répondu ${res.status}. Collez plutôt le texte de l'offre.`);
-  }
-  const html = await res.text();
-  if (html.length > 2_000_000) {
-    throw new Error("Page trop volumineuse. Collez plutôt le texte de l'offre.");
-  }
-  const $ = cheerio.load(html);
-  $("script, style, nav, footer, header, noscript, svg, iframe").remove();
-  const text = $("body").text().replace(/\s+/g, " ").trim();
-  if (text.length < 200) {
-    throw new Error("Contenu trop court ou bloqué par le site. Collez plutôt le texte de l'offre.");
-  }
-  return text.slice(0, 12000);
-}
 
 export interface TailorParams {
   baseCV: CVData;
