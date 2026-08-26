@@ -22,10 +22,8 @@ import { isEnglishGeneration } from "@/lib/generation-locale";
 import { getOrCreateJobAnalysis } from "@/lib/job-analysis";
 import {
   scoreCvAgainstJob,
-  promoteRequirementsInCv,
-  sanitizeSkillsAgainstBase,
   applyClaimsToCv,
-  withSoftSkillsGroup,
+  finalizeTailoredCv,
   type MatchClaim,
   type MatchResult,
 } from "@/lib/match-score";
@@ -282,18 +280,9 @@ export async function generateCV(
       niceHave: analysis.requirements.niceHave,
       tools: analysis.requirements.tools,
     });
-    // Sanitize vs enriched base so claimed skills survive; then promote wording.
-    const cv = withSoftSkillsGroup(
-      promoteRequirementsInCv(
-        {
-          ...sanitizeSkillsAgainstBase(tailored.cv, enrichedBase),
-          softSkills: tailored.cv.softSkills?.length
-            ? tailored.cv.softSkills
-            : enrichedBase.softSkills,
-        },
-        analysis.requirements
-      )
-    );
+    // Union profile + claimed soft skills with the LLM output so a non-empty
+    // model list cannot drop what the candidate already selected.
+    const cv = finalizeTailoredCv(tailored.cv, enrichedBase, analysis.requirements);
     const { detectedTitle } = tailored;
 
     emit({ step: "writing_letter", message: "Rédaction de la lettre de motivation…" });

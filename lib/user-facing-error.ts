@@ -137,7 +137,7 @@ function mapKnownFrenchError(raw: string, locale: Locale): string | null {
     [/Solde de crédits insuffisant/i, e.insufficientCredits],
     [/Template introuvable|Template non autorisé/i, api.cvEditor.templateNotAllowed],
     [/Aucun template disponible/i, api.cvEditor.templateNotAllowed],
-    [/offre est trop courte|offre trop courte/i, e.invalidData],
+    [/offre est trop courte|offre trop courte|Contenu trop court ou bloqué/i, e.invalidData],
     [/Offre illisible/i, e.invalidData],
     [/Job (de génération|Campus France) introuvable/i, api.generate.jobNotFound],
     [/Paramètres de génération invalides/i, api.invalidRequest],

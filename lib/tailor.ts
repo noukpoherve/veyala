@@ -1,8 +1,6 @@
 import "server-only";
-import * as cheerio from "cheerio";
 import { chatJSON } from "@/lib/llm";
 import { cvSchema, cvForLLM, CV_JSON_SHAPE, type CVData } from "@/lib/cv-schema";
-import { assertSafePublicUrl } from "@/lib/job-url";
 import {
   GENERATED_COPY_TYPOGRAPHY,
   GENERATED_COPY_TYPOGRAPHY_EN,
@@ -11,42 +9,10 @@ import {
 } from "@/lib/typography";
 import { isEnglishGeneration } from "@/lib/generation-locale";
 
+export { fetchJobText } from "@/lib/fetch-job-text";
+
 /** Keeps prompts within free-tier TPM budgets (Groq: 12k tokens/min). */
 const MAX_JOB_TEXT_PROMPT_CHARS = 8000;
-
-const FETCH_TIMEOUT_MS = 12_000;
-
-/** Fetches and cleans a job posting's text from its URL (SSRF-safe). */
-export async function fetchJobText(rawUrl: string): Promise<string> {
-  const url = await assertSafePublicUrl(rawUrl);
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36",
-      "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
-    },
-    redirect: "follow",
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-  });
-  // Re-check the final URL after redirects.
-  if (res.url && res.url !== url.href) {
-    await assertSafePublicUrl(res.url);
-  }
-  if (!res.ok) {
-    throw new Error(`Le site a répondu ${res.status}. Collez plutôt le texte de l'offre.`);
-  }
-  const html = await res.text();
-  if (html.length > 2_000_000) {
-    throw new Error("Page trop volumineuse. Collez plutôt le texte de l'offre.");
-  }
-  const $ = cheerio.load(html);
-  $("script, style, nav, footer, header, noscript, svg, iframe").remove();
-  const text = $("body").text().replace(/\s+/g, " ").trim();
-  if (text.length < 200) {
-    throw new Error("Contenu trop court ou bloqué par le site. Collez plutôt le texte de l'offre.");
-  }
-  return text.slice(0, 12000);
-}
 
 export interface TailorParams {
   baseCV: CVData;
@@ -79,7 +45,7 @@ Règles STRICTES :
 - "summary" : 3-4 phrases (max 480 caractères) qui citent explicitement les must-have / tools que le candidat possède.
 - "skills" : réordonne pour placer d'abord les items utiles à l'offre ; ajoute les termes de l'offre déjà prouvés dans le CV.
 - "experiences" : mêmes expériences (mêmes title/company/companyUrl/dates/place/links). Reformule les puces avec le vocabulaire de l'offre et les mots-clés couvrables ; réordonne les puces (plus pertinentes en premier). Même nombre de puces (±1). Puces 110–220 caractères. Conserve les liens markdown [texte](url) déjà présents dans les puces. Enrichis "stack" avec les technos de l'expérience déjà présentes dans les puces / le CV.
-- "education", "languages", "interests", "contact" : recopiés à l'identique (sauf languages si l'offre demande une langue déjà listée : garde-la en premier).
+- "education", "languages", "interests", "contact", "softSkills" : recopiés à l'identique (sauf languages si l'offre demande une langue déjà listée : garde-la en premier). Ne déplace pas "softSkills" dans "skills".
 - Ajoute "detectedTitle" : intitulé du poste dans l'offre.
 - ${GENERATED_COPY_TYPOGRAPHY}
 - Réponds UNIQUEMENT avec un objet JSON valide, sans backticks ni texte autour, conforme à ce format (+ detectedTitle) :
@@ -99,7 +65,7 @@ STRICT rules:
 - "summary": 3-4 sentences (max 480 characters) that explicitly cite must-have / tools the candidate has.
 - "skills": reorder so posting-relevant items come first; add posting terms already evidenced in the resume.
 - "experiences": same jobs (same title/company/companyUrl/dates/place/links). Rewrite bullets in natural US English with the posting's vocabulary; most relevant bullets first. Same bullet count (±1). Bullets 110–220 characters. Keep existing markdown links [text](url). Enrich "stack" with technologies already in those bullets / the resume.
-- "education", "languages", "interests", "contact": copy as-is (except reorder a required language already listed to first).
+- "education", "languages", "interests", "contact", "softSkills": copy as-is (except reorder a required language already listed to first). Do not move "softSkills" into "skills".
 - Do not translate the candidate's proper nouns, company names, or school names.
 - Write all generated prose (headline, summary, bullets) in English.
 - Add "detectedTitle": the job title from the posting.

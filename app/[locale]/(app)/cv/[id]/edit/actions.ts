@@ -6,6 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cvSchema } from "@/lib/cv-schema";
+import { withSoftSkillsGroup } from "@/lib/match-score";
 import {
   parseTemplateDefinition,
   resolveDefinition,
@@ -48,7 +49,8 @@ export async function saveCvEdits(input: unknown): Promise<SaveCvEditsResult> {
   if (!parsed.success) {
     return { ok: false, error: m.api.cvEditor.invalidData };
   }
-  const { cvId, templateId, styleOverride, data, coverLetter } = parsed.data;
+  const { cvId, templateId, styleOverride, coverLetter } = parsed.data;
+  const data = withSoftSkillsGroup(parsed.data.data);
 
   const cv = await db.generatedCV.findUnique({ where: { id: cvId } });
   if (!cv || cv.userId !== session.user.id) {

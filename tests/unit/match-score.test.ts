@@ -10,6 +10,8 @@ import {
   sanitizeSkillsAgainstBase,
   withSoftSkillsGroup,
   parseMatchBreakdown,
+  unionSoftSkills,
+  finalizeTailoredCv,
 } from "@/lib/match-score";
 import { extractRequirementsHeuristic } from "@/lib/job-requirements";
 import type { CVData } from "@/lib/cv-schema";
@@ -237,6 +239,34 @@ describe("sanitizeSkillsAgainstBase / withSoftSkillsGroup", () => {
         (g) => g.category === "Soft skills"
       )
     ).toBe(false);
+  });
+
+  it("keeps profile soft skills even if the LLM returns a different non-empty list", () => {
+    const profile: CVData = { ...baseCv, softSkills: ["Autonomie", "Rigueur"] };
+    const llm: CVData = {
+      ...baseCv,
+      softSkills: ["Communication"],
+      skills: [{ category: "Frontend", items: ["React"] }],
+    };
+    const finalized = finalizeTailoredCv(llm, profile, {
+      title: "Dev",
+      mustHave: [],
+      niceHave: [],
+      tools: [],
+      softSkills: [],
+    });
+    expect(finalized.softSkills).toEqual(
+      expect.arrayContaining(["Autonomie", "Rigueur", "Communication"])
+    );
+    const group = finalized.skills.find((g) => g.category === "Soft skills");
+    expect(group?.items).toEqual(expect.arrayContaining(["Autonomie", "Rigueur", "Communication"]));
+  });
+
+  it("unions claimed matching gaps with the profile catalog", () => {
+    expect(unionSoftSkills(["Autonomie"], ["autonomie"], ["Rigueur"])).toEqual([
+      "Autonomie",
+      "Rigueur",
+    ]);
   });
 });
 
