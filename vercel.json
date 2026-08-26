@@ -1,6 +1,8 @@
 {
   "functions": {
     "app/api/generate/route.ts": { "memory": 2048, "maxDuration": 60 },
+    "app/api/analyze/route.ts": { "memory": 2048, "maxDuration": 60 },
+    "app/api/campus-france/analyze/route.ts": { "memory": 2048, "maxDuration": 90 },
     "app/[locale]/(app)/cv/[id]/page.tsx": { "memory": 2048, "maxDuration": 60 },
     "app/[locale]/(app)/cv/[id]/edit/page.tsx": { "memory": 2048, "maxDuration": 60 }
   }
