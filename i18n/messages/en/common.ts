@@ -64,6 +64,16 @@ export const common = {
     article: "Loading the article",
     articles: "Loading articles",
   },
+  cookies: {
+    title: "Audience measurement",
+    body: "We use Google Analytics to understand how Veyala is used (pages viewed, device, language). No ads, no data resale. You can refuse.",
+    accept: "Accept",
+    refuse: "Refuse",
+    privacy: "Privacy policy",
+    statusGranted: "You accepted audience measurement (Google Analytics).",
+    statusDenied: "You refused audience measurement. No Analytics cookie is stored.",
+    statusUnknown: "You have not chosen yet. A banner stays on screen until you decide.",
+  },
 } as const;
 
 export const nav = {

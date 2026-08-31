@@ -80,13 +80,17 @@ export const content = {
       "Resume: the file you upload and its structured version, which you can edit.",
       "Generations: the job postings you submit and the resumes produced.",
       "Payments: processed by Stripe. We never store card details.",
+      "Audience measurement (Google Analytics, only if you accept): pages viewed, device type, language.",
     ],
     purposesTitle: "Purposes and legal bases",
     purposesBody:
-      "Your data is used solely to deliver the service (performance of the contract): tailoring your resume to job postings, generating exports and managing your credits. We never sell data and we run no advertising.",
+      "Your data is used to deliver the service (performance of the contract): tailoring your resume to job postings, generating exports and managing your credits. Audience measurement relies on your consent. We never sell data and we run no advertising.",
     processorsTitle: "Processors",
     processorsBody:
-      "The text of your resume and of the job postings is sent to the configured AI provider for generation only. Payments go through Stripe, and sign-in emails through our SMTP provider.",
+      "The text of your resume and of the job postings is sent to the configured AI provider for generation only. Payments go through Stripe, and sign-in emails through our SMTP provider. Audience measurement, if you consent, is run by Google Ireland Limited (Google Analytics 4).",
+    cookiesTitle: "Audience-measurement cookies",
+    cookiesBody:
+      "A Google Analytics cookie is stored only after you consent, to produce visit statistics. Maximum lifetime: 13 months. You can accept or refuse via the banner, then change your choice on this page.",
     retentionTitle: "Retention periods",
     retentionBody:
       "Your data is kept for as long as your account is active, then deleted within 30 days of the account being removed.",
