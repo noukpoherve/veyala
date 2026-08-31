@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/noukpoherve/veyala/compare/v1.16.1...v1.17.0) (2026-08-31)
+
+
+### Features
+
+* **analytics:** load GA4 in production after cookie consent ([02eb79b](https://github.com/noukpoherve/veyala/commit/02eb79b6c2ffa0e00d4e48c9d10a2ac8dc84e940))
+
 ## [1.16.1](https://github.com/noukpoherve/veyala/compare/v1.16.0...v1.16.1) (2026-08-26)
 
 
