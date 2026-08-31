@@ -80,13 +80,17 @@ export const content = {
       "CV : le fichier importé et sa version structurée, éditable par vous.",
       "Générations : offres d'emploi soumises et CV produits.",
       "Paiements : traités par Stripe ; nous ne stockons aucune donnée bancaire.",
+      "Mesure d'audience (Google Analytics, uniquement si vous acceptez) : pages consultées, type d'appareil, langue.",
     ],
     purposesTitle: "Finalités et bases légales",
     purposesBody:
-      "Vos données servent exclusivement à fournir le service (exécution du contrat) : adapter votre CV aux offres, générer les exports et gérer vos crédits. Aucune revente de données, aucune publicité.",
+      "Vos données servent à fournir le service (exécution du contrat) : adapter votre CV aux offres, générer les exports et gérer vos crédits. La mesure d'audience repose sur votre consentement. Aucune revente de données, aucune publicité.",
     processorsTitle: "Sous-traitants",
     processorsBody:
-      "Le texte de votre CV et des offres est transmis au fournisseur d'IA configuré uniquement pour la génération. Les paiements passent par Stripe ; l'envoi d'emails de connexion par notre prestataire SMTP.",
+      "Le texte de votre CV et des offres est transmis au fournisseur d'IA configuré uniquement pour la génération. Les paiements passent par Stripe ; l'envoi d'emails de connexion par notre prestataire SMTP. La mesure d'audience, si vous y consentez, est réalisée par Google Ireland Limited (Google Analytics 4).",
+    cookiesTitle: "Cookies de mesure d'audience",
+    cookiesBody:
+      "Un cookie Google Analytics n'est déposé qu'après votre consentement, pour des statistiques de fréquentation. Durée maximale : 13 mois. Vous pouvez accepter ou refuser via le bandeau, puis modifier votre choix sur cette page.",
     retentionTitle: "Durées de conservation",
     retentionBody:
       "Vos données sont conservées tant que votre compte est actif, puis supprimées dans les 30 jours suivant la suppression du compte.",

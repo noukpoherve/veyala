@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { Analytics } from "@/components/analytics/analytics";
 import { Toaster } from "@/components/ui/toaster";
 import { HtmlLang } from "@/components/i18n/html-lang";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
@@ -37,6 +38,7 @@ export default function LocaleLayout({
       </Suspense>
       {children}
       <Toaster />
+      <Analytics />
     </LocaleProvider>
   );
 }

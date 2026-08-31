@@ -18,6 +18,7 @@ Document de suivi (pas un audit formel exhaustif). Mis à jour 2026-07-27.
 - `S3_PUBLIC_URL` — à éviter pour données perso (préférer le proxy `/api/files`)
 - `ENCRYPTION_KEY` — chiffrement clés LLM
 - `NEXT_PUBLIC_SENTRY_DSN` — DSN public (identifiant de projet, pas un secret). Pas de Session Replay ; cookies / Authorization strippés avant envoi.
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID` — identifiant de flux GA4 (public). Script chargé uniquement en production et après consentement ; pas de publicité / Google signals.
 
 ## Backlog
 
