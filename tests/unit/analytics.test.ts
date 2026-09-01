@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   analyticsPagePath,
+  googleAnalyticsInitSnippet,
   googleAnalyticsMeasurementId,
   isProductionDeploy,
   parseAnalyticsConsent,
@@ -38,6 +39,17 @@ describe("analyticsPagePath", () => {
     expect(analyticsPagePath("/en/dashboard")).toBe("/en/dashboard");
     expect(analyticsPagePath("/dashboard")).toBe("/dashboard");
     expect(analyticsPagePath("/en/login", "error=1")).toBe("/en/login?error=1");
+  });
+});
+
+describe("googleAnalyticsInitSnippet", () => {
+  it("queues commands via Arguments, not a rest array, and grants analytics consent", () => {
+    const snippet = googleAnalyticsInitSnippet("G-TESTID01");
+    expect(snippet).toContain("dataLayer.push(arguments)");
+    expect(snippet).not.toContain("push(args)");
+    expect(snippet).toContain("analytics_storage:'granted'");
+    expect(snippet).toContain("gtag('config','G-TESTID01'");
+    expect(googleAnalyticsInitSnippet("UA-123")).toBe("");
   });
 });
 

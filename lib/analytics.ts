@@ -42,3 +42,18 @@ export function analyticsPagePath(pathname: string, search = ""): string {
   const publicPath = localizePath(stripLocalePrefix(path), locale);
   return search ? `${publicPath}?${search}` : publicPath;
 }
+
+/**
+ * Inline gtag bootstrap. Must use `dataLayer.push(arguments)` — a rest array
+ * is not replayed by gtag.js, so no collect hits and no `_ga` cookie.
+ */
+export function googleAnalyticsInitSnippet(measurementId: string): string {
+  const id = parseGaMeasurementId(measurementId);
+  if (!id) return "";
+  return `window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+window.gtag=gtag;
+gtag('consent','update',{analytics_storage:'granted',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
+gtag('js',new Date());
+gtag('config','${id}',{anonymize_ip:true,allow_google_signals:false,allow_ad_personalization_signals:false,cookie_expires:${ANALYTICS_COOKIE_MAX_AGE_SECONDS}});`;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useId, useState } from "react";
+import { Suspense, useEffect, useId, useRef, useState } from "react";
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMessages } from "@/components/i18n/locale-provider";
@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import {
   ANALYTICS_CONSENT_KEY,
-  ANALYTICS_COOKIE_MAX_AGE_SECONDS,
   analyticsPagePath,
+  googleAnalyticsInitSnippet,
   parseAnalyticsConsent,
   type AnalyticsConsent,
 } from "@/lib/analytics";
@@ -26,32 +26,30 @@ function writeConsent(value: AnalyticsConsent): void {
   localStorage.setItem(ANALYTICS_CONSENT_KEY, value);
 }
 
+/**
+ * Official gtag stub: `dataLayer.push(arguments)`, not a rest array.
+ * Pushing `['config', id]` as one Array is ignored by gtag.js (no collect hit, no _ga cookie).
+ */
 function ensureGtag(): void {
   window.dataLayer = window.dataLayer ?? [];
-  window.gtag =
-    window.gtag ??
-    function gtag(...args: unknown[]) {
-      window.dataLayer?.push(args);
-    };
+  if (typeof window.gtag === "function") return;
+  window.gtag = function gtag() {
+    // biome-ignore lint/complexity/noArguments: gtag.js replays the Arguments object
+    window.dataLayer?.push(arguments);
+  };
 }
 
 function GaPageViews({ measurementId }: { measurementId: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isFirstPath = useRef(true);
 
   useEffect(() => {
-    ensureGtag();
-    window.gtag?.("js", new Date());
-    window.gtag?.("config", measurementId, {
-      send_page_view: false,
-      anonymize_ip: true,
-      allow_google_signals: false,
-      allow_ad_personalization_signals: false,
-      cookie_expires: ANALYTICS_COOKIE_MAX_AGE_SECONDS,
-    });
-  }, [measurementId]);
-
-  useEffect(() => {
+    // First page_view is sent by gtag('config') in the init script.
+    if (isFirstPath.current) {
+      isFirstPath.current = false;
+      return;
+    }
     ensureGtag();
     const path = analyticsPagePath(pathname || "/", searchParams.toString());
     window.gtag?.("event", "page_view", {
@@ -68,6 +66,9 @@ function GaPageViews({ measurementId }: { measurementId: string }) {
 function GoogleAnalytics({ measurementId }: { measurementId: string }) {
   return (
     <>
+      <Script id="ga4-init" strategy="afterInteractive">
+        {googleAnalyticsInitSnippet(measurementId)}
+      </Script>
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
         strategy="afterInteractive"
