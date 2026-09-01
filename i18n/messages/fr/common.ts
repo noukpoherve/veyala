@@ -65,15 +65,11 @@ export const common = {
     articles: "Chargement des articles",
   },
   cookies: {
-    title: "Mesure d'audience",
-    body: "Nous utilisons Google Analytics pour comprendre comment Veyala est utilisé (pages visitées, appareil, langue). Aucune publicité, aucune revente. Vous pouvez refuser.",
-    accept: "Accepter",
-    refuse: "Refuser",
+    title: "Nous utilisons des cookies",
+    body: "Ils servent au fonctionnement du site et à la mesure d'audience. Aucune publicité, aucune revente.",
+    accept: "Tout accepter",
+    refuse: "Tout refuser",
     privacy: "Politique de confidentialité",
-    statusGranted: "Vous avez accepté la mesure d'audience (Google Analytics).",
-    statusDenied: "Vous avez refusé la mesure d'audience. Aucun cookie Analytics n'est déposé.",
-    statusUnknown:
-      "Vous n'avez pas encore choisi. Un bandeau s'affiche tant qu'aucune décision n'est enregistrée.",
   },
 } as const;
 

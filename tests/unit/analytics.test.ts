@@ -3,8 +3,8 @@ import {
   analyticsPagePath,
   googleAnalyticsInitSnippet,
   googleAnalyticsMeasurementId,
+  isCookieBannerDismissed,
   isProductionDeploy,
-  parseAnalyticsConsent,
   parseGaMeasurementId,
 } from "@/lib/analytics";
 
@@ -24,12 +24,13 @@ describe("parseGaMeasurementId", () => {
   });
 });
 
-describe("parseAnalyticsConsent", () => {
-  it("only accepts granted or denied", () => {
-    expect(parseAnalyticsConsent("granted")).toBe("granted");
-    expect(parseAnalyticsConsent("denied")).toBe("denied");
-    expect(parseAnalyticsConsent("granted ")).toBeNull();
-    expect(parseAnalyticsConsent(null)).toBeNull();
+describe("isCookieBannerDismissed", () => {
+  it("treats any prior choice as dismissed", () => {
+    expect(isCookieBannerDismissed("seen")).toBe(true);
+    expect(isCookieBannerDismissed("granted")).toBe(true);
+    expect(isCookieBannerDismissed("denied")).toBe(true);
+    expect(isCookieBannerDismissed(null)).toBe(false);
+    expect(isCookieBannerDismissed("granted ")).toBe(false);
   });
 });
 

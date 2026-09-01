@@ -20,7 +20,7 @@ avant ce qui existe déjà dans le CV importé.
 - **zod** (validation), **react-hook-form** (formulaires)
 - **Upstash Redis** (optionnel) pour le rate-limit distribué en multi-instance
 - **Sentry** (optionnel) pour le suivi des erreurs client / serveur / edge
-- **Google Analytics 4** (optionnel, prod uniquement, après consentement cookies)
+- **Google Analytics 4** (optionnel, prod uniquement)
 
 ## Démarrage rapide
 
@@ -138,8 +138,8 @@ prisma/               Schéma + migrations + seed
 8. Sentry : `NEXT_PUBLIC_SENTRY_DSN` (runtime) + `SENTRY_ORG` / `SENTRY_PROJECT` /
    `SENTRY_AUTH_TOKEN` (upload des source maps au build Vercel).
 9. Google Analytics 4 : `NEXT_PUBLIC_GA_MEASUREMENT_ID` (`G-…`) **uniquement** sur
-   l'environnement Production Vercel. Le script n'est pas chargé en local, ni sur
-   les previews, ni tant que le visiteur n'a pas accepté le bandeau cookies.
+   l'environnement Production Vercel. Le script n'est pas chargé en local ni sur
+   les previews.
 
 ## Sécurité
 
