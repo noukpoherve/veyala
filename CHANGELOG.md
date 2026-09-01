@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/noukpoherve/veyala/compare/v1.17.0...v1.17.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **analytics:** send GA4 hits with the official gtag queue ([33ef68a](https://github.com/noukpoherve/veyala/commit/33ef68ab4d74eec5cee950749ffde7446259a95d))
+
 # [1.17.0](https://github.com/noukpoherve/veyala/compare/v1.16.1...v1.17.0) (2026-08-31)
 
 
