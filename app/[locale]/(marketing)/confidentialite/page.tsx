@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { AnalyticsPreferences } from "@/components/analytics/analytics";
 import { LegalArticle } from "@/components/marketing/legal-article";
 import { getLocale } from "@/i18n/get-locale";
 import { getMessages } from "@/i18n/messages";
@@ -47,9 +46,6 @@ export default function ConfidentialitePage() {
       <section>
         <h2>{t.cookiesTitle}</h2>
         <p>{t.cookiesBody}</p>
-        <div className="mt-3">
-          <AnalyticsPreferences />
-        </div>
       </section>
       <section>
         <h2>{t.retentionTitle}</h2>

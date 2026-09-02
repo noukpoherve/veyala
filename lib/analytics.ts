@@ -3,9 +3,8 @@ import { localeFromPathname, localizePath, stripLocalePrefix } from "@/i18n/path
 /** GA4 measurement IDs (Universal Analytics UA- is retired). */
 const GA_MEASUREMENT_ID = /^G-[A-Z0-9]+$/;
 
-export const ANALYTICS_CONSENT_KEY = "veyala:analytics-consent";
-
-export type AnalyticsConsent = "granted" | "denied";
+/** Same key as before so returning visitors do not see the banner again. */
+export const COOKIE_BANNER_KEY = "veyala:analytics-consent";
 
 /** CNIL max lifetime for audience-measurement cookies (13 months). */
 export const ANALYTICS_COOKIE_MAX_AGE_SECONDS = 395 * 24 * 60 * 60;
@@ -15,8 +14,9 @@ export function parseGaMeasurementId(raw: string | undefined | null): string | n
   return GA_MEASUREMENT_ID.test(value) ? value : null;
 }
 
-export function parseAnalyticsConsent(raw: string | null | undefined): AnalyticsConsent | null {
-  return raw === "granted" || raw === "denied" ? raw : null;
+/** True once the visitor has dismissed the cookie bar (accept or refuse). */
+export function isCookieBannerDismissed(raw: string | null | undefined): boolean {
+  return raw === "granted" || raw === "denied" || raw === "seen";
 }
 
 /**

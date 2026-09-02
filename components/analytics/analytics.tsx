@@ -1,15 +1,14 @@
 import { googleAnalyticsMeasurementId } from "@/lib/analytics";
-import { AnalyticsRuntime, CookiePreferences } from "./analytics-client";
+import { CookieBanner, GoogleAnalytics } from "./analytics-client";
 
-/** Loads GA4 in production after consent. No-op when unset or not prod. */
+/** GA4 in production, plus a dismissible cookie bar. Tracking is not gated on the bar. */
 export function Analytics() {
   const measurementId = googleAnalyticsMeasurementId();
   if (!measurementId) return null;
-  return <AnalyticsRuntime measurementId={measurementId} />;
-}
-
-/** Consent controls on the privacy page. Hidden when analytics is off. */
-export function AnalyticsPreferences() {
-  if (!googleAnalyticsMeasurementId()) return null;
-  return <CookiePreferences />;
+  return (
+    <>
+      <GoogleAnalytics measurementId={measurementId} />
+      <CookieBanner />
+    </>
+  );
 }
