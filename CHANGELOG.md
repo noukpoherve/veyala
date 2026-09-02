@@ -1,3 +1,10 @@
+## [1.17.2](https://github.com/noukpoherve/veyala/compare/v1.17.1...v1.17.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* **analytics:** keep GA4 running when the cookie bar is dismissed ([50c1521](https://github.com/noukpoherve/veyala/commit/50c15219fa3cf8a716c8698fdf07517c43b8e947))
+
 ## [1.17.1](https://github.com/noukpoherve/veyala/compare/v1.17.0...v1.17.1) (2026-09-01)
 
 
