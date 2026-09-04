@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronsUpDown, LogOut, Mail, Monitor, Moon, Sun } from "lucide-react";
+import { BookOpen, Check, ChevronsUpDown, LogOut, Mail, Monitor, Moon, Sun } from "lucide-react";
 import { useMessages } from "@/components/i18n/locale-provider";
+import { useTourUi } from "@/components/onboarding/product-tour";
+import { useSidebarUi } from "@/components/layout/collapsible-sidebar";
 import { Link } from "@/i18n/navigation";
 
 type Theme = "light" | "dark" | "system";
@@ -63,6 +65,8 @@ export function UserMenu({
   signOutAction: () => Promise<void>;
 }) {
   const m = useMessages();
+  const { openTour } = useTourUi();
+  const { setMobileOpen } = useSidebarUi();
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>("system");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -149,6 +153,26 @@ export function UserMenu({
           </div>
 
           <div className="border-t border-border p-2">
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                setMobileOpen(false);
+                const isMobileNav = window.matchMedia("(max-width: 767px)").matches;
+                // Mobile nav is a Radix dialog; wait for it to close so two
+                // focus traps are not mounted at once.
+                if (isMobileNav) {
+                  window.setTimeout(() => openTour(), 200);
+                } else {
+                  openTour();
+                }
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent"
+            >
+              <BookOpen className="size-4 text-muted-foreground" aria-hidden />
+              {m.pages.userMenu.replayTour}
+            </button>
             <Link
               href="/support"
               role="menuitem"

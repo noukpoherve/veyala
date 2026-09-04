@@ -38,6 +38,8 @@ model User {
   emailVerified DateTime?
   role          Role      @default(USER)
   createdAt     DateTime  @default(now())
+  /// Set when the first-run product tour is skipped or completed.
+  tourDismissedAt DateTime?
   /// Soft-deactivation: account is inaccessible until an admin restores it.
   archivedAt    DateTime?
   archivedBy    ArchiveSource?

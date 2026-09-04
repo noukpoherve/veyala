@@ -15,11 +15,16 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen, navId } = useSidebarUi();
   const m = useMessages();
-  const tabs = [
+  const tabs: {
+    href: string;
+    label: string;
+    icon: typeof LayoutDashboard;
+    tour?: "generate" | "profile";
+  }[] = [
     { href: "/dashboard", label: m.nav.dashboard, icon: LayoutDashboard },
-    { href: "/generate", label: m.nav.generate, icon: Sparkles },
-    { href: "/profile", label: m.nav.baseCv, icon: UserRound },
-  ] as const;
+    { href: "/generate", label: m.nav.generate, icon: Sparkles, tour: "generate" },
+    { href: "/profile", label: m.nav.baseCv, icon: UserRound, tour: "profile" },
+  ];
 
   return (
     <nav
@@ -35,6 +40,7 @@ export function MobileBottomNav() {
               <Link
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
+                data-tour={tab.tour}
                 className={cn(
                   "flex h-full min-h-11 touch-manipulation flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium",
                   active ? "text-blue-600" : "text-muted-foreground"

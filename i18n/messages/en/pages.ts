@@ -11,6 +11,26 @@ export const pages = {
     importCta: "Import my resume",
   },
 
+  tour: {
+    done: "Got it",
+    skip: "Skip",
+    stepOf: (n: number, total: number) => `${n} / ${total}`,
+    steps: {
+      profile: {
+        title: "My base resume",
+        body: "Import your resume here first. It is the source of truth: the AI never invents anything.",
+      },
+      generate: {
+        title: "Create a resume",
+        body: "Paste a job posting, pick a template, and generate. Veyala tailors the resume and writes the letter.",
+      },
+      credits: {
+        title: "Your credits",
+        body: "2 free credits when you sign up. 1 credit = 1 resume + cover letter.",
+      },
+    },
+  },
+
   scores: {
     coherence: "Consistency",
     matching: "Match",
@@ -221,6 +241,7 @@ export const pages = {
 
   userMenu: {
     contactUs: "Contact us",
+    replayTour: "Replay the guide",
   },
 
   sidebar: {

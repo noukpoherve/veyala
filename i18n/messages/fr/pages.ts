@@ -11,6 +11,26 @@ export const pages = {
     importCta: "Importer mon CV",
   },
 
+  tour: {
+    done: "J'ai compris",
+    skip: "Passer",
+    stepOf: (n: number, total: number) => `${n} / ${total}`,
+    steps: {
+      profile: {
+        title: "Mon CV de base",
+        body: "Importez d'abord votre CV ici. C'est la source de vérité : l'IA n'invente jamais rien.",
+      },
+      generate: {
+        title: "Générer un CV",
+        body: "Collez une offre, choisissez un template, lancez. Veyala adapte le CV et rédige la lettre.",
+      },
+      credits: {
+        title: "Vos crédits",
+        body: "2 crédits offerts à l'inscription. 1 crédit = 1 CV + lettre.",
+      },
+    },
+  },
+
   scores: {
     coherence: "Cohérence",
     matching: "Matching",
@@ -221,6 +241,7 @@ export const pages = {
 
   userMenu: {
     contactUs: "Nous contacter",
+    replayTour: "Revoir le guide",
   },
 
   sidebar: {

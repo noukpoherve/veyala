@@ -13,6 +13,8 @@ type SidebarUi = {
   mobileOpen: boolean;
   setMobileOpen: (open: boolean | ((current: boolean) => boolean)) => void;
   navId: string;
+  desktopOpen: boolean;
+  setDesktopOpen: (open: boolean | ((current: boolean) => boolean)) => void;
 };
 
 const SidebarUiContext = createContext<SidebarUi | null>(null);
@@ -20,6 +22,7 @@ const SidebarUiContext = createContext<SidebarUi | null>(null);
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const navId = useId();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState(true);
   const pathname = usePathname();
 
   // Close the mobile drawer after in-app navigation.
@@ -29,7 +32,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <SidebarUiContext.Provider value={{ mobileOpen, setMobileOpen, navId }}>
+    <SidebarUiContext.Provider
+      value={{ mobileOpen, setMobileOpen, navId, desktopOpen, setDesktopOpen }}
+    >
       {children}
     </SidebarUiContext.Provider>
   );
@@ -49,13 +54,12 @@ export function useSidebarUi() {
  * focus trap, a gap flagged in the UX audit). The persistent tab bar opens it.
  */
 export function CollapsibleSidebar({ children }: { children: ReactNode }) {
-  const { mobileOpen, setMobileOpen, navId } = useSidebarUi();
-  const [desktopOpen, setDesktopOpen] = useState(true);
+  const { mobileOpen, setMobileOpen, navId, desktopOpen, setDesktopOpen } = useSidebarUi();
   const m = useMessages();
 
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY) === "closed") setDesktopOpen(false);
-  }, []);
+  }, [setDesktopOpen]);
 
   useEffect(() => {
     const html = document.documentElement;
