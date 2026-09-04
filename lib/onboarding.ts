@@ -1,7 +1,46 @@
 /** Pure first-run tour rules. Data fetching lives in `lib/onboarding-state.ts`. */
 
-export const TOUR_STEPS = ["profile", "generate", "credits"] as const;
-export type TourStepId = (typeof TOUR_STEPS)[number];
+export const WELCOME_TOUR_STEPS = [
+  "profile",
+  "jobUrl",
+  "generate",
+  "templates",
+  "credits",
+] as const;
+export const RESULT_TOUR_STEPS = ["edit", "studioTemplates", "appearance", "download"] as const;
+
+export type WelcomeTourStepId = (typeof WELCOME_TOUR_STEPS)[number];
+export type ResultTourStepId = (typeof RESULT_TOUR_STEPS)[number];
+export type TourStepId = WelcomeTourStepId | ResultTourStepId;
+export type TourKind = "welcome" | "result";
+
+export const TOUR_STEP_HREF: Partial<Record<TourStepId, string>> = {
+  profile: "/profile",
+  jobUrl: "/generate",
+  generate: "/generate",
+  templates: "/templates",
+};
+
+export function tourHrefFor(stepId: TourStepId, pathname: string): string | undefined {
+  const staticHref = TOUR_STEP_HREF[stepId];
+  if (staticHref) return staticHref;
+  if (stepId === "studioTemplates" || stepId === "appearance") {
+    const match = pathname.match(/^\/cv\/([^/]+)/);
+    if (!match) return undefined;
+    const editPath = `/cv/${match[1]}/edit`;
+    if (pathname === editPath) return undefined;
+    return editPath;
+  }
+  return undefined;
+}
+
+export function tourStepsFor(kind: TourKind): readonly TourStepId[] {
+  return kind === "welcome" ? WELCOME_TOUR_STEPS : RESULT_TOUR_STEPS;
+}
+
+export function isCvWorkspacePath(pathname: string): boolean {
+  return pathname === "/cv" || pathname.startsWith("/cv/");
+}
 
 export function shouldShowWelcomeTour(input: {
   tourDismissedAt: Date | null;
@@ -9,6 +48,14 @@ export function shouldShowWelcomeTour(input: {
 }): boolean {
   if (input.tourDismissedAt) return false;
   return input.generatedCvCount === 0;
+}
+
+export function shouldShowResultTour(input: {
+  editorTourDismissedAt: Date | null;
+  generatedCvCount: number;
+}): boolean {
+  if (input.editorTourDismissedAt) return false;
+  return input.generatedCvCount > 0;
 }
 
 export type Box = { top: number; left: number; width: number; height: number };

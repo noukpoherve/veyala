@@ -55,7 +55,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <TourProvider initiallyOpen={onboarding.showWelcome}>
+      <TourProvider initiallyOpen={onboarding.showWelcome} showResult={onboarding.showResult}>
         <div className="flex h-dvh max-h-dvh overflow-hidden bg-muted/40">
           <CollapsibleSidebar>
             <Link

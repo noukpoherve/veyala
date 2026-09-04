@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
  * (otherwise hot-reload keeps an old client → missing delegates like `blogPost`).
  * Bump CLIENT_REV after schema changes that require a fresh PrismaClient.
  */
-const CLIENT_REV = "onboarding-tour-1";
+const CLIENT_REV = "onboarding-tour-2";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;

@@ -32,7 +32,11 @@ export function ExportButtons({
   if (!docxUrl && !pdfUrl) return null;
 
   return (
-    <div className="flex items-center gap-2" title={dirty ? t.dirtyHint : undefined}>
+    <div
+      className="flex items-center gap-2"
+      data-tour="download"
+      title={dirty ? t.dirtyHint : undefined}
+    >
       {docxUrl ? (
         <Button asChild size={size} aria-disabled={dirty}>
           <a

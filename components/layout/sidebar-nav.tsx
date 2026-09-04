@@ -37,7 +37,7 @@ const NavLink = memo(function NavLink({
   icon: React.ComponentType<{ className?: string }>;
   active: boolean;
   nested?: boolean;
-  tour?: "profile" | "generate";
+  tour?: "profile" | "generate" | "templates";
 }) {
   return (
     <Link
@@ -68,7 +68,7 @@ export function SidebarNav({ isAdmin }: { isAdmin: boolean }) {
     { href: "/generate", label: m.nav.generate, icon: Sparkles, tour: "generate" as const },
     { href: "/campus-france", label: m.nav.campusFrance, icon: GraduationCap },
     { href: "/profile", label: m.nav.baseCv, icon: UserRound, tour: "profile" as const },
-    { href: "/templates", label: m.nav.templates, icon: Palette },
+    { href: "/templates", label: m.nav.templates, icon: Palette, tour: "templates" as const },
     { href: "/billing", label: m.nav.billing, icon: Wallet },
     { href: "/support", label: m.nav.support, icon: LifeBuoy },
   ];

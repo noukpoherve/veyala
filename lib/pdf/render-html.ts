@@ -1,3 +1,4 @@
+import { isLightHex } from "@/lib/color";
 import type { CVData, CVSkillGroup } from "@/lib/cv-schema";
 import { inlineLinksToHtml, normalizeHttpUrl } from "@/lib/inline-links";
 import { withSoftSkillsGroup } from "@/lib/match-score";
@@ -24,14 +25,8 @@ function gradientCss(stops: string[]): string {
   return `linear-gradient(180deg, ${stops.map((c, i) => `${c} ${Math.round(i * step)}%`).join(", ")})`;
 }
 
-/** Relative luminance of a #rrggbb color (0 = black, 1 = white). */
-function luminance(hex: string): number {
-  const chan = (i: number) => parseInt(hex.slice(i, i + 2), 16) / 255;
-  return 0.2126 * chan(1) + 0.7152 * chan(3) + 0.0722 * chan(5);
-}
-
 function isLightSidebar(def: TemplateDefinition): boolean {
-  return luminance(def.colors.sidebar[0]!) > 0.6;
+  return isLightHex(def.colors.sidebar[0]!);
 }
 
 function contactSection(cv: CVData, inSidebar: boolean, copy: CvCopy): string {

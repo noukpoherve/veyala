@@ -20,13 +20,37 @@ export const pages = {
         title: "My base resume",
         body: "Import your resume here first. It is the source of truth: the AI never invents anything.",
       },
+      jobUrl: {
+        title: "Paste the job posting",
+        body: "Use the URL tab to paste the posting link, or Text to paste the content. Then run the analysis.",
+      },
       generate: {
         title: "Create a resume",
-        body: "Paste a job posting, pick a template, and generate. Veyala tailors the resume and writes the letter.",
+        body: "Pick a template, then generate. Veyala tailors the resume and writes the letter.",
+      },
+      templates: {
+        title: "Templates",
+        body: "Browse the available designs. After generating, you can still change the look in the editor.",
       },
       credits: {
         title: "Your credits",
         body: "2 free credits when you sign up. 1 credit = 1 resume + cover letter.",
+      },
+      edit: {
+        title: "Edit the resume",
+        body: "Fix the wording, experience, and letter here. The AI adapted it; you have the last word.",
+      },
+      studioTemplates: {
+        title: "Pick a template",
+        body: "Change the model on the left. The preview in the centre updates immediately.",
+      },
+      appearance: {
+        title: "Customize the look",
+        body: "Colors, photo, columns: all of that is in this panel, with no need to regenerate. Done takes you back to the editor.",
+      },
+      download: {
+        title: "Download",
+        body: "Word to keep editing, PDF to send. Save first if you changed the resume.",
       },
     },
   },

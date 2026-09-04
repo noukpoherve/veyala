@@ -5,7 +5,8 @@ import { BookOpen, Check, ChevronsUpDown, LogOut, Mail, Monitor, Moon, Sun } fro
 import { useMessages } from "@/components/i18n/locale-provider";
 import { useTourUi } from "@/components/onboarding/product-tour";
 import { useSidebarUi } from "@/components/layout/collapsible-sidebar";
-import { Link } from "@/i18n/navigation";
+import { Link, useLocalizedPathname } from "@/i18n/navigation";
+import { isCvWorkspacePath } from "@/lib/onboarding";
 
 type Theme = "light" | "dark" | "system";
 const THEME_KEY = "veyala:theme";
@@ -67,6 +68,7 @@ export function UserMenu({
   const m = useMessages();
   const { openTour } = useTourUi();
   const { setMobileOpen } = useSidebarUi();
+  const pathname = useLocalizedPathname();
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>("system");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -162,10 +164,11 @@ export function UserMenu({
                 const isMobileNav = window.matchMedia("(max-width: 767px)").matches;
                 // Mobile nav is a Radix dialog; wait for it to close so two
                 // focus traps are not mounted at once.
+                const replay = () => openTour(isCvWorkspacePath(pathname) ? "result" : "welcome");
                 if (isMobileNav) {
-                  window.setTimeout(() => openTour(), 200);
+                  window.setTimeout(replay, 200);
                 } else {
-                  openTour();
+                  replay();
                 }
               }}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent"

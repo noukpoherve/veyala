@@ -8,6 +8,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -16,17 +17,23 @@ import { Button } from "@/components/ui/button";
 import { useSidebarUi } from "@/components/layout/collapsible-sidebar";
 import { useMessages } from "@/components/i18n/locale-provider";
 import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { useLocalizedPathname, useLocalizedRouter } from "@/i18n/navigation";
+import { cn, scrollBehavior } from "@/lib/utils";
 import {
+  isCvWorkspacePath,
   placeTourTooltip,
-  TOUR_STEPS,
+  tourHrefFor,
+  tourStepsFor,
   type Box,
+  type TourKind,
   type TourStepId,
   type TourTooltipPlacement,
 } from "@/lib/onboarding";
 
 type TourUi = {
-  openTour: () => void;
+  openTour: (kind?: TourKind, from?: TourStepId) => void;
+  active: boolean;
+  stepId: TourStepId | null;
 };
 
 const TourUiContext = createContext<TourUi | null>(null);
@@ -39,17 +46,21 @@ export function useTourUi() {
 
 export function TourProvider({
   initiallyOpen,
+  showResult,
   children,
 }: {
   initiallyOpen: boolean;
+  showResult: boolean;
   children: ReactNode;
 }) {
+  const pathname = useLocalizedPathname();
+  const [kind, setKind] = useState<TourKind>("welcome");
   const [active, setActive] = useState(initiallyOpen);
   const [step, setStep] = useState(0);
   const { setDesktopOpen } = useSidebarUi();
 
-  const persistDismiss = useCallback(() => {
-    void dismissTour().then((result) => {
+  const persistDismiss = useCallback((tourKind: TourKind) => {
+    void dismissTour(tourKind).then((result) => {
       if (!result.ok) toast({ variant: "error", title: result.error });
     });
   }, []);
@@ -57,52 +68,79 @@ export function TourProvider({
   const close = useCallback(() => {
     setActive(false);
     setStep(0);
-    persistDismiss();
-  }, [persistDismiss]);
+    persistDismiss(kind);
+  }, [kind, persistDismiss]);
 
-  const openTour = useCallback(() => {
-    setDesktopOpen(true);
-    setStep(0);
-    setActive(true);
-  }, [setDesktopOpen]);
+  const openTour = useCallback(
+    (nextKind: TourKind = "welcome", from?: TourStepId) => {
+      const steps = tourStepsFor(nextKind);
+      const index = from ? steps.indexOf(from) : 0;
+      setDesktopOpen(true);
+      setKind(nextKind);
+      setStep(index >= 0 ? index : 0);
+      setActive(true);
+    },
+    [setDesktopOpen]
+  );
+
+  const stepId = active
+    ? ((tourStepsFor(kind)[step] ?? tourStepsFor(kind)[0]) as TourStepId)
+    : null;
 
   useEffect(() => {
     if (active) setDesktopOpen(true);
   }, [active, setDesktopOpen]);
 
+  useEffect(() => {
+    if (active || initiallyOpen) return;
+    if (!showResult || !isCvWorkspacePath(pathname)) return;
+    setKind("result");
+    setStep(0);
+    setActive(true);
+  }, [active, initiallyOpen, pathname, showResult]);
+
   return (
-    <TourUiContext.Provider value={{ openTour }}>
+    <TourUiContext.Provider value={{ openTour, active, stepId }}>
       {children}
-      {active ? <ProductTour step={step} setStep={setStep} onClose={close} /> : null}
+      {active ? <ProductTour kind={kind} step={step} setStep={setStep} onClose={close} /> : null}
     </TourUiContext.Provider>
   );
 }
 
 function visibleTourTarget(id: TourStepId): HTMLElement | null {
   const nodes = document.querySelectorAll<HTMLElement>(`[data-tour="${id}"]`);
+  let fallback: HTMLElement | null = null;
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i];
     if (!node) continue;
     const rect = node.getBoundingClientRect();
-    if (rect.width > 2 && rect.height > 2) return node;
+    if (rect.width <= 2 || rect.height <= 2) continue;
+    if (node.closest("main")) return node;
+    if (!fallback) fallback = node;
   }
-  return null;
+  return fallback;
 }
 
 function ProductTour({
+  kind,
   step,
   setStep,
   onClose,
 }: {
+  kind: TourKind;
   step: number;
   setStep: (n: number | ((current: number) => number)) => void;
   onClose: () => void;
 }) {
   const m = useMessages();
   const copy = m.pages.tour;
-  const stepId = TOUR_STEPS[step] ?? TOUR_STEPS[0];
+  const router = useLocalizedRouter();
+  const pathname = useLocalizedPathname();
+  const steps = tourStepsFor(kind);
+  const stepId = (steps[step] ?? steps[0]) as TourStepId;
   const item = copy.steps[stepId];
-  const last = step >= TOUR_STEPS.length - 1;
+  const last = step >= steps.length - 1;
+  const href = tourHrefFor(stepId, pathname);
   const [target, setTarget] = useState<Box | null>(null);
   const [tipPos, setTipPos] = useState<{
     top: number;
@@ -116,6 +154,22 @@ function ProductTour({
     else setStep((current) => current + 1);
   }, [last, onClose, setStep]);
 
+  // useLocalizedRouter returns a new object each render; pathname + href are the triggers.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: router identity is not stable
+  useEffect(() => {
+    if (!href) return;
+    if (pathname === href || pathname.startsWith(`${href}/`)) return;
+    router.push(href);
+  }, [href, pathname]);
+
+  // Replay the step event after client navigation so late-mounted pages can react.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the navigation signal
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("veyala:tour-step", { detail: stepId }));
+  }, [pathname, stepId]);
+
+  // Remeasure after client navigation even when the step id is unchanged.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the navigation signal
   useLayoutEffect(() => {
     const measure = () => {
       const el = visibleTourTarget(stepId);
@@ -123,7 +177,7 @@ function ProductTour({
         setTarget(null);
         return;
       }
-      el.scrollIntoView({ block: "nearest", inline: "nearest" });
+      el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: scrollBehavior() });
       const rect = el.getBoundingClientRect();
       setTarget({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
     };
@@ -139,7 +193,17 @@ function ProductTour({
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
     };
-  }, [stepId]);
+  }, [stepId, pathname]);
+
+  useEffect(() => {
+    if (kind !== "result" || target) return;
+    const timer = window.setTimeout(() => {
+      if (visibleTourTarget(stepId)) return;
+      if (last) onClose();
+      else setStep((current) => current + 1);
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [kind, last, onClose, setStep, stepId, target]);
 
   useLayoutEffect(() => {
     if (!target || !tooltipRef.current) return;
@@ -155,6 +219,39 @@ function ProductTour({
       )
     );
   }, [target]);
+
+  useLayoutEffect(() => {
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const onTab = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const root = tooltipRef.current;
+      if (!root) return;
+      const items = Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (items.length === 0) return;
+      const first = items[0]!;
+      const last = items[items.length - 1]!;
+      const active = document.activeElement;
+      if (event.shiftKey) {
+        if (active === first || !root.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !root.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onTab, true);
+    return () => {
+      document.removeEventListener("keydown", onTab, true);
+      previouslyFocused?.focus();
+    };
+  }, []);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -187,21 +284,20 @@ function ProductTour({
 
   return createPortal(
     <>
-      <div
-        className={cn("fixed inset-0 z-[70]", hole ? "bg-transparent" : "bg-foreground/55")}
-        aria-hidden
-        onClick={onClose}
-      />
+      {hole ? (
+        <TourScrim hole={hole} onDismiss={onClose} />
+      ) : (
+        <div className="fixed inset-0 z-[70] bg-foreground/55" aria-hidden onClick={onClose} />
+      )}
       {hole ? (
         <div
           aria-hidden
-          className="pointer-events-none fixed z-[75] rounded-xl ring-2 ring-blue-500 ring-offset-2 ring-offset-background transition-[top,left,width,height] duration-300"
+          className="pointer-events-none fixed z-[75] rounded-xl ring-2 ring-blue-500 ring-offset-2 ring-offset-background transition-[top,left,width,height] duration-300 motion-reduce:transition-none motion-reduce:duration-0"
           style={{
             top: hole.top,
             left: hole.left,
             width: hole.width,
             height: hole.height,
-            boxShadow: "0 0 0 9999px rgb(15 23 42 / 0.6)",
           }}
         />
       ) : null}
@@ -225,7 +321,7 @@ function ProductTour({
           </span>
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
-              {copy.stepOf(step + 1, TOUR_STEPS.length)}
+              {copy.stepOf(step + 1, steps.length)}
             </p>
             <h2 id="tour-step-title" className="mt-0.5 font-display text-base font-bold">
               {item.title}
@@ -236,7 +332,7 @@ function ProductTour({
           </div>
         </div>
         <ol className="mt-3 flex justify-center gap-1.5" aria-hidden>
-          {TOUR_STEPS.map((id, index) => (
+          {steps.map((id, index) => (
             <li
               key={id}
               className={cn(
@@ -269,6 +365,35 @@ function ProductTour({
       </div>
     </>,
     document.body
+  );
+}
+
+function TourScrim({
+  hole,
+  onDismiss,
+}: {
+  hole: { top: number; left: number; width: number; height: number };
+  onDismiss: () => void;
+}) {
+  const { top, left, width, height } = hole;
+  const panes: CSSProperties[] = [
+    { top: 0, left: 0, right: 0, height: top },
+    { top, left: 0, width: left, height },
+    { top, left: left + width, right: 0, height },
+    { top: top + height, left: 0, right: 0, bottom: 0 },
+  ];
+  return (
+    <>
+      {panes.map((style, index) => (
+        <div
+          key={index}
+          className="fixed z-[70] bg-[rgb(15_23_42/0.6)]"
+          style={style}
+          aria-hidden
+          onClick={onDismiss}
+        />
+      ))}
+    </>
   );
 }
 

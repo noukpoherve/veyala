@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Check, Search, Wand2, X } from "lucide-react";
+import { BookOpen, Check, Search, Wand2, X } from "lucide-react";
 import type { EditorTemplate } from "@/components/cv/cv-editor";
 import { DesignControls } from "@/components/cv/design-controls";
 import { SectionLayoutControls } from "@/components/cv/section-layout-controls";
-import { TemplateSwatch } from "@/components/templates/template-swatch";
+import { TemplateOptionCard } from "@/components/templates/template-option";
+import { swatchFromDefinition } from "@/components/templates/template-swatch";
 import type {
   ChipStyle,
   ColorsOverride,
@@ -16,6 +17,7 @@ import type {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useMessages } from "@/components/i18n/locale-provider";
+import { useTourUi } from "@/components/onboarding/product-tour";
 
 /**
  * Full-screen "appearance studio": an in-place overlay (no route change, same
@@ -118,7 +120,14 @@ export function CustomizationStudio({
   const [mobileSection, setMobileSection] = useState<"templates" | "preview" | "customize">(
     "customize"
   );
-  const studio = useMessages().forms.studio;
+  const m = useMessages();
+  const studio = m.forms.studio;
+  const { openTour, active: tourActive, stepId } = useTourUi();
+
+  useEffect(() => {
+    if (stepId === "studioTemplates") setMobileSection("templates");
+    if (stepId === "appearance") setMobileSection("customize");
+  }, [stepId]);
 
   const groups = useMemo<[string, EditorTemplate[]][]>(() => {
     const q = query.trim().toLowerCase();
@@ -136,7 +145,11 @@ export function CustomizationStudio({
   const matchCount = groups.reduce((n, [, list]) => n + list.length, 0);
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={(next) => !next && onClose()}>
+    <DialogPrimitive.Root
+      open={open}
+      modal={!tourActive}
+      onOpenChange={(next) => !next && onClose()}
+    >
       <DialogPrimitive.Portal>
         {/*
          * Radix Dialog.Content, not the styled <DialogContent> primitive —
@@ -146,7 +159,18 @@ export function CustomizationStudio({
          * (manual keydown listener, no focus trap) was missing — a gap
          * flagged in the UX audit.
          */}
-        <DialogPrimitive.Content className="fixed inset-0 z-50 flex flex-col bg-background focus:outline-none data-[state=open]:animate-in data-[state=open]:fade-in">
+        <DialogPrimitive.Content
+          className="fixed inset-0 z-50 flex flex-col bg-background focus:outline-none data-[state=open]:animate-in data-[state=open]:fade-in"
+          onEscapeKeyDown={(event) => {
+            if (tourActive) event.preventDefault();
+          }}
+          onPointerDownOutside={(event) => {
+            if (tourActive) event.preventDefault();
+          }}
+          onInteractOutside={(event) => {
+            if (tourActive) event.preventDefault();
+          }}
+        >
           <header className="flex items-center justify-between gap-3 border-b px-4 py-3 sm:px-6">
             <DialogPrimitive.Title asChild>
               <h2 className="flex items-center gap-2 font-display text-base font-bold">
@@ -158,6 +182,15 @@ export function CustomizationStudio({
               <span className="hidden text-xs text-muted-foreground sm:inline">
                 {studio.liveNotice}
               </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => openTour("result", "studioTemplates")}
+              >
+                <BookOpen className="size-4" aria-hidden />
+                {m.pages.userMenu.replayTour}
+              </Button>
               <Button variant="gradient" size="sm" onClick={onClose}>
                 <Check className="size-4" aria-hidden />
                 {studio.done}
@@ -210,6 +243,7 @@ export function CustomizationStudio({
                 "min-h-0 flex-col border-b bg-muted/20 lg:flex lg:border-b-0 lg:border-r",
                 mobileSection === "templates" ? "flex flex-1" : "hidden"
               )}
+              data-tour="studioTemplates"
             >
               <div className="border-b p-3">
                 <div className="relative">
@@ -233,50 +267,34 @@ export function CustomizationStudio({
                     {studio.noMatch(query)}
                   </p>
                 ) : (
-                  groups.map(([label, list]) => (
-                    <section key={label}>
-                      <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {label}
-                        <span className="rounded-full bg-muted px-1.5 text-[10px] tabular-nums">
-                          {list.length}
-                        </span>
-                      </h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        {list.map((t) => {
-                          const isSelected = t.id === selectedId;
-                          return (
-                            <button
+                  <fieldset className="space-y-4">
+                    <legend className="sr-only">{studio.templatesTab}</legend>
+                    {groups.map(([label, list]) => (
+                      <section key={label}>
+                        <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          {label}
+                          <span className="rounded-full bg-muted px-1.5 text-[10px] tabular-nums">
+                            {list.length}
+                          </span>
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                          {list.map((t) => (
+                            <TemplateOptionCard
                               key={t.id}
-                              type="button"
-                              onClick={() => onSelect(t.id)}
-                              aria-pressed={isSelected}
-                              title={t.name}
-                              className={cn(
-                                "relative rounded-lg border bg-card p-1.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm",
-                                isSelected
-                                  ? "border-primary ring-2 ring-primary/30"
-                                  : "hover:border-primary/40"
-                              )}
-                            >
-                              {isSelected ? (
-                                <span className="absolute right-1 top-1 z-10 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                                  <Check className="size-3" aria-hidden />
-                                </span>
-                              ) : null}
-                              <TemplateSwatch
-                                layout={t.definition.layout}
-                                colors={t.definition.colors.sidebar}
-                                band={t.definition.colors.band}
-                              />
-                              <span className="mt-1 block truncate text-[11px] font-medium">
-                                {t.name}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  ))
+                              id={t.id}
+                              name={t.name}
+                              swatch={swatchFromDefinition(t.definition)}
+                              selected={t.id === selectedId}
+                              onSelect={() => onSelect(t.id)}
+                              groupName="studio-template"
+                              size="md"
+                              className="w-full rounded-lg p-1.5"
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+                  </fieldset>
                 )}
               </div>
             </aside>
@@ -312,6 +330,7 @@ export function CustomizationStudio({
                 "min-h-0 space-y-3 overflow-y-auto border-t bg-muted/20 p-3 lg:block lg:border-l lg:border-t-0",
                 mobileSection === "customize" ? "block flex-1" : "hidden"
               )}
+              data-tour="appearance"
             >
               <DesignControls
                 colors={colors}

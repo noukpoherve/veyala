@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getPublicTemplates } from "@/lib/cached";
 import { parseTemplateDefinition } from "@/lib/templates/definition";
-import { TemplateSwatch } from "@/components/templates/template-swatch";
+import { TemplateSwatch, swatchFromDefinition } from "@/components/templates/template-swatch";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Import form (upload + vision extraction UI) is heavy and below the fold: lazy-loaded.
@@ -37,7 +37,7 @@ function TemplateCard({ template, showStatus }: { template: Template; showStatus
   return (
     <Card>
       <CardContent className="space-y-2 p-4">
-        <TemplateSwatch layout={def.layout} colors={def.colors.sidebar} band={def.colors.band} />
+        <TemplateSwatch {...swatchFromDefinition(def)} size="lg" />
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-medium">{template.name}</h3>
           {showStatus && variant && statusLabel ? (
@@ -67,7 +67,7 @@ export default async function TemplatesPage() {
     <article className="mx-auto max-w-4xl space-y-8">
       <PageHeader title={m.app.templatesTitle} description={m.app.templatesSubtitle} />
 
-      <section aria-labelledby="gallery-title" className="space-y-4">
+      <section aria-labelledby="gallery-title" className="space-y-4" data-tour="templates">
         <h2 id="gallery-title" className="font-display text-lg font-semibold">
           {m.pages.templates.galleryTitle}
         </h2>

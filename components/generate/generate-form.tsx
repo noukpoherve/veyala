@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
-import { TemplateOptionCard } from "@/components/templates/template-option";
+import { TemplatePicker } from "@/components/templates/template-picker";
+import type { SwatchProps } from "@/components/templates/template-swatch";
 import { MatchAnalyzePanel } from "@/components/generate/match-analyze-panel";
 import { PipelineTimeline } from "@/components/generate/pipeline-timeline";
 import { StatCard } from "@/components/ui/stat-card";
@@ -29,10 +30,7 @@ import {
 export interface TemplateOption {
   id: string;
   name: string;
-  layout: "sidebar-left" | "single-column";
-  colors: string[];
-  band: string;
-  isOwn: boolean;
+  swatch: SwatchProps;
 }
 
 /**
@@ -116,6 +114,15 @@ export function GenerateForm({
   const [activeStep, setActiveStep] = useState<StepId | "done" | null>(null);
   const [scoreBeforeLive, setScoreBeforeLive] = useState<number | null>(null);
   const [scoreAfterLive, setScoreAfterLive] = useState<number | null>(null);
+
+  useEffect(() => {
+    const onTourStep = (event: Event) => {
+      const id = (event as CustomEvent<string>).detail;
+      if (id === "jobUrl") setMode("url");
+    };
+    window.addEventListener("veyala:tour-step", onTourStep);
+    return () => window.removeEventListener("veyala:tour-step", onTourStep);
+  }, []);
 
   const pipelineSteps = [
     { id: "reading_offer", label: t.steps.readingOffer },
@@ -370,7 +377,7 @@ export function GenerateForm({
     <div className="space-y-6">
       {phase === "compose" || phase === "review" ? (
         <form onSubmit={onAnalyze} className="space-y-6" aria-busy={analyzing}>
-          <Card>
+          <Card data-tour="jobUrl">
             <CardHeader>
               <CardTitle className="text-base">{t.jobStep}</CardTitle>
             </CardHeader>
@@ -434,25 +441,18 @@ export function GenerateForm({
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-tour="generate" className="min-w-0">
             <CardHeader>
               <CardTitle className="text-base">{t.templateStep}</CardTitle>
+              <p className="text-sm text-muted-foreground">{m.forms.wizard.templateHint}</p>
             </CardHeader>
-            <CardContent>
-              <fieldset className="grid gap-3 sm:grid-cols-3">
-                <legend className="sr-only">{m.forms.wizard.templateLegend}</legend>
-                {templates.map((tpl) => (
-                  <TemplateOptionCard
-                    key={tpl.id}
-                    id={tpl.id}
-                    name={tpl.name}
-                    swatch={{ layout: tpl.layout, colors: tpl.colors, band: tpl.band }}
-                    selected={templateId === tpl.id}
-                    onSelect={() => setTemplateId(tpl.id)}
-                    groupName="template"
-                  />
-                ))}
-              </fieldset>
+            <CardContent className="min-w-0">
+              <TemplatePicker
+                templates={templates}
+                selectedId={templateId}
+                onSelect={setTemplateId}
+                groupName="template"
+              />
             </CardContent>
           </Card>
 
