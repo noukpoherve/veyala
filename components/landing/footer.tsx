@@ -82,7 +82,7 @@ export function LandingFooter() {
           <ul className="flex items-center gap-6">
             {[
               { href: "https://instagram.com", label: "Instagram" },
-              { href: "https://linkedin.com", label: "LinkedIn" },
+              { href: "https://www.linkedin.com/company/139174062/", label: "LinkedIn" },
               { href: "https://youtube.com", label: "YouTube" },
             ].map((social) => (
               <li key={social.label}>
