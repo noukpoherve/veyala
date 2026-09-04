@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
-import { TemplateOptionCard } from "@/components/templates/template-option";
+import { TemplatePicker } from "@/components/templates/template-picker";
 import { CoherencePanel } from "@/components/campus-france/coherence-panel";
 import { PipelineTimeline } from "@/components/generate/pipeline-timeline";
 import { StatCard } from "@/components/ui/stat-card";
@@ -427,25 +427,18 @@ export function CampusFranceForm({
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle className="text-base">{t.templateStep}</CardTitle>
+              <p className="text-sm text-muted-foreground">{m.forms.wizard.templateHint}</p>
             </CardHeader>
-            <CardContent>
-              <fieldset className="grid gap-3 sm:grid-cols-3">
-                <legend className="sr-only">{m.forms.wizard.templateLegend}</legend>
-                {templates.map((tpl) => (
-                  <TemplateOptionCard
-                    key={tpl.id}
-                    id={tpl.id}
-                    name={tpl.name}
-                    swatch={{ layout: tpl.layout, colors: tpl.colors, band: tpl.band }}
-                    selected={templateId === tpl.id}
-                    onSelect={() => setTemplateId(tpl.id)}
-                    groupName="template"
-                  />
-                ))}
-              </fieldset>
+            <CardContent className="min-w-0">
+              <TemplatePicker
+                templates={templates}
+                selectedId={templateId}
+                onSelect={setTemplateId}
+                groupName="template"
+              />
             </CardContent>
           </Card>
 

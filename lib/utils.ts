@@ -31,6 +31,17 @@ export function siteUrl(): string {
   return "http://localhost:3000";
 }
 
+/** Instant motion when the user asked the OS to reduce animation. */
+export function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+export function scrollBehavior(): ScrollBehavior {
+  return prefersReducedMotion() ? "auto" : "smooth";
+}
+
 /** Canonical email form used everywhere an address is stored or compared. */
 export function normalizeEmail(value: unknown): string {
   return String(value ?? "")

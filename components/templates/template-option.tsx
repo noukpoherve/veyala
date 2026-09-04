@@ -1,12 +1,15 @@
-import { TemplateSwatch, type SwatchProps } from "@/components/templates/template-swatch";
+import type { ReactNode } from "react";
+import { Check } from "lucide-react";
+import {
+  TemplateSwatch,
+  type SwatchProps,
+  type SwatchSize,
+} from "@/components/templates/template-swatch";
 import { cn } from "@/lib/utils";
 
 /**
- * A selectable template tile (native radio, sr-only input — keyboard/screen
- * reader accessible for free). TemplateSwatch itself was already shared, but
- * this wrapper around it was copied identically in generate-form.tsx and
- * campus-france-form.tsx, and diverged a third time in
- * customization-studio.tsx (own radius, own hover, a checkmark badge).
+ * Selectable template tile (native radio + visible label). Used by generate,
+ * Campus France, and the appearance studio.
  */
 export function TemplateOptionCard({
   id,
@@ -15,7 +18,9 @@ export function TemplateOptionCard({
   selected,
   onSelect,
   groupName,
+  layoutLabel,
   badge,
+  size = "lg",
   className,
 }: {
   id: string;
@@ -25,15 +30,22 @@ export function TemplateOptionCard({
   onSelect: () => void;
   /** `name` of the native radio group this option belongs to. */
   groupName: string;
+  /** Visible layout caption (sidebar vs single column). */
+  layoutLabel?: string;
   /** Extra marker rendered over the swatch when selected (e.g. a checkmark). */
-  badge?: React.ReactNode;
+  badge?: ReactNode;
+  size?: SwatchSize;
   className?: string;
 }) {
   return (
     <label
+      data-template-id={id}
       className={cn(
-        "relative cursor-pointer rounded-lg border p-3 text-left transition-colors",
-        selected ? "border-primary ring-2 ring-primary/30" : "hover:border-muted-foreground/40",
+        "relative cursor-pointer rounded-xl border-2 bg-card p-2.5 text-left transition-colors",
+        "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2",
+        selected
+          ? "border-primary ring-2 ring-primary/25"
+          : "border-border hover:border-primary/50",
         className
       )}
     >
@@ -45,9 +57,27 @@ export function TemplateOptionCard({
         onChange={onSelect}
         className="sr-only"
       />
-      {selected ? badge : null}
-      <TemplateSwatch {...swatch} />
-      <span className="mt-2 block truncate text-sm font-medium">{name}</span>
+      {selected
+        ? (badge ?? (
+            <span className="absolute right-2 top-2 z-10 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+              <Check className="size-3" aria-hidden />
+            </span>
+          ))
+        : null}
+      <TemplateSwatch {...swatch} size={size} />
+      <span
+        className={cn(
+          "mt-1.5 block truncate font-semibold text-foreground",
+          size === "xs" || size === "sm" ? "text-xs" : "text-sm"
+        )}
+      >
+        {name}
+      </span>
+      {layoutLabel ? (
+        <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+          {layoutLabel}
+        </span>
+      ) : null}
     </label>
   );
 }

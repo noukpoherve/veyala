@@ -27,7 +27,7 @@ export default async function ProfilePage() {
     <article className="mx-auto max-w-3xl space-y-6">
       <PageHeader title={m.app.profileTitle} description={m.app.profileSubtitle} />
 
-      <section aria-labelledby="import-title">
+      <section aria-labelledby="import-title" data-tour="profile">
         <Card>
           <CardHeader>
             <CardTitle id="import-title" className="flex items-center gap-2 text-base">

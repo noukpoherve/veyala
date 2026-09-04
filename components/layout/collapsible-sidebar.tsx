@@ -13,6 +13,8 @@ type SidebarUi = {
   mobileOpen: boolean;
   setMobileOpen: (open: boolean | ((current: boolean) => boolean)) => void;
   navId: string;
+  desktopOpen: boolean;
+  setDesktopOpen: (open: boolean | ((current: boolean) => boolean)) => void;
 };
 
 const SidebarUiContext = createContext<SidebarUi | null>(null);
@@ -20,6 +22,7 @@ const SidebarUiContext = createContext<SidebarUi | null>(null);
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const navId = useId();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState(true);
   const pathname = usePathname();
 
   // Close the mobile drawer after in-app navigation.
@@ -29,7 +32,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <SidebarUiContext.Provider value={{ mobileOpen, setMobileOpen, navId }}>
+    <SidebarUiContext.Provider
+      value={{ mobileOpen, setMobileOpen, navId, desktopOpen, setDesktopOpen }}
+    >
       {children}
     </SidebarUiContext.Provider>
   );
@@ -49,13 +54,12 @@ export function useSidebarUi() {
  * focus trap, a gap flagged in the UX audit). The persistent tab bar opens it.
  */
 export function CollapsibleSidebar({ children }: { children: ReactNode }) {
-  const { mobileOpen, setMobileOpen, navId } = useSidebarUi();
-  const [desktopOpen, setDesktopOpen] = useState(true);
+  const { mobileOpen, setMobileOpen, navId, desktopOpen, setDesktopOpen } = useSidebarUi();
   const m = useMessages();
 
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY) === "closed") setDesktopOpen(false);
-  }, []);
+  }, [setDesktopOpen]);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -82,8 +86,8 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
         aria-hidden={!desktopOpen || undefined}
         {...(!desktopOpen ? { inert: true } : {})}
         className={cn(
-          "relative hidden h-full min-h-0 flex-col overflow-hidden border-r border-border bg-card transition-[width] duration-300 ease-in-out md:flex",
-          desktopOpen ? "w-64" : "w-0 border-r-0"
+          "relative hidden h-full min-h-0 flex-col border-r border-border bg-card transition-[width] duration-300 ease-in-out md:flex",
+          desktopOpen ? "z-20 w-64 overflow-visible" : "w-0 overflow-hidden border-r-0"
         )}
       >
         <div className="flex h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden">{children}</div>
@@ -100,7 +104,7 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
           onClick={toggleDesktop}
           aria-label={m.pages.sidebar.hide}
           aria-expanded="true"
-          className="absolute right-0 top-4 z-10 flex size-9 translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-blue-600 shadow-elevation-hover hover:bg-accent"
+          className="absolute -right-3.5 top-4 z-30 flex size-8 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-950/40 hover:bg-blue-500"
         >
           <PanelLeftClose className="size-4" aria-hidden />
         </button>
@@ -126,7 +130,7 @@ export function CollapsibleSidebar({ children }: { children: ReactNode }) {
           onClick={toggleDesktop}
           aria-label={m.pages.sidebar.show}
           aria-expanded="false"
-          className="fixed left-4 top-4 z-40 hidden size-9 items-center justify-center rounded-full border border-border bg-card text-blue-600 shadow-elevation-hover hover:bg-accent md:flex"
+          className="fixed left-4 top-4 z-40 hidden size-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-950/40 hover:bg-blue-500 md:flex"
         >
           <PanelLeftOpen className="size-4" aria-hidden />
         </button>

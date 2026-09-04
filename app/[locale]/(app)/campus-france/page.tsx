@@ -5,6 +5,7 @@ import { getPublicTemplates } from "@/lib/cached";
 import { getBalance } from "@/lib/credits";
 import { mergeTemplateLists } from "@/lib/templates/merge";
 import { parseTemplateDefinition } from "@/lib/templates/definition";
+import { swatchFromDefinition } from "@/components/templates/template-swatch";
 import type { TemplateOption } from "@/components/generate/generate-form";
 import { CampusFranceForm } from "@/components/campus-france/campus-france-form";
 import { Alert } from "@/components/ui/alert";
@@ -38,10 +39,7 @@ export default async function CampusFrancePage() {
     return {
       id: t.id,
       name: t.name,
-      layout: def.layout,
-      colors: def.colors.sidebar,
-      band: def.colors.band,
-      isOwn: t.ownerId === userId,
+      swatch: swatchFromDefinition(def),
     };
   });
 

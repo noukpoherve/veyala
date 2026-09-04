@@ -99,7 +99,7 @@ export default async function CvDetailPage({ params }: { params: { id: string } 
         actions={
           <>
             <Button asChild variant="gradient">
-              <Link href={`/cv/${cv.id}/edit`}>
+              <Link href={`/cv/${cv.id}/edit`} data-tour="edit">
                 <PenLine />
                 {t.editInEditor}
               </Link>

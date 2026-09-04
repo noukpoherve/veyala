@@ -4,7 +4,7 @@ import { Check, X } from "lucide-react";
 import { db } from "@/lib/db";
 import { parseTemplateDefinition } from "@/lib/templates/definition";
 import { reviewTemplate } from "./actions";
-import { TemplateSwatch } from "@/components/templates/template-swatch";
+import { TemplateSwatch, swatchFromDefinition } from "@/components/templates/template-swatch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,11 +84,7 @@ export default async function AdminTemplatesPage({
                         unoptimized
                       />
                     ) : null}
-                    <TemplateSwatch
-                      layout={def.layout}
-                      colors={def.colors.sidebar}
-                      band={def.colors.band}
-                    />
+                    <TemplateSwatch {...swatchFromDefinition(def)} size="md" />
                     <div className="flex gap-2">
                       <form action={reviewTemplate} className="flex-1">
                         <input type="hidden" name="templateId" value={template.id} />

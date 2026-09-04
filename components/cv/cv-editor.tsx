@@ -18,6 +18,7 @@ import { saveCvEdits } from "@/app/[locale]/(app)/cv/[id]/edit/actions";
 import { exportFilename } from "@/lib/export-filename";
 import { cn } from "@/lib/utils";
 import { useLocale, useMessages } from "@/components/i18n/locale-provider";
+import { useTourUi } from "@/components/onboarding/product-tour";
 import { CvFields } from "@/components/cv/cv-fields";
 import { CustomizationStudio } from "@/components/cv/customization-studio";
 import { PrintPreview } from "@/components/cv/print-preview";
@@ -82,7 +83,23 @@ export function CvEditor({
     docxUrl: initialDocxUrl ?? "",
   });
   // Edits since the last save make the current downloads stale.
+  const { stepId } = useTourUi();
   const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    if (stepId === "edit") {
+      setStudioOpen(false);
+      setMobileView("form");
+    }
+    if (stepId === "studioTemplates" || stepId === "appearance") {
+      setMobileView("preview");
+      setStudioOpen(true);
+    }
+    if (stepId === "download") {
+      setStudioOpen(false);
+      setMobileView("preview");
+    }
+  }, [stepId]);
 
   // Live preview: every keystroke updates the form values; the deferred value
   // keeps typing smooth while the iframe re-renders in the background.
@@ -259,6 +276,7 @@ export function CvEditor({
           role="tabpanel"
           aria-labelledby="cv-editor-tab-form"
           className={cn(mobileView === "preview" && "hidden lg:block", "min-w-0 space-y-6")}
+          data-tour="edit"
         >
           <CvFields form={form} />
           <Card>

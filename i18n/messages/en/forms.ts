@@ -5,6 +5,10 @@ export const forms = {
     pastedText: "Pasted text (recommended)",
     urlPlaceholder: "https://…",
     templateLegend: "Template choice",
+    templateHint:
+      "Each miniature mirrors the real resume structure: column, photo, bands, and colors.",
+    templatePrev: "Previous templates",
+    templateNext: "Next templates",
     optionsStep: "3. Options",
     instructionsLabel: "Notes for the AI (optional)",
     invalidFields: "Invalid fields",

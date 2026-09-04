@@ -11,6 +11,50 @@ export const pages = {
     importCta: "Importer mon CV",
   },
 
+  tour: {
+    done: "J'ai compris",
+    skip: "Passer",
+    stepOf: (n: number, total: number) => `${n} / ${total}`,
+    steps: {
+      profile: {
+        title: "Mon CV de base",
+        body: "Importez d'abord votre CV ici. C'est la source de vérité : l'IA n'invente jamais rien.",
+      },
+      jobUrl: {
+        title: "Collez l'offre",
+        body: "Onglet URL pour coller le lien de l'annonce, ou Texte pour coller le contenu. Ensuite, lancez l'analyse.",
+      },
+      generate: {
+        title: "Générer un CV",
+        body: "Choisissez un template, puis générez. Veyala adapte le CV et rédige la lettre.",
+      },
+      templates: {
+        title: "Templates",
+        body: "Parcourez les designs disponibles. Après génération, vous pourrez encore changer l'apparence dans l'éditeur.",
+      },
+      credits: {
+        title: "Vos crédits",
+        body: "2 crédits offerts à l'inscription. 1 crédit = 1 CV + lettre.",
+      },
+      edit: {
+        title: "Modifier le CV",
+        body: "Corrigez le texte, les expériences et la lettre ici. L'IA a adapté, vous gardez le dernier mot.",
+      },
+      studioTemplates: {
+        title: "Choisir un template",
+        body: "À gauche, changez de modèle. L'aperçu au centre se met à jour tout de suite.",
+      },
+      appearance: {
+        title: "Personnaliser l'apparence",
+        body: "Couleurs, photo, colonnes : tout se règle dans cette colonne, sans régénérer. Terminé pour revenir à l'éditeur.",
+      },
+      download: {
+        title: "Télécharger",
+        body: "Word pour retravailler, PDF pour envoyer. Enregistrez d'abord si vous avez modifié le CV.",
+      },
+    },
+  },
+
   scores: {
     coherence: "Cohérence",
     matching: "Matching",
@@ -221,6 +265,7 @@ export const pages = {
 
   userMenu: {
     contactUs: "Nous contacter",
+    replayTour: "Revoir le guide",
   },
 
   sidebar: {

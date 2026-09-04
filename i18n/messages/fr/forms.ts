@@ -5,6 +5,10 @@ export const forms = {
     pastedText: "Texte collé (recommandé)",
     urlPlaceholder: "https://…",
     templateLegend: "Choix du template",
+    templateHint:
+      "Chaque miniature reprend la structure réelle du CV : colonne, photo, bandeaux et couleurs.",
+    templatePrev: "Modèles précédents",
+    templateNext: "Modèles suivants",
     optionsStep: "3. Options",
     instructionsLabel: "Consignes libres (optionnel)",
     invalidFields: "Champs invalides",
