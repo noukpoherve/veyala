@@ -1,3 +1,12 @@
+# [1.18.0](https://github.com/noukpoherve/veyala/compare/v1.17.2...v1.18.0) (2026-09-04)
+
+
+### Features
+
+* **landing:** point the footer LinkedIn link to the company page ([cbd1d6b](https://github.com/noukpoherve/veyala/commit/cbd1d6be9b5882d6e6fefdc9f174a42cc37c4c0f))
+* **onboarding:** add a first-run spotlight tour on real nav targets ([f9fa798](https://github.com/noukpoherve/veyala/commit/f9fa7983ed9feffbe55a3aacc46204fa70d2d6a4))
+* **onboarding:** add the editor tour and a compact template picker ([b3ac5fc](https://github.com/noukpoherve/veyala/commit/b3ac5fc36dcb666dce3ff5d5de5e18f8d3a2e4ae))
+
 ## [1.17.2](https://github.com/noukpoherve/veyala/compare/v1.17.1...v1.17.2) (2026-09-02)
 
 
